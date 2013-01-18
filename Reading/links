@@ -1,0 +1,13 @@
+System-F esque intermediate language
+http://hackage.haskell.org/trac/ghc/wiki/IntermediateTypes
+
+Stack overflow overview of Core 
+http://stackoverflow.com/questions/6121146/reading-ghc-core
+
+SPJ thoughts on System F
+http://research.microsoft.com/en-us/um/people/simonpj/papers/ext-f/
+
+haskell.org core stub
+http://www.haskell.org/ghc/docs/latest/html/users_guide/ext-core.html
+
+
