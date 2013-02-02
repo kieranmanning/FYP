@@ -1,0 +1,5 @@
+x = int, bool, $var
+
+list = [a, a, a]
+
+lambda = \x,y,z -> func

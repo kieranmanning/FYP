@@ -1,26 +1,100 @@
 \documentclass[11pt]{article}
-%Gummi|065|=)
-\title{\textbf{FYP }}
-\author{Kieran Manning \\
-		Senior Sophister Computer Science \\
-		2013}
-\date{}
+%Gummi|062|=)
+
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\title{\textbf{OpenGL Project Report}}
+\author{Kieran Manning \\ 09676121}
+\date{December 2012}
 \begin{document}
 
 \maketitle
 
+%	i, ii etc. page numbering for contents, intro etc. etc.
+
+\pagenumbering{roman}
+
 \tableofcontents
 
+\setcounter{page}{1}
+
 \section{Acknowledgements}
+Lorem ipsum
 
 \section{Abstract: a short summary} 
+Lorem ipsum
 
 \section{Goal}
 Javascript through Haskell via some form of core-like intermediate language.
+Preserve laziness, typesafety, improve on syntax
+
+\newpage
+
+\pagenumbering{arabic}
+
+\pagebreak
+
+\section{Problem Space}
+\subsection{Javascript Problems}
+\begin{itemize}
+\item Late binding
+\item Weak Typing
+\item Ganky syntax
+\end{itemize}
+
+\subsubsection{Syntax}
+JS syntax is hella pants. Able to fix this though!
+\begin{itemize}
+\item Generally awkward, verbose
+\item JS is Old. New ideas on syntax have emerged
+\item Succinct simplicity of syntax in languages such as Python as contrast
+\item Overview of ease of writing DSLs in haskell as a solution
+\end{itemize}
+
+\subsubsection{Weak Typing}
+General type safety issues
+
+\subsubsection{Late Binding}
+Efficiency, runtime vs. compile time typing
+
+\pagebreak
 
 \section{Existing Solutions}
-Fay, iTasks, why these aren't what I wanted.
+Fay, iTasks, GHCJS. Why these aren't what I wanted.
 
+\subsection{Fay}
+The Fay language, which lives \href[https://github.com/faylang/fay/wiki]{"here"}  
+
+\subsection{iTasks? Relevant?}
+
+\subsection{GHCJS}
+
+\subsection{CoffeeScript}
+Worth mentioning from point of view of non-functional take on the js problem
+
+\section{Propose solution involving Haskell}
+\begin{itemize}
+\item Discuss type safety, laziness, ease of haskell/JS interoperability.
+\item Compare our core-level output ideas with existing solutions. Include quick chats
+	  core/STG in general. Link to SPJ paper(s). Actually, maybe keep chats for later.
+\item Worth comparing to ClojureScript 
+\end{itemize}
+
+\pagebreak
+
+\section{Description of implementation and choices}
+\subsection{Core/STG}
+link to SPJ etc. papers. Talk about SAPL and the iTasks project.
+
+\subsection{Representing laziness?}
+Fay, thunks-as-JS-functions
+
+\subsection{Flow control}
+case statement continuations, link to paper
+
+\subsection{Higher order functions}
+
+\subsection{Syntax}
 
 
 \end{document}

@@ -11,4 +11,5 @@ cabal-dev
 fay
 ghc
 iTasks
+ghcjs
 
