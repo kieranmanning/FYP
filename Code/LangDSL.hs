@@ -1,47 +1,51 @@
 {-# LANGUAGE GADTs, StandaloneDeriving #-}
 
 module LangDSL where
+import qualified Data.Map as Map
+import Control.Monad.State
 
+type Result = StateT DataStore 
 
-data Empty
+type DataStore = Map.Map String Expr
 
-data StmtList
-	= Stmt StmtList
-	| Empty
-	deriving (Show, Eq)
+type Ident = String
+
+data Program = Program StmtList
+	deriving(Show, Eq)
+
+type StmtList = [Stmt]
+
+data Func = Func Environment Behaviour
+
+f a b = x * b 
+
+type Environment = DataStore
+type Behaviour = Stmt
 
 data Stmt 
-	= Decl 
-	| Print Stmt 
+	= Decl Decl 
+	deriving(Show, Eq)
 
+data Decl where 
+	VarDecl 	:: Ident -> Expr -> Decl
+	LambdaDecl  :: Ident -> BinderList -> Expr -> Decl
+	FuncDecl 	:: Ident -> ParamList -> Expr -> Decl
+	deriving(Show, Eq)
 
-data Expr 
-	= ExprInt Int
-	| ExprBool Bool 
-	| ExprString String 
-	| ExprOp Expr Expr 
-	| ExprLambda Lambda 
+type BinderList = [String]
 
-data Lambda = Lambda BinderList Expr 
+type ParamList = [String]
 
-data BinderList 
-	= Ident BinderList
-	| Exmpty
-
-data Decl
-	= Ident Expr 
-
-data Type 
-	= TypeInt
-	| TypeBool
-	| TypeString
-	| TypeIdent Ident 
-	| TypeIdentList Ident
-	deriving (Show, Eq)
-
-data Term
-	= 
-
+data Expr where
+	TypeInt :: Int -> Expr
+	TypeBool :: Bool -> Expr
+	TypeList :: [Expr] -> Expr
+	GetV :: Ident -> Expr
+	LetExp :: Decl -> Expr -> Expr
+	AddOp :: Expr -> Expr -> Expr
+	SubOp :: Expr -> Expr -> Expr
+	AndOp :: Expr -> Expr -> Expr
+	deriving(Show, Eq)
 
 
 

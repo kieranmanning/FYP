@@ -6,9 +6,14 @@
 \title{\textbf{OpenGL Project Report}}
 \author{Kieran Manning \\ 09676121}
 \date{December 2012}
+
+\newcommand{\lang}{\$LANG}
+
 \begin{document}
 
 \maketitle
+
+
 
 %	i, ii etc. page numbering for contents, intro etc. etc.
 
@@ -63,7 +68,7 @@ Efficiency, runtime vs. compile time typing
 Fay, iTasks, GHCJS. Why these aren't what I wanted.
 
 \subsection{Fay}
-The Fay language, which lives \href[https://github.com/faylang/fay/wiki]{"here"}  
+The Fay language, which lives \href{https://github.com/faylang/fay/wiki}{here}, 
 
 \subsection{iTasks? Relevant?}
 
@@ -83,6 +88,53 @@ Worth mentioning from point of view of non-functional take on the js problem
 \pagebreak
 
 \section{Description of implementation and choices}
+
+\subsection{A subset language as a Haskell DSL}
+This will 
+
+\subsection{Syntax}
+One of the earlier considerations for this project, by virtue of the natural order
+of implementing features in \lang, was the syntax of the developer facing input 
+language (the "language" itself really). I knew from the outset that the syntax
+used in javascript was not something I wished to reinvent, seeing it more as a
+problem than an inspiration. 
+
+The syntax in javascript feels like a relic of a different time. It is a common
+problem brought up by programmers new to the language, and an accepted
+hindrance for anyone more experience with javascript. 
+
+Keywords such as 'new', 'var', and 'function' serve as examples of ideas on syntax
+design which have become far less common since javascript was created. 'var', for
+instance, adds verbosity to the language while providing little benefit. Seemingly
+inspired by Scheme's 'define' concept, it adds additional cruft to declaration 
+statements which are otherwise self-explanatory in languages with more minimal 
+syntaxes such as Python. A declaration can be inferred sufficiently from a simple
+"x = y" statement and its context. 'function' as a keyword also seems to have been
+inspired by Scheme, in this case its liberal use of the 'lambda' keyword to represent
+anonymous functions. Languages such as Haskell dont overcomplicate their function
+defintions, content with statements as simple and declarative as 'f x y = x + y',
+as well as internally scoped (fix that terminology when less tired) functions using
+the where keyword etc.
+Type signatures are optional but do serve to make the code in question more readable and
+solve some programmer headaches (from a syntactical point of view, they obviously have other 
+significant semantic effects). 
+
+Both Fay and CoffeeScript went the minimal, Pythonic route with syntax design. Statements
+such as...
+\begin{itemize}
+\item Variable declarations : "\(number = 42\)"
+\item Function declarations : "\(square = (x) \rightarrow x * x\)"
+\item List comprehensions : "\(cubes = (math.cube num \emph{for} num \emph{in} list)\)"
+\end{itemize}
+
+...in coffeescript contrast sharply with the parentheses, "function" and semicolon 
+ridden expanse of comparable javascript. The Fay approach is similar in its brevity.
+
+My approach to syntax design would be influenced by these ideas. They are reflected 
+in the simple declarative statements included in my language, and were I to continue
+this project beyond its current scope the same concepts would continue to be applied.
+
+
 \subsection{Core/STG}
 link to SPJ etc. papers. Talk about SAPL and the iTasks project.
 
@@ -94,7 +146,20 @@ case statement continuations, link to paper
 
 \subsection{Higher order functions}
 
-\subsection{Syntax}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 \end{document}
