@@ -17,8 +17,6 @@ type StmtList = [Stmt]
 
 data Func = Func Environment Behaviour
 
-f a b = x * b 
-
 type Environment = DataStore
 type Behaviour = Stmt
 

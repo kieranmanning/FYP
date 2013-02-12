@@ -80,6 +80,7 @@ ListContents : {- Empty -}				{ [] }
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
 
+
 type Ident = String
 
 data Program = Program StmtList
@@ -102,8 +103,8 @@ type BinderList = [String]
 type ParamList = [String]
 
 data Expr where
-	TypeInt :: Int -> Expr
 	GetV :: Ident -> Expr
+	TypeInt :: Int -> Expr
 	TypeBool :: Bool -> Expr
 	TypeList :: [Expr] -> Expr
 	LetExp :: Decl -> Expr -> Expr
@@ -111,6 +112,46 @@ data Expr where
 	SubOp :: Expr -> Expr -> Expr
 	AndOp :: Expr -> Expr -> Expr
 	deriving(Show, Eq)
+
+
+{-
+evalExpr :: Expr -> Expr
+evalExpr = \x -> bigFuckOffCaseStatement x
+-}
+
+{-
+evalGetV :: Ident -> Expr
+evalGetV = \x -> lookup x
+-}
+
+evalExprListOp :: Expr -> Expr 
+evalExprListOp expr = do 
+	case expr of 
+		TypeList x -> TypeList x
+
+
+evalExprIntOp :: Expr -> Expr 
+evalExprIntOp expr = do 
+	case expr of
+		TypeInt x -> TypeInt x
+		x -> TypeInt (eval x)
+	where eval x = do 
+		case x of
+			TypeInt x -> x
+			AddOp x y -> (eval x) + (eval y)
+			SubOp x y -> (eval x) - (eval y)
+
+
+evalExprBoolOp :: Expr -> Expr 
+evalExprBoolOp expr = do 
+	case expr of
+		TypeBool x -> TypeBool x
+		x -> TypeBool (eval x)
+	where eval x = do 
+		case x of 
+			TypeBool x -> x
+			AndOp x y -> (eval x) && (eval y)
+
 
 data Token
 	{- 	Primitives					-}

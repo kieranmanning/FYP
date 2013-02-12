@@ -482,6 +482,7 @@ happySeq = happyDontSeq
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
 
+
 type Ident = String
 
 data Program = Program StmtList
@@ -513,6 +514,36 @@ data Expr where
 	SubOp :: Expr -> Expr -> Expr
 	AndOp :: Expr -> Expr -> Expr
 	deriving(Show, Eq)
+
+	 
+evalExprListOp :: Expr -> Expr 
+evalExprListOp expr = do 
+	case expr of 
+		TypeList x -> TypeList x
+
+
+evalExprIntOp :: Expr -> Expr 
+evalExprIntOp expr = do 
+	case expr of
+		TypeInt x -> TypeInt x
+		x -> TypeInt (eval x)
+	where eval x = do 
+		case x of
+			TypeInt x -> x
+			AddOp x y -> (eval x) + (eval y)
+			SubOp x y -> (eval x) - (eval y)
+
+
+evalExprBoolOp :: Expr -> Expr 
+evalExprBoolOp expr = do 
+	case expr of
+		TypeBool x -> TypeBool x
+		x -> TypeBool (eval x)
+	where eval x = do 
+		case x of 
+			TypeBool x -> x
+			AndOp x y -> (eval x) && (eval y)
+
 
 data Token
 	{- 	Primitives					-}
