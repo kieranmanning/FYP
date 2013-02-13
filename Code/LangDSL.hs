@@ -1,27 +1,25 @@
 {-# LANGUAGE GADTs, StandaloneDeriving #-}
 
 module LangDSL where
+{- import qualified Data.Map as Map -}
 import qualified Data.Map as Map
-import Control.Monad.State
+import Control.Monad.ST
 
-type Result = StateT DataStore 
 
-type DataStore = Map.Map String Expr
+type Ident 		= String
 
-type Ident = String
+type SymbolTable= Map.Map Ident Expr
 
-data Program = Program StmtList
+type Evaluation a = ST SymbolTable a
+
+data Program 	= Program StmtList
 	deriving(Show, Eq)
 
-type StmtList = [Stmt]
-
-data Func = Func Environment Behaviour
-
-type Environment = DataStore
-type Behaviour = Stmt
+type StmtList 	= [Stmt]
 
 data Stmt 
 	= Decl Decl 
+	| Print Expr
 	deriving(Show, Eq)
 
 data Decl where 
@@ -30,53 +28,71 @@ data Decl where
 	FuncDecl 	:: Ident -> ParamList -> Expr -> Decl
 	deriving(Show, Eq)
 
-type BinderList = [String]
+type BinderList = [Ident]
 
-type ParamList = [String]
+type ParamList 	= [Ident]
 
 data Expr where
-	TypeInt :: Int -> Expr
-	TypeBool :: Bool -> Expr
-	TypeList :: [Expr] -> Expr
-	GetV :: Ident -> Expr
-	LetExp :: Decl -> Expr -> Expr
-	AddOp :: Expr -> Expr -> Expr
-	SubOp :: Expr -> Expr -> Expr
-	AndOp :: Expr -> Expr -> Expr
+	GetV 		:: Ident -> Expr
+	TypeInt 	:: Int -> Expr
+	TypeBool 	:: Bool -> Expr
+	TypeList 	:: [Expr] -> Expr
+	LetExp 		:: Decl -> Expr -> Expr
+	AddOp 		:: Expr -> Expr -> Expr
+	SubOp 		:: Expr -> Expr -> Expr
+	AndOp 		:: Expr -> Expr -> Expr
+	ExprError 	:: Expr
 	deriving(Show, Eq)
 
+{-
+evalStmt :: Stmt -> Stmt
+evalStmt stmt = case stmt of decls, whatever.
+					simplify.
+-}
 
+{-					Eval decls 					-}
+
+
+
+{- 					Eval Exprs					-}
 
 {-
-type Var = String
-type Binders =  [Var]	
-
-data Term a where
-	Expr    :: Expr a -> Term a 
-	Factor  :: Factor a -> Term a
-deriving instance Show a => Show (Term a)
-
-data Factor a where
-	N      :: Int -> Factor Int
-	B      :: Bool -> Factor Bool 
-	Lambda :: Binders -> Term a -> Factor a
-	List   :: [Factor a] -> Factor a
-deriving instance Show a => Show (Factor a)
-
-data Stmt a where
-	Seq    :: Stmt a -> Stmt a -> Stmt a
-	Decl   :: Var -> Term a -> Stmt a
-deriving instance Show a => Show (Stmt a)
-
-data Expr a where
-	--Numerical expressions:
-	Add  :: Expr Int  ->  Expr Int ->  Expr Int
-	--Boolean expressions:
-	And  :: Expr Bool ->  Expr Bool ->  Expr Bool
-	--List expressions:
-	Con  :: Expr [a] -> Expr [a] -> Expr [a]
-	--Loading something not a constant:
-	GetV :: String -> Expr Int
-deriving instance Show a => Show (Expr a)
-
+evalExpr :: Expr -> Expr
+evalExpr = \x -> bigFuckOffCaseStatement x
 -}
+
+{-
+evalGetV :: Ident -> Expr
+evalGetV = \x -> lookup x
+-}
+
+
+
+evalExprListOp :: Expr -> Expr 
+evalExprListOp expr = do 
+	case expr of 
+		TypeList x -> TypeList x
+		_ -> ExprError
+
+
+evalExprIntOp :: Expr -> Expr 
+evalExprIntOp expr = do 
+	case expr of
+		TypeInt x -> TypeInt x
+		x -> TypeInt (eval x)
+	where eval x = do 
+		case x of
+			TypeInt x -> x
+			AddOp x y -> (eval x) + (eval y)
+			SubOp x y -> (eval x) - (eval y)
+
+
+evalExprBoolOp :: Expr -> Expr 
+evalExprBoolOp expr = do 
+	case expr of
+		TypeBool x -> TypeBool x
+		x -> TypeBool (eval x)
+	where eval x = do 
+		case x of 
+			TypeBool x -> x
+			AndOp x y -> (eval x) && (eval y)

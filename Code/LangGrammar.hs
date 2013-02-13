@@ -500,26 +500,38 @@ data Decl where
 	FuncDecl 	:: Ident -> ParamList -> Expr -> Decl
 	deriving(Show, Eq)
 
-type BinderList = [String]
+type BinderList = [Ident]
 
-type ParamList = [String]
+type ParamList = [Ident]
 
 data Expr where
-	TypeInt :: Int -> Expr
 	GetV :: Ident -> Expr
+	TypeInt :: Int -> Expr
 	TypeBool :: Bool -> Expr
 	TypeList :: [Expr] -> Expr
 	LetExp :: Decl -> Expr -> Expr
 	AddOp :: Expr -> Expr -> Expr
 	SubOp :: Expr -> Expr -> Expr
 	AndOp :: Expr -> Expr -> Expr
+	ExprError :: Expr
 	deriving(Show, Eq)
 
-	 
+
+{-
+evalExpr :: Expr -> Expr
+evalExpr = \x -> bigFuckOffCaseStatement x
+-}
+
+{-
+evalGetV :: Ident -> Expr
+evalGetV = \x -> lookup x
+-}
+
 evalExprListOp :: Expr -> Expr 
 evalExprListOp expr = do 
 	case expr of 
 		TypeList x -> TypeList x
+		_ -> ExprError
 
 
 evalExprIntOp :: Expr -> Expr 
@@ -527,6 +539,7 @@ evalExprIntOp expr = do
 	case expr of
 		TypeInt x -> TypeInt x
 		x -> TypeInt (eval x)
+		_ -> ExprError
 	where eval x = do 
 		case x of
 			TypeInt x -> x
@@ -539,6 +552,7 @@ evalExprBoolOp expr = do
 	case expr of
 		TypeBool x -> TypeBool x
 		x -> TypeBool (eval x)
+		_ -> ExprError
 	where eval x = do 
 		case x of 
 			TypeBool x -> x

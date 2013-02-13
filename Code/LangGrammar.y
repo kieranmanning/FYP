@@ -3,6 +3,9 @@
 
 module Main where
 import Data.Char (isSpace, isDigit, isAlpha, isAlphaNum)
+{- import qualified Data.Map as Map -}
+import Data.Map
+
 
 }
 
@@ -36,6 +39,8 @@ import Data.Char (isSpace, isDigit, isAlpha, isAlphaNum)
 		'='				{ TokenAss }
 		{-	List Operations				-}
 		':'				{ TokenConsList }
+		{- 	Misc						-}
+		"print"			{ TokenPrint }
 
 %%
 
@@ -46,6 +51,7 @@ StmtList : {- Empty -}					{ [] }
 		 | StmtList Stmt 				{ $2 : $1 }
 
 Stmt : Decl 							{ Decl $1 }
+	 | "print" Expr 					{ Print $1 }
 
 Decl : var '=' Expr						{ VarDecl $1 $3 }
 	 | var ParamList '=' Expr			{ FuncDecl $1 $2 $4 }
@@ -66,9 +72,14 @@ Expr : int 								{ TypeInt $1 }
 	 | False 							{ TypeBool False }
 	 | '[' ListContents ']'				{ TypeList $2 }
 	 | "let" Decl "in" Expr				{ LetExp $2 $4 }
+	 | var '(' InitParamList ')'		{ FuncAppl $1 $3 }
 	 | Expr '+' Expr					{ AddOp $1 $3 }
 	 | Expr '-' Expr 					{ SubOp $1 $3 }
 	 | Expr '&' Expr 					{ AndOp $1 $3 }
+
+InitParamList 	: {- Empty -}				{ [] }
+				| Expr 						{ [$1] }
+				| ParamList ',' Expr 		{ $3 : $1 }
 
 ListContents : {- Empty -}				{ [] }
 			 | Expr 					{ [$1] }
@@ -80,6 +91,7 @@ ListContents : {- Empty -}				{ [] }
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
 
+type SymbolTable = Data.Map Ident Expr
 
 type Ident = String
 
@@ -90,6 +102,7 @@ type StmtList = [Stmt]
 
 data Stmt 
 	= Decl Decl 
+	| Print Expr
 	deriving(Show, Eq)
 
 data Decl where 
@@ -98,9 +111,9 @@ data Decl where
 	FuncDecl 	:: Ident -> ParamList -> Expr -> Decl
 	deriving(Show, Eq)
 
-type BinderList = [String]
+type BinderList = [Ident]
 
-type ParamList = [String]
+type ParamList = [Ident]
 
 data Expr where
 	GetV :: Ident -> Expr
@@ -108,33 +121,74 @@ data Expr where
 	TypeBool :: Bool -> Expr
 	TypeList :: [Expr] -> Expr
 	LetExp :: Decl -> Expr -> Expr
+	FuncAppl :: Var -> [Expr] -> Expr
 	AddOp :: Expr -> Expr -> Expr
 	SubOp :: Expr -> Expr -> Expr
 	AndOp :: Expr -> Expr -> Expr
+	ExprError :: Expr
 	deriving(Show, Eq)
 
-
 {-
+evalStmt :: Stmt -> Stmt
+evalStmt stmt = case stmt of decls, whatever.
+					simplify.
+-}
+
+{-					Eval decls 					-}
+evalDecl :: Decl -> Decl 
+evalDecl decl = do 
+	case decl of
+		(VarDecl i e) 		-> evalVarDecl(VarDecl i expr)
+		(LambdaDecl i b e) 	-> evalLambdaDecl(LambdaDecl i b e)
+		(FuncDecl i p e) 	-> evalFuncDecl(FuncDecl i p e)
+
+{- evalVarDecl :: Decl -> Store() -}
+evalVarDecl :: Decl -> Decl
+evalVarDecl decl = decl
+
+{- evalLambdaDecl :: Decl -> Store() -}
+evalLambdaDecl :: Decl -> Decl
+evalLambdaDecl decl = decl
+
+{- evalFuncDecl :: Decl -> Store() -}
+evalFuncDecl :: Decl -> Decl
+evalFuncDecl decl = decl
+
+{- 					Eval Exprs					-}
 evalExpr :: Expr -> Expr
-evalExpr = \x -> bigFuckOffCaseStatement x
--}
+evalExpr expr = do
+	case expr of
+		GetV x 		-> evalExprLookUp	(GetV x)
+		TypeInt x 	-> evalExprIntOp	(TypeInt x)
+		TypeBool x 	-> evalExprBoolOp	(TypeBool x)
+		TypeList x 	-> evalExprListOp	(TypeList x)
+		LetExp x 	-> evalLetExp		(LetExp x)
+		FuncAppl x 	-> evalFuncAppl		(FuncAppl x)
+		AddOp x 	-> evalExprIntOp	(AddOp x)
+		SubOp x 	-> evalExprIntOp	(SubOp x)
+		AndOp x 	-> evalExprBoolOp	(AndOp x)
 
-{-
-evalGetV :: Ident -> Expr
-evalGetV = \x -> lookup x
--}
+
+evalExprLookUp :: Expr -> Expr 
+evalExprLookUp get = get
+
+evalExprFuncAppl :: Expr -> Expr
+evalExprFuncAppl fget = fget
+
 
 evalExprListOp :: Expr -> Expr 
 evalExprListOp expr = do 
 	case expr of 
-		TypeList x -> TypeList x
+		TypeList x 	-> TypeList x
+		_ 			-> ExprError
 
 
 evalExprIntOp :: Expr -> Expr 
 evalExprIntOp expr = do 
 	case expr of
-		TypeInt x -> TypeInt x
-		x -> TypeInt (eval x)
+		TypeInt x 	-> TypeInt x
+		x 			-> TypeInt (eval x)
+		_ 			-> ExprError
 	where eval x = do 
 		case x of
 			TypeInt x -> x
@@ -145,12 +199,14 @@ evalExprIntOp expr = do
 evalExprBoolOp :: Expr -> Expr 
 evalExprBoolOp expr = do 
 	case expr of
-		TypeBool x -> TypeBool x
-		x -> TypeBool (eval x)
+		TypeBool x 	-> TypeBool x
+		x 			-> TypeBool (eval x)
+		_ 			-> ExprError
 	where eval x = do 
 		case x of 
-			TypeBool x -> x
-			AndOp x y -> (eval x) && (eval y)
+			TypeBool x 	-> x
+			AndOp x y 	-> (eval x) && (eval y)
+
 
 
 data Token
