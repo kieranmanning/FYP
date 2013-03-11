@@ -1,0 +1,19 @@
+This is METAFONT, Version 2.718281 (TeX Live 2012/Arch Linux) (base=mf 2013.1.17)  3 MAR 2013 16:47
+**build.sh main/
+(build.sh
+>> #!
+>> bin
+! Not implemented: (unknown numeric)/(unknown numeric).
+<to be read again> 
+                   /
+l.1 #!/bin/
+           sh
+? 
+! Emergency stop.
+<to be read again> 
+                   /
+l.1 #!/bin/
+           sh
+End of file on the terminal!
+
+
