@@ -1,0 +1,10 @@
+%module main:Main
+
+
+identFunc :: %forall a . (base:GHCziNum.Num a) -> a -> a =
+
+    \ @ aT (Num aT) (aaeH::aT) ->
+        Num @ aT Num
+        (Num.fromInteger @ aT Num
+         (2::integer))
+        aaeH;

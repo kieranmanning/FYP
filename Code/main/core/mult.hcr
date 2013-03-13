@@ -1,0 +1,29 @@
+%module main:Main
+  main:Main.nonFunction :: %forall aaif . (base:GHCziNum.Num aaif) ->
+                                          aaif -> aaif -> aaif =
+    \ @ aaii
+      (zddNumaij::base:GHCziNum.Num aaii)
+      (xaeI::aaii)
+      (yaeJ::aaii) ->
+        base:GHCziNum.zt @ aaii zddNumaij xaeI yaeJ;
+  main:Main.lambdaFunc :: integerzmgmp:GHCziIntegerziType.Integer ->
+                          integerzmgmp:GHCziIntegerziType.Integer ->
+                          integerzmgmp:GHCziIntegerziType.Integer =
+    \ (xaf2::integerzmgmp:GHCziIntegerziType.Integer)
+      (yaf3::integerzmgmp:GHCziIntegerziType.Integer) ->
+        base:GHCziNum.zt @ integerzmgmp:GHCziIntegerziType.Integer
+        base:GHCziNum.zdfNumInteger xaf2 yaf3;
+  main:Main.main :: ghczmprim:GHCziTypes.IO
+                    ghczmprim:GHCziTuple.Z0T =
+    base:GHCziBase.zd @ integerzmgmp:GHCziIntegerziType.Integer
+    @ (ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T)
+    (base:SystemziIO.print @ integerzmgmp:GHCziIntegerziType.Integer
+     base:GHCziShow.zdfShowInteger)
+    (base:GHCziNum.zt @ integerzmgmp:GHCziIntegerziType.Integer
+     base:GHCziNum.zdfNumInteger
+     (2::integerzmgmp:GHCziIntegerziType.Integer)
+     (1::integerzmgmp:GHCziIntegerziType.Integer));
+  main:ZCMain.main :: ghczmprim:GHCziTypes.IO
+                      ghczmprim:GHCziTuple.Z0T =
+    base:GHCziTopHandler.runMainIO @ ghczmprim:GHCziTuple.Z0T
+    main:Main.main;
