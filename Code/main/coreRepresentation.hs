@@ -23,16 +23,6 @@ main:mIdent.funcId :: %forall typeVar . typeSig =
 	\ @ typeVarId'd (?) (paramGuID::typeVarId'd) -> output
 
 
-
- --}
-
- data JSTypes 
- 	= JSNum
- 	| JSString
-
-
-{-- 
-
 function idFunc that takes paramater 'param'
 of type forall param . param -> param (ie. 
 not a function (in the classic sense)). 'xm'

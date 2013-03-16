@@ -1,28 +1,27 @@
 %module main:Main
-  main:Main.nonFunction :: %forall aaif . (base:GHCziNum.Num aaif) ->
-                                          aaif -> aaif -> aaif =
-    \ @ aaii
-      (zddNumaij::base:GHCziNum.Num aaii)
-      (xaeI::aaii)
-      (yaeJ::aaii) ->
-        base:GHCziNum.zp @ aaii zddNumaij xaeI yaeJ;
-  main:Main.lambdaFunc :: integerzmgmp:GHCziIntegerziType.Integer ->
-                          integerzmgmp:GHCziIntegerziType.Integer ->
-                          integerzmgmp:GHCziIntegerziType.Integer =
-    \ (xaf2::integerzmgmp:GHCziIntegerziType.Integer)
-      (yaf3::integerzmgmp:GHCziIntegerziType.Integer) ->
-        base:GHCziNum.zp @ integerzmgmp:GHCziIntegerziType.Integer
-        base:GHCziNum.zdfNumInteger xaf2 yaf3;
-  main:Main.main :: ghczmprim:GHCziTypes.IO
+  main:Main.lambdaFunc :: type.Integer ->
+                          type.Integer ->
+                          type.Integer ->
+                          type.Integer =
+    
+    
+    \ (x::type.Integer) (y::type.Integer) (zzaeK::type.Integer) 
+        -> op.zp @ type.Integer op.zdfNumInteger (op.zp @ type.Integer op.zdfNumInteger x y) z;
+
+
+main:Main.main :: ghczmprim:GHCziTypes.IO
                     ghczmprim:GHCziTuple.Z0T =
-    base:GHCziBase.zd @ integerzmgmp:GHCziIntegerziType.Integer
+    base:GHCziBase.zd @ type.Integer
     @ (ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T)
-    (base:SystemziIO.print @ integerzmgmp:GHCziIntegerziType.Integer
+    (base:SystemziIO.print @ type.Integer
      base:GHCziShow.zdfShowInteger)
-    (base:GHCziNum.zp @ integerzmgmp:GHCziIntegerziType.Integer
-     base:GHCziNum.zdfNumInteger
-     (2::integerzmgmp:GHCziIntegerziType.Integer)
-     (1::integerzmgmp:GHCziIntegerziType.Integer));
+    (op.zp @ type.Integer
+     op.zdfNumInteger
+     (op.zp @ type.Integer
+      op.zdfNumInteger
+      (1::type.Integer)
+      (2::type.Integer))
+     (3::type.Integer));
   main:ZCMain.main :: ghczmprim:GHCziTypes.IO
                       ghczmprim:GHCziTuple.Z0T =
     base:GHCziTopHandler.runMainIO @ ghczmprim:GHCziTuple.Z0T

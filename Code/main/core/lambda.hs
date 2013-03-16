@@ -1,8 +1,7 @@
 module Main where
 
-nonFunction x y = x + y
 
-lambdaFunc = \x -> \y -> (nonFunction x y)
+lambdaFunc = \x y z -> (x + y + z)
 
 main = do
-    print $ lambdaFunc 2 1
+    print $ lambdaFunc 1 2 3
