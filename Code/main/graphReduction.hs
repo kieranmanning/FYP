@@ -67,32 +67,6 @@ data Expr a
 	| ELam [a] (Expr a)
 	deriving(Show)
 
----------------------------------------------------------------------------------
--- Prelude and such.
----------------------------------------------------------------------------------
-
-preludeDefs :: CoreProgram
-preludeDefs = 
-	[("Id", ["x"], EVar "x")]	-- Identity, here we come...
-
-
----------------------------------------------------------------------------------
--- Compilation.
----------------------------------------------------------------------------------
-
-{-
-Notes
-
-The 'Ti-' prefix denotes a relation to template instantiation,
-the poor graph-reduction cousin to the G-Machine. Time permitting
-I might attempt to make this into a proper G-Machine.
-
-The Significant type in all of is this TiState, representing
-the stack, dump, heap, global vars and stats related to compilation.
-The individual components are fairly self explanatory from looking
-at their types. 
--}
-
 {-
 data AExpr 
 	= Num Int 
@@ -107,19 +81,68 @@ aExprEval (Mult e1 e2) = (aExprEval e1) * (aExprEval e2)
 type MultState = (Int, Int, Int, Int)
 -}
 
---runProg :: [Char] -> [Char]
+---------------------------------------------------------------------------------
+-- Prelude and such.
+---------------------------------------------------------------------------------
+
+preludeDefs :: CoreProgram
+preludeDefs = 
+	[("Id", ["x"], EVar "x"),	-- Identity, here we come...
+
+idTest :: CoreProgram
+idTest = 
+	[("main", [], (EAp (EVar "Id") (ENum 21)))]
+
+---------------------------------------------------------------------------------
+-- Graph Reduction.
+---------------------------------------------------------------------------------
+
+{-
+This is our graph reduction machine. In terms of data types, it
+consists of a stack, dump, heap and a mapping of global names.
+The stack stores the addresses of our graph nodes, which are
+stored in the heap. The dump is not currently used, probably will
+be beyond the identity function. The heap consists of tagged
+nodes addressed by the stack. Globals which are represented using
+a specified 'ASSOC' name->addr mapping store the addresses of
+heap nodes representing supercombinators.
+
+Heap nodes can currently be applicators, supercombinators or
+numbers. 
+
+The 'Ti-' prefix denotes a relation to template instantiation,
+the poor graph-reduction cousin to the G-Machine. Time permitting
+I might attempt to make this into a proper G-Machine.
+
+The Significant type in all of this is TiState, representing
+the stack, dump, heap, global vars and stats related to compilation.
+The individual components are fairly self explanatory from looking
+at their types. 
+-}
+
+
+
+-- runProg :: [Char] -> [Char]
 
 --parse :: [Char] -> CoreProgram
 
---compile :: CoreProgram -> TiState
+compile :: CoreProgram -> TiState
 
---eval :: TiState -> [TiState]
+eval :: TiState -> [TiState]
 
---showResults :: [TiState] -> [Char]
+-- showResults :: [TiState] -> [Char]
 
---runProg = showResults . eval . compile . parse 
+-- parsing is now our concern right now 
+-- runProg = showResults . eval . compile . parse 
 
---Compiler
+runProg = showResults . eval . compile 
+
+
+
+---------------------------------------------------------------------------------
+-- Compiler.
+---------------------------------------------------------------------------------
+
 
 type TiState = (TiStack, TiDump, TiHeap, TiGlobals, TiStats)
 
@@ -137,7 +160,9 @@ data Node = NAp Addr Addr 					-- Application
 
 type TiGlobals = ASSOC Name Addr 
 
+--Used to measure number of steps taken by compiler
 type TiStats = Int 
+
 tiStatInitial :: TiStats
 tiStatInitial= 0
 
@@ -245,12 +270,77 @@ instantiate (EVar v) heap env =
 
 
 ---------------------------------------------------------------------------------
--- Displaying results. JS Should take over here
+-- Displaying results. 
 ---------------------------------------------------------------------------------
 
+data Iseq 
+	= INil 
+	| IStr String 
+	| IAppend Iseq Iseq
+	| IIndent Iseq
+	| INewline
+
+--Miranda inbuilt function
+spaces :: Int -> [Char]
+spaces x = spaceAcc x []
+
+spaceAcc :: Int -> [Char] -> [Char]
+spaceAcc 0 sps 		= sps 
+spaceAcc inc sps 	= spaceAcc (inc - 1) (' ':sps)
+
+iNum :: Int -> Iseq 
+iNum n = iStr (show n)
+
+iFWNum :: Int -> Int -> Iseq
+iFWNum width n = 
+	iStr (spaces (width - length digits) ++ digits)
+		where
+			digits = show n
+
+iLayn :: [Iseq] -> Iseq
+iLayn seqs = iConcat (map lay_item (zip [1..] seqs))
+	where
+		lay_item (n, sseq) =
+			iConcat [ iFWNum 4 n, iStr "( ", iIndent sseq, iNewLine]
+
+
+iNil :: Iseq 
+iNil = INil 
+
+iStr :: String -> Iseq 
+iStr str = IStr str 
+
+iAppend :: Iseq -> Iseq -> Iseq 
+iAppend seq1 seq2 = IAppend seq1 seq2
+
+iNewLine :: Iseq 
+iNewLine = IStr "\n"
+
+iIndent :: Iseq -> Iseq 
+iIndent seq = seq 
+
+iDisplay :: Iseq -> String
+iDisplay seq = flatten [seq]
+
+iConcat :: [Iseq] -> Iseq 
+iConcat [] = INil
+iConcat (x:xs) = x `iAppend` iConcat xs
+
+iInterleave :: Iseq -> [Iseq] -> Iseq
+iInterleave _ [] = INil
+iInterleave _ [x] = x
+iInterleave sep (x:xs) = x `iAppend` sep `iAppend` iInterleave sep xs
+
+flatten :: [Iseq] -> String
+flatten [] = ""
+flatten (INil 	: xs) = flatten xs
+flatten (IStr s : xs) = s ++ (flatten xs)
+flatten (IAppend s1 s2 : seqs) = flatten (s1 : s2 : seqs)
+
+showResults :: [TiState] -> [Char]
 showResults states =
 	iDisplay (iConcat [iLayn (map showState states),
-						showStates (last states)
+						showState (last states)
 						])
 
 showState :: TiState -> Iseq
@@ -258,6 +348,46 @@ showState (stack, dump, heap, globals, stats) =
 	iConcat [showStack heap stack, iNewLine]
 
 showStack :: TiHeap -> TiStack -> Iseq 
+showStack heap stack = 
+	iConcat [
+		iStr "Stack [",
+		iIndent (iInterleave iNewLine (map show_stack_item stack)),
+		iStr " ]"
+	]
+	where
+		show_stack_item addr =
+			iConcat [showFWAddr addr, iStr ": ", 
+					 showStkNode heap (hLookup heap addr)]
+
+showStkNode :: TiHeap -> Node -> Iseq
+showStkNode heap (NAp fun_addr arg_addr) =
+	iConcat [ iStr "NAp ", showFWAddr fun_addr,
+			  iStr " ", showFWAddr arg_addr, iStr " (",
+			  showNode (hLookup heap arg_addr), iStr ")"
+	]
+showStkNode heap node = showNode node
+
+showNode :: Node -> Iseq
+showNode (NAp a1 a2) = iConcat [iStr "NAp ", showAddr a1, 
+								iStr " ", showAddr a2
+								]
+showNode (NSuperComb name args body) = iStr ("NSuperComb " ++ name)
+showNode (NNum n) = (iStr "NNum ") `iAppend` (iNum n)
+
+showAddr :: Addr -> Iseq
+showAddr addr = iStr (show addr)
+
+showFWAddr :: Addr -> Iseq
+showFWAddr addr = iStr (spaces (4 - length str) ++ str)
+	where
+		str = show addr
+
+showStats :: TiState -> Iseq 
+showStats (stack, dump, heap, globals, stats) =
+	iConcat [ iNewLine, iNewLine, iStr "Total num steps = ",
+			  iNum (tiStatGetSteps stats)
+	]
+
 
 ---------------------------------------------------------------------------------
 -- Utils.
