@@ -26,39 +26,8 @@ import Data.List
 
 {-
 
--*NB*-
+still using Core-Like ADT
 
-For talks on wednesday:
-	- Decide on scope
-	- Ask about compiling to a lower object code;
-	  Might be an easier platform for getting to JS.
-	- G-machine to be implemented via slave labour.
-	- Disregard the display crap. It could probably
-	  be rewritten with with as little as a handful
-	  of show statements.
-	- Happy parser for core.
-	- Front Facing dsl.
-	- Not currently performing graph updates, just
-	  dumping additionally onto the stack
-
-Some of this is annotated on paper. Should be saved for purposes
-of adding to report.
-
-I'm using the 'Core-like' language from the SJP implementorial
-book. Further reading should start there for anyone interested.
-
-Why this isn't 'Core' core:
-
-The current version of core is doing my head in. It also contains
-unnecessary information. I may well update this to represent actual
-core but i'll probably end up parsing GHC current core into this
-version as all I need is already expressed here.
-
-The only significant difference really is in the type-signatures,
-type annotations and the non-unary infix applicator (?!!).
-
-G-Machine will be required for case alternatives and probably
-for any kind of ADT representations.
 -}
 
 type Name = String
@@ -108,6 +77,37 @@ data Expr a
 		[Alter a]
 	| ELam [a] (Expr a)
 	deriving(Show)
+
+data AExpr 
+	= Num Int 
+	| Plus AExpr AExpr 
+	| Mult AExpr AExpr
+
+aInterpret :: AExpr 	-> Int 
+aInterpret (Num n)		= n
+aInterpret (Plus a b) 	= (aInterpret a) + (aInterpret b)
+aInterpret (Mult a b) 	= (aInterpret a) * (aInterpret b)
+
+-- but! we'll want these in postfix. so....
+
+-- Where Ix denotes instruction x
+data AInstruction 
+	= INum Int 
+	| IPlus 
+	| IMult	
+
+-- We're aiming for [INum 2, INum 3, IPlus] here			
+
+aEval :: ([AInstruction], [Int]) -> Int 
+aEval ([],			[n]) 	= n 
+aEval (INum n:is, s)		= aEval (is, n:s)
+aEval (IPlus: is, n0:n1:s)	= aEval (is, n1+n0:s)
+aEval (IMult: is, n0:n1:s)	= aEval (is, n1*n0:s)
+
+aCompile :: AExpr -> [AInstruction]
+aCompile (Num n) = [INum n]
+aCompile (Plus e1 e2) = aCompile e1 ++ aCompile e2 ++ [IPlus]
+aCompile (Mult e1 e2) = aCompile e1 ++ aCompile e2 ++ [IMult]
 
 ---------------------------------------------------------------------------------
 -- Prelude and tests and such.
@@ -178,7 +178,6 @@ eval :: TiState -> [TiState]
 runProg = showResults . eval . compile 
 
 
-
 ---------------------------------------------------------------------------------
 -- Compiler.
 ---------------------------------------------------------------------------------
@@ -209,6 +208,13 @@ type TiGlobals = ASSOC Name Addr
 
 --Used to measure number of steps taken by compiler
 type TiStats = Int 
+
+type GmState 
+	= (	GmCode,
+		GmStack,
+		GmHeap,
+		GmGlobals,
+		GmStats)
 
 tiStatInitial :: TiStats
 tiStatInitial= 0
