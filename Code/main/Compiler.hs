@@ -327,6 +327,16 @@ instantiate (EVar v) heap env =
 -- Javascript. 
 ---------------------------------------------------------------------------------
 
+{-	The general approach is to let the compiler reduce
+ -	our functions as much as possible, then grab them
+ -	from the heap via their tags and convert them to
+ -	the most minimal JS possible. We're only on identity
+ -	functions at the moment, so it'll take some more 
+ -	work to deal with the Applications more complicated
+ -	supercombinators (not to mention the whole "Rest 
+ -	of the language") but we'll get to that
+ -}
+
 --runCore2JS :: CoreProgram -> String
 runCore2JS prog = let x = eval(compile(prog)) in
 	intercalate "\n" (map node2JS (interpret2JS(x)))
