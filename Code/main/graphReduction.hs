@@ -1,10 +1,49 @@
 module GraphRed where
+import Data.List
+
+---------------------------------------------------------------------------------
+-- Contents.
+---------------------------------------------------------------------------------
+
+{-	Sorry this needs a 'contents'. will split tomorrow.
+ -
+ -	1. Core(-Like) ADT Defintion
+ -  2. Prelude funcs and tests (*proof of concept)
+ -  3. Graph Reduction
+ -		3.1 Compiler
+ -		3.2 Evaluation
+ -		3.3 Javascript
+ -	4. Displaying/Pretty printing. Superflous now.
+ -	5. Utils
+ -  
+ -}
+
+
 
 ---------------------------------------------------------------------------------
 -- Definition of our (current core-like) language.
 ---------------------------------------------------------------------------------
 
 {-
+
+-*NB*-
+
+For talks on wednesday:
+	- Decide on scope
+	- Ask about compiling to a lower object code;
+	  Might be an easier platform for getting to JS.
+	- G-machine to be implemented via slave labour.
+	- Disregard the display crap. It could probably
+	  be rewritten with with as little as a handful
+	  of show statements.
+	- Happy parser for core.
+	- Front Facing dsl.
+	- Not currently performing graph updates, just
+	  dumping additionally onto the stack
+
+Some of this is annotated on paper. Should be saved for purposes
+of adding to report.
+
 I'm using the 'Core-like' language from the SJP implementorial
 book. Further reading should start there for anyone interested.
 
@@ -17,6 +56,9 @@ version as all I need is already expressed here.
 
 The only significant difference really is in the type-signatures,
 type annotations and the non-unary infix applicator (?!!).
+
+G-Machine will be required for case alternatives and probably
+for any kind of ADT representations.
 -}
 
 type Name = String
@@ -67,31 +109,29 @@ data Expr a
 	| ELam [a] (Expr a)
 	deriving(Show)
 
-{-
-data AExpr 
-	= Num Int 
-	| Plus AExpr AExpr 
-	| Mult AExpr AExpr
-
-aExprEval :: AExpr -> Int 
-aExprEval (Num n) = n
-aExprEval (Plus e1 e2) = (aExprEval e1) + (aExprEval e2)
-aExprEval (Mult e1 e2) = (aExprEval e1) * (aExprEval e2)
-
-type MultState = (Int, Int, Int, Int)
--}
-
 ---------------------------------------------------------------------------------
--- Prelude and such.
+-- Prelude and tests and such.
 ---------------------------------------------------------------------------------
+
+test = eval ( compile ( idTest ) )
 
 preludeDefs :: CoreProgram
 preludeDefs = 
 	[("Id", ["x"], EVar "x"),	-- Identity, here we come...
+	 ("Id2", ["y"], EVar "y")]
 
 idTest :: CoreProgram
 idTest = 
-	[("main", [], (EAp (EVar "Id") (ENum 21)))]
+	[("main", [], (
+		(EAp (EVar "Id") 
+				(EAp (EVar "Id2") (ENum 21)))
+		))
+	]
+
+
+--underSaturatedTest :: CoreProgram
+--underSaturatedTest =
+--	[("main", [], (EAp (EVar "Id") ()))]
 
 ---------------------------------------------------------------------------------
 -- Graph Reduction.
@@ -148,15 +188,22 @@ type TiState = (TiStack, TiDump, TiHeap, TiGlobals, TiStats)
 
 type TiStack = [Addr]
 
+type Addr = Int
+
 data TiDump = DummyTiDump
+	deriving(Show)
 
 initialTiDump = DummyTiDump
 
 type TiHeap = Heap Node 
 
+-- Heap object count, unused addrs, addr->obj mapping
+type Heap a = (Int, [Int], [(Int, a)])
+
 data Node = NAp Addr Addr 					-- Application
 	      | NSuperComb Name [Name] CoreExpr -- sc
 	      | NNum Int 						-- Ints		 
+	deriving(Show)
 
 type TiGlobals = ASSOC Name Addr 
 
@@ -176,9 +223,6 @@ applyToStats :: (TiStats -> TiStats) -> TiState -> TiState
 applyToStats stats_fun (stack, dump, heap, sc_defs, stats) = 
 	(stack, dump, heap, sc_defs, stats_fun stats)
 
--- Heap object count, unused addrs, addr->obj mapping
-type Heap a = (Int, [Int], [(Int, a)])
-type Addr = Int
 
 compile program = 
 	(initial_stack, initialTiDump, initial_heap, globals, tiStatInitial)
@@ -225,6 +269,7 @@ isDataNode :: Node -> Bool
 isDataNode (NNum n) = True
 isDataNode node = False
 
+-- **** Expand here later, unless switching to G-machine
 step :: TiState -> TiState
 step state =
 	dispatch (hLookup heap (head stack))
@@ -234,13 +279,18 @@ step state =
 		dispatch(NAp a1 a2) = apStep state a1 a2 
 		dispatch(NSuperComb sc args body) = scStep state sc args body
 
+-- Can't step through a literal int. what would do?!
 numStep :: TiState -> Int -> TiState 
 numStep state n = error "num on top of stack"
 
+-- applicator evaluation step. add to stack
 apStep :: TiState -> Addr -> Addr -> TiState
 apStep (stack, dump, heap, globals, stats) a1 a2 =
 	(a1 : stack, dump, heap, globals, stats)
 
+-- Instantiate body of SuperCom and bind argument names
+-- to the argument address in the stack, which we can
+-- then discard (it seems).
 scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState 
 scStep (stack, dump, heap, globals, stats) sc_name arg_names body =
 	(stack', dump, heap', globals, stats)
@@ -250,12 +300,17 @@ scStep (stack, dump, heap, globals, stats) sc_name arg_names body =
 		env = arg_bindings ++ globals 
 		arg_bindings = zip arg_names (getargs heap stack)
 
+
+-- presumed to have a SuperCom on top of stack. returns list
+-- of arguments from application nodes.
 getargs :: TiHeap -> TiStack -> [Addr] 
 getargs heap (sc:stack) = 
 	map get_arg stack 
 	where get_arg addr = arg where (NAp fun arg) = hLookup heap addr
 
-instantiate :: CoreExpr 				-- SC in particular
+-- Takes a supercombinator body, heap and env and 
+-- 
+instantiate :: CoreExpr 				-- sc body
 			-> TiHeap 					-- pre heap
 			-> ASSOC Name Addr 			-- name->addr mapping
 			-> (TiHeap, Addr)			-- post heap + instance root addr
@@ -268,6 +323,80 @@ instantiate (EAp e1 e2) heap env =
 instantiate (EVar v) heap env =
 	(heap, aLookup env v (error ("undefined name " ++ show v)))
 
+---------------------------------------------------------------------------------
+-- Javascript. 
+---------------------------------------------------------------------------------
+
+runCore2JS :: CoreProgram -> String
+runCore2JS prog = let x = eval(compile(prog)) in
+	map node2JS (interpret2JS(x))
+
+interpret2JS :: [TiState] -> [Node]
+interpret2JS graphStates = deconState (last graphStates)
+
+node2JS :: Node -> String
+node2JS (NNum x)	 		= ""
+node2JS (NSuperComb s b e) 	= superComb2JS (NSuperComb s b e)
+node2JS (NAp a1 a2)			= ""
+
+superComb2JS :: Node -> String
+superComb2JS (NSuperComb sId b e) =
+	"function " 			++ 
+	sId 					++ 
+	scBinders2JSParams b 	++
+	"{ " ++ expr2JS e  ++ " }"
+
+expr2JS :: Expr a -> String
+expr2JS expr = do 
+	case expr of 
+		EVar name 	-> "return " ++ name ++ ";"
+		ENum int 	-> "return " ++ (show int) ++ ";"
+		EAp e1 e2 	-> "not tonight..."
+
+scBinders2JSParams :: [Name] -> String
+scBinders2JSParams b = "( " ++ (intercalate ", " b) ++ " )"
+
+deconState :: TiState -> [Node] 
+deconState (stack, dump, heap, globals, stats) =
+	getNodesFromHeap heap
+
+getNodesFromHeap :: TiHeap -> [Node]
+getNodesFromHeap heap = 
+	map (hLookup heap) (hAddresses heap)
+
+
+
+{-
+
+*Ignore this. Copy Pasted so i wouldn't wear out my mousewheel*
+
+	= EVar Name
+	| ENum Int
+	| EConstr Int Int
+	| EAp (Expr a) (Expr a)
+
+
+node2JS :: Node -> String
+node2JS node 	| NNum x = show x
+				| NSuperComb s b e = (show s) ++ (show b) ++ (show e)
+				| NApp a1 a2 = 
+
+hAddresses :: Heap a -> [Addr] - returns all addresses
+
+hLookup :: Heap -> Addr -> Node
+
+
+type TiHeap = Heap Node 
+type TiState = (TiStack, TiDump, TiHeap, TiGlobals, TiStats)
+-- Heap object count, unused addrs, addr->obj mapping
+type Heap a = (Int, [Int], [(Int, a)])
+
+data Node = NAp Addr Addr 					-- Application
+	      | NSuperComb Name [Name] CoreExpr -- sc
+	      | NNum Int 						-- Ints		 
+	deriving(Show)
+-}
+
 
 ---------------------------------------------------------------------------------
 -- Displaying results. 
@@ -279,14 +408,17 @@ data Iseq
 	| IAppend Iseq Iseq
 	| IIndent Iseq
 	| INewline
+	deriving(Show)
 
---Miranda inbuilt function
+
+--Miranda inbuilt function {
 spaces :: Int -> [Char]
 spaces x = spaceAcc x []
 
 spaceAcc :: Int -> [Char] -> [Char]
 spaceAcc 0 sps 		= sps 
 spaceAcc inc sps 	= spaceAcc (inc - 1) (' ':sps)
+--}
 
 iNum :: Int -> Iseq 
 iNum n = iStr (show n)
@@ -407,7 +539,7 @@ mapAccuml f acc (x:xs) 	= (acc2, x':xs')
 		(acc2, xs') 	= mapAccuml f acc1 xs
 
 hInitial :: Heap a
-hInitial = (0, [1..], [])
+hInitial = (0, [1..100], [])
 
 hAlloc :: Heap a -> a -> (Heap a, Addr)
 hAlloc (size, (next:free), cts) n = ((size+1, free, (next, n) : cts), next)
