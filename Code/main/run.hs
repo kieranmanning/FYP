@@ -1,5 +1,5 @@
 module Main where
-import Compiler
+import TemplateCompiler
 
 main = do
     putStrLn "---Test program---"
