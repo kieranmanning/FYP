@@ -1,0 +1,20 @@
+%module main:Main
+  main:Main.f :: %forall aaid . (base:GHCziNum.Num aaid) ->
+                                aaid -> aaid =
+    \ @ aaig (zddNumaih::base:GHCziNum.Num aaig) (xaeH::aaig) ->
+        base:GHCziNum.zt @ aaig zddNumaih xaeH
+        (base:GHCziNum.fromInteger @ aaig zddNumaih
+         (2::integerzmgmp:GHCziIntegerziType.Integer));
+  main:Main.main :: ghczmprim:GHCziTypes.IO
+                    ghczmprim:GHCziTuple.Z0T =
+    base:GHCziBase.zd @ integerzmgmp:GHCziIntegerziType.Integer
+    @ (ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T)
+    (base:SystemziIO.print @ integerzmgmp:GHCziIntegerziType.Integer
+     base:GHCziShow.zdfShowInteger)
+    (main:Main.f @ integerzmgmp:GHCziIntegerziType.Integer
+     base:GHCziNum.zdfNumInteger
+     (1::integerzmgmp:GHCziIntegerziType.Integer));
+  main:ZCMain.main :: ghczmprim:GHCziTypes.IO
+                      ghczmprim:GHCziTuple.Z0T =
+    base:GHCziTopHandler.runMainIO @ ghczmprim:GHCziTuple.Z0T
+    main:Main.main;

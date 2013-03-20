@@ -1,0 +1,282 @@
+%module main:Main
+  %data main:Main.Stmt =
+    {main:Main.Print main:Main.Expr};
+  %data main:Main.Expr =
+    {main:Main.TypeInt ghczmprim:GHCziTypes.Int;
+     main:Main.TypeBool ghczmprim:GHCziTypes.Bool;
+     main:Main.AddOp main:Main.Expr main:Main.Expr;
+     main:Main.SubOp main:Main.Expr main:Main.Expr;
+     main:Main.AndOp main:Main.Expr main:Main.Expr};
+  %rec
+  {main:Main.zdfEqExpr :: ghczmprim:GHCziClasses.Eq main:Main.Expr =
+     ghczmprim:GHCziClasses.DZCEq @ main:Main.Expr zdczezervb
+     zdczszerva;
+   zdczszerva :: main:Main.Expr ->
+                 main:Main.Expr -> ghczmprim:GHCziTypes.Bool =
+     \ (aas2::main:Main.Expr) (bas3::main:Main.Expr) ->
+         ghczmprim:GHCziClasses.not
+         (ghczmprim:GHCziClasses.zeze @ main:Main.Expr main:Main.zdfEqExpr
+          aas2 bas3);
+   zdczezervb :: main:Main.Expr ->
+                 main:Main.Expr -> ghczmprim:GHCziTypes.Bool =
+     \ (dsdut::main:Main.Expr) (ds1duu::main:Main.Expr) ->
+         %case ghczmprim:GHCziTypes.Bool dsdut %of (wildXo::main:Main.Expr)
+           {main:Main.TypeInt (a1arM::ghczmprim:GHCziTypes.Int) ->
+              %case ghczmprim:GHCziTypes.Bool ds1duu
+              %of (wild1Xg::main:Main.Expr)
+                {%_ ->
+                   ghczmprim:GHCziTypes.False;
+                 main:Main.TypeInt (b1arN::ghczmprim:GHCziTypes.Int) ->
+                   ghczmprim:GHCziClasses.zeze @ ghczmprim:GHCziTypes.Int
+                   ghczmprim:GHCziClasses.zdfEqInt a1arM b1arN};
+            main:Main.TypeBool (a1arO::ghczmprim:GHCziTypes.Bool) ->
+              %case ghczmprim:GHCziTypes.Bool ds1duu
+              %of (wild1Xg::main:Main.Expr)
+                {%_ ->
+                   ghczmprim:GHCziTypes.False;
+                 main:Main.TypeBool (b1arP::ghczmprim:GHCziTypes.Bool) ->
+                   ghczmprim:GHCziClasses.zeze @ ghczmprim:GHCziTypes.Bool
+                   ghczmprim:GHCziClasses.zdfEqBool a1arO b1arP};
+            main:Main.AddOp (a1arQ::main:Main.Expr) (a2arR::main:Main.Expr) ->
+              %case ghczmprim:GHCziTypes.Bool ds1duu
+              %of (wild1Xh::main:Main.Expr)
+                {%_ ->
+                   ghczmprim:GHCziTypes.False;
+                 main:Main.AddOp (b1arS::main:Main.Expr) (b2arT::main:Main.Expr) ->
+                   ghczmprim:GHCziClasses.zaza
+                   (ghczmprim:GHCziClasses.zeze @ main:Main.Expr main:Main.zdfEqExpr
+                    a1arQ b1arS)
+                   (ghczmprim:GHCziClasses.zeze @ main:Main.Expr main:Main.zdfEqExpr
+                    a2arR b2arT)};
+            main:Main.SubOp (a1arU::main:Main.Expr) (a2arV::main:Main.Expr) ->
+              %case ghczmprim:GHCziTypes.Bool ds1duu
+              %of (wild1Xh::main:Main.Expr)
+                {%_ ->
+                   ghczmprim:GHCziTypes.False;
+                 main:Main.SubOp (b1arW::main:Main.Expr) (b2arX::main:Main.Expr) ->
+                   ghczmprim:GHCziClasses.zaza
+                   (ghczmprim:GHCziClasses.zeze @ main:Main.Expr main:Main.zdfEqExpr
+                    a1arU b1arW)
+                   (ghczmprim:GHCziClasses.zeze @ main:Main.Expr main:Main.zdfEqExpr
+                    a2arV b2arX)};
+            main:Main.AndOp (a1arY::main:Main.Expr) (a2arZZ::main:Main.Expr) ->
+              %case ghczmprim:GHCziTypes.Bool ds1duu
+              %of (wild1Xh::main:Main.Expr)
+                {%_ ->
+                   ghczmprim:GHCziTypes.False;
+                 main:Main.AndOp (b1as0::main:Main.Expr) (b2as1::main:Main.Expr) ->
+                   ghczmprim:GHCziClasses.zaza
+                   (ghczmprim:GHCziClasses.zeze @ main:Main.Expr main:Main.zdfEqExpr
+                    a1arY b1as0)
+                   (ghczmprim:GHCziClasses.zeze @ main:Main.Expr main:Main.zdfEqExpr
+                    a2arZZ b2as1)}}};
+  zdczeze1rvc :: main:Main.Stmt ->
+                 main:Main.Stmt -> ghczmprim:GHCziTypes.Bool =
+    \ (dsduJ::main:Main.Stmt) (ds1duK::main:Main.Stmt) ->
+        %case ghczmprim:GHCziTypes.Bool dsduJ %of (wildXn::main:Main.Stmt)
+          {main:Main.Print (a1as6::main:Main.Expr) ->
+             %case ghczmprim:GHCziTypes.Bool ds1duK
+             %of (wild1Xf::main:Main.Stmt)
+               {main:Main.Print (b1as7::main:Main.Expr) ->
+                  ghczmprim:GHCziClasses.zeze @ main:Main.Expr main:Main.zdfEqExpr
+                  a1as6 b1as7}};
+  %rec
+  {main:Main.zdfEqStmt :: ghczmprim:GHCziClasses.Eq main:Main.Stmt =
+     ghczmprim:GHCziClasses.DZCEq @ main:Main.Stmt zdczeze1rvc
+     zdczsze1rvd;
+   zdczsze1rvd :: main:Main.Stmt ->
+                  main:Main.Stmt -> ghczmprim:GHCziTypes.Bool =
+     \ (aas8::main:Main.Stmt) (bas9::main:Main.Stmt) ->
+         ghczmprim:GHCziClasses.not
+         (ghczmprim:GHCziClasses.zeze @ main:Main.Stmt main:Main.zdfEqStmt
+          aas8 bas9)};
+  %rec
+  {main:Main.zdfShowExpr :: base:GHCziShow.Show main:Main.Expr =
+     base:GHCziShow.DZCShow @ main:Main.Expr zdcshowsPrecrvg zdcshowrvf
+     zdcshowListrve;
+   zdcshowListrve :: (ghczmprim:GHCziTypes.ZMZN main:Main.Expr) ->
+                     (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+                     ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char =
+     base:GHCziShow.showListzuzu @ main:Main.Expr
+     (base:GHCziShow.showsPrec @ main:Main.Expr main:Main.zdfShowExpr
+      (ghczmprim:GHCziTypes.Izh (0::ghczmprim:GHCziPrim.Intzh)));
+   zdcshowrvf :: main:Main.Expr ->
+                 ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char =
+     base:GHCziShow.zddmshow @ main:Main.Expr main:Main.zdfShowExpr;
+   zdcshowsPrecrvg :: ghczmprim:GHCziTypes.Int ->
+                      main:Main.Expr ->
+                      (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+                      ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char =
+     \ (aarzz::ghczmprim:GHCziTypes.Int) (dsdun::main:Main.Expr) ->
+         %case ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+                ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) dsdun
+         %of (wildXt::main:Main.Expr)
+           {main:Main.TypeInt (b1arA::ghczmprim:GHCziTypes.Int) ->
+              base:GHCziShow.showParen
+              (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
+               ghczmprim:GHCziClasses.zdfOrdInt aarzz
+               (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh)))
+              (base:GHCziBase.zi
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               (base:GHCziShow.showString
+                (ghczmprim:GHCziCString.unpackCStringzh
+                 ("TypeInt "::ghczmprim:GHCziPrim.Addrzh)))
+               (base:GHCziShow.showsPrec @ ghczmprim:GHCziTypes.Int
+                base:GHCziShow.zdfShowInt
+                (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh)) b1arA));
+            main:Main.TypeBool (b1arC::ghczmprim:GHCziTypes.Bool) ->
+              base:GHCziShow.showParen
+              (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
+               ghczmprim:GHCziClasses.zdfOrdInt aarzz
+               (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh)))
+              (base:GHCziBase.zi
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               (base:GHCziShow.showString
+                (ghczmprim:GHCziCString.unpackCStringzh
+                 ("TypeBool "::ghczmprim:GHCziPrim.Addrzh)))
+               (base:GHCziShow.showsPrec @ ghczmprim:GHCziTypes.Bool
+                base:GHCziShow.zdfShowBool
+                (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh)) b1arC));
+            main:Main.AddOp (b1arE::main:Main.Expr) (b2arF::main:Main.Expr) ->
+              base:GHCziShow.showParen
+              (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
+               ghczmprim:GHCziClasses.zdfOrdInt aarzz
+               (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh)))
+              (base:GHCziBase.zi
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               (base:GHCziShow.showString
+                (ghczmprim:GHCziCString.unpackCStringzh
+                 ("AddOp "::ghczmprim:GHCziPrim.Addrzh)))
+               (base:GHCziBase.zi
+                @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                (base:GHCziShow.showsPrec @ main:Main.Expr main:Main.zdfShowExpr
+                 (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh)) b1arE)
+                (base:GHCziBase.zi
+                 @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                 @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                 @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                 base:GHCziShow.showSpace
+                 (base:GHCziShow.showsPrec @ main:Main.Expr main:Main.zdfShowExpr
+                  (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh))
+                  b2arF))));
+            main:Main.SubOp (b1arH::main:Main.Expr) (b2arI::main:Main.Expr) ->
+              base:GHCziShow.showParen
+              (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
+               ghczmprim:GHCziClasses.zdfOrdInt aarzz
+               (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh)))
+              (base:GHCziBase.zi
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               (base:GHCziShow.showString
+                (ghczmprim:GHCziCString.unpackCStringzh
+                 ("SubOp "::ghczmprim:GHCziPrim.Addrzh)))
+               (base:GHCziBase.zi
+                @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                (base:GHCziShow.showsPrec @ main:Main.Expr main:Main.zdfShowExpr
+                 (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh)) b1arH)
+                (base:GHCziBase.zi
+                 @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                 @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                 @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                 base:GHCziShow.showSpace
+                 (base:GHCziShow.showsPrec @ main:Main.Expr main:Main.zdfShowExpr
+                  (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh))
+                  b2arI))));
+            main:Main.AndOp (b1arK::main:Main.Expr) (b2arL::main:Main.Expr) ->
+              base:GHCziShow.showParen
+              (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
+               ghczmprim:GHCziClasses.zdfOrdInt aarzz
+               (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh)))
+              (base:GHCziBase.zi
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+               (base:GHCziShow.showString
+                (ghczmprim:GHCziCString.unpackCStringzh
+                 ("AndOp "::ghczmprim:GHCziPrim.Addrzh)))
+               (base:GHCziBase.zi
+                @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                (base:GHCziShow.showsPrec @ main:Main.Expr main:Main.zdfShowExpr
+                 (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh)) b1arK)
+                (base:GHCziBase.zi
+                 @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                 @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                 @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+                 base:GHCziShow.showSpace
+                 (base:GHCziShow.showsPrec @ main:Main.Expr main:Main.zdfShowExpr
+                  (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh))
+                  b2arL))))}};
+  zdcshowsPrec1rvh :: ghczmprim:GHCziTypes.Int ->
+                      main:Main.Stmt ->
+                      (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+                      ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char =
+    \ (aas4::ghczmprim:GHCziTypes.Int) (dsduH::main:Main.Stmt) ->
+        %case ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+               ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) dsduH
+        %of (wildXu::main:Main.Stmt)
+          {main:Main.Print (b1as5::main:Main.Expr) ->
+             base:GHCziShow.showParen
+             (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
+              ghczmprim:GHCziClasses.zdfOrdInt aas4
+              (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh)))
+             (base:GHCziBase.zi
+              @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+              @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+              @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+              (base:GHCziShow.showString
+               (ghczmprim:GHCziCString.unpackCStringzh
+                ("Print "::ghczmprim:GHCziPrim.Addrzh)))
+              (base:GHCziShow.showsPrec @ main:Main.Expr main:Main.zdfShowExpr
+               (ghczmprim:GHCziTypes.Izh (11::ghczmprim:GHCziPrim.Intzh))
+               b1as5))};
+  %rec
+  {main:Main.zdfShowStmt :: base:GHCziShow.Show main:Main.Stmt =
+     base:GHCziShow.DZCShow @ main:Main.Stmt zdcshowsPrec1rvh
+     zdcshow1rvj zdcshowList1rvi;
+   zdcshowList1rvi :: (ghczmprim:GHCziTypes.ZMZN main:Main.Stmt) ->
+                      (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+                      ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char =
+     base:GHCziShow.showListzuzu @ main:Main.Stmt
+     (base:GHCziShow.showsPrec @ main:Main.Stmt main:Main.zdfShowStmt
+      (ghczmprim:GHCziTypes.Izh (0::ghczmprim:GHCziPrim.Intzh)));
+   zdcshow1rvj :: main:Main.Stmt ->
+                  ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char =
+     base:GHCziShow.zddmshow @ main:Main.Stmt main:Main.zdfShowStmt};
+  main:Main.test :: ghczmprim:GHCziTypes.IO
+                    ghczmprim:GHCziTuple.Z0T =
+    base:GHCziBase.zd
+    @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+    @ (ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T)
+    (base:SystemziIO.print
+     @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+     (base:GHCziShow.zdfShowZMZN @ ghczmprim:GHCziTypes.Char
+      base:GHCziShow.zdfShowChar))
+    (base:GHCziBase.zd @ main:Main.Stmt
+     @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+     (base:GHCziShow.show @ main:Main.Stmt main:Main.zdfShowStmt)
+     (main:Main.Print
+      (main:Main.AddOp
+       (main:Main.TypeInt
+        (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh)))
+       (main:Main.TypeInt
+        (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh))))));
+  main:Main.main :: ghczmprim:GHCziTypes.IO
+                    ghczmprim:GHCziTuple.Z0T =
+    main:Main.test;
+  main:ZCMain.main :: ghczmprim:GHCziTypes.IO
+                      ghczmprim:GHCziTuple.Z0T =
+    base:GHCziTopHandler.runMainIO @ ghczmprim:GHCziTuple.Z0T
+    main:Main.test;
