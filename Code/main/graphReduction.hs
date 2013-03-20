@@ -327,34 +327,12 @@ instantiate (EVar v) heap env =
 -- Javascript. 
 ---------------------------------------------------------------------------------
 
-runCore2JS :: CoreProgram -> String
+--runCore2JS :: CoreProgram -> String
 runCore2JS prog = let x = eval(compile(prog)) in
-	map node2JS (interpret2JS(x))
+	putStr (intercalate "\n" (map node2JS (interpret2JS(x))))
 
 interpret2JS :: [TiState] -> [Node]
 interpret2JS graphStates = deconState (last graphStates)
-
-node2JS :: Node -> String
-node2JS (NNum x)	 		= ""
-node2JS (NSuperComb s b e) 	= superComb2JS (NSuperComb s b e)
-node2JS (NAp a1 a2)			= ""
-
-superComb2JS :: Node -> String
-superComb2JS (NSuperComb sId b e) =
-	"function " 			++ 
-	sId 					++ 
-	scBinders2JSParams b 	++
-	"{ " ++ expr2JS e  ++ " }"
-
-expr2JS :: Expr a -> String
-expr2JS expr = do 
-	case expr of 
-		EVar name 	-> "return " ++ name ++ ";"
-		ENum int 	-> "return " ++ (show int) ++ ";"
-		EAp e1 e2 	-> "not tonight..."
-
-scBinders2JSParams :: [Name] -> String
-scBinders2JSParams b = "( " ++ (intercalate ", " b) ++ " )"
 
 deconState :: TiState -> [Node] 
 deconState (stack, dump, heap, globals, stats) =
@@ -363,6 +341,28 @@ deconState (stack, dump, heap, globals, stats) =
 getNodesFromHeap :: TiHeap -> [Node]
 getNodesFromHeap heap = 
 	map (hLookup heap) (hAddresses heap)
+
+node2JS :: Node -> String
+node2JS (NNum x)	 		= " "
+node2JS (NSuperComb s b e) 	= superComb2JS (NSuperComb s b e)
+node2JS (NAp a1 a2)			= " "
+
+superComb2JS :: Node -> String
+superComb2JS (NSuperComb sId b e) =
+	"function " 			++ 
+	sId 					++ 
+	scBinders2JSParams b 	++
+	"{ \n" ++ expr2JS e  ++ " } \n"
+
+scBinders2JSParams :: [Name] -> String
+scBinders2JSParams b = "( " ++ (intercalate ", " b) ++ " )"
+
+expr2JS :: Expr a -> String
+expr2JS expr = do 
+	case expr of 
+		EVar name 	-> "\t return " ++ name ++ "; \n "
+		ENum int 	-> "\t return " ++ (show int) ++ "; \n"
+		EAp e1 e2 	-> "\t not tonight... \n"
 
 
 
