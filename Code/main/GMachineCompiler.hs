@@ -40,11 +40,6 @@ For talks on wednesday:
 	- Front Facing dsl.
 	- Not currently performing graph updates, just
 	  dumping additionally onto the stack
-	- Only significant difference to GHC current core
-	  is that a core program here is represented as a
-	  list of ScDefns whereas GHCCCore has an additional
-	  bind data type external to the Expr and is represented
-	  as a series of top-level bindings.
 
 Some of this is annotated on paper. Should be saved for purposes
 of adding to report.
