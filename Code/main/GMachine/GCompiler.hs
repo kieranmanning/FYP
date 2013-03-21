@@ -4,7 +4,7 @@ import GPrelude
 import GADT
 
 ---------------------------------------------------------------------------------
--- Compiler.
+-- Compiler State Representations and Utils.
 ---------------------------------------------------------------------------------
 
 {-	
@@ -36,6 +36,7 @@ data Instruction
 	| Mkap
 	| Slide Int
 	deriving(Show)
+
 instance Eq Instruction where
 	Unwind			== Unwind			= True
 	PushGlobal n1 	== PushGlobal n2 	= n1 == n2 
@@ -66,10 +67,12 @@ type GmHeap = Heap Node
 -- Heap object count, unused addrs, addr->obj mapping
 type Heap a = (Int, [Int], [(Int, a)])
 
+-- NNum value | NAp Addr Addr | NGlobal arity instructions
 data Node 
 	= NNum Int 
 	| NAp Addr Addr 
 	| NGlobal Int GmCode
+	deriving(Show)
 
 getHeap :: GmState -> GmHeap
 getHeap (i, stack, heap, globals, stats) = heap
@@ -106,50 +109,73 @@ putStats stats' (i, stack, heap, globals, stats) =
 	(i, stack, heap, globals, stats')
 -- } END GMSTATS
 
+---------------------------------------------------------------------------------
+-- Compiler.
+---------------------------------------------------------------------------------
+
+-- Take ScDefns and start with init'd empty GmState
 compile :: CoreProgram -> GmState
 compile program =
 	(initialCode, [], heap, globals, statInitial)
 	where
-		(heap, globals) = buildIinitialHeap program
+		(heap, globals) = buildInitialHeap program
 
-buildIinitialHeap :: CoreProgram -> (GmHeap, GmGlobals)
-buildIinitialHeap program 
+-- Same as TemplateInst. Build heap and globals with 
+-- starting ScDefns
+buildInitialHeap :: CoreProgram -> (GmHeap, GmGlobals)
+buildInitialHeap program 
 	= mapAccuml allocateSc hInitial compiled
 	where
-		compiled = (map compileSc program) ++ compiledPrimitives
+		compiled = map compileSc (program ++ preludeDefs) ++ compiledPrimitives
 
+-- Represents a compiled global with presumably global name,
+-- arity and code.
 type GmCompiledSC = (Name, Int, GmCode)
 
+-- Takes a compiled SC and creates a global with its arity
+-- and instructions which it then hallocs
 allocateSc :: GmHeap -> GmCompiledSC -> (GmHeap, (Name, Addr))
 allocateSc heap (name, nargs, instns) =
 	(heap', (name, addr))
 	where
 		(heap', addr) = hAlloc heap (NGlobal nargs instns)
 
+-- Starting code
 initialCode :: GmCode 
 initialCode = [PushGlobal "main", Unwind]
 
+-- env of [NodeName, StackLocation]
+type GmEnvironment = ASSOC Name Int
+-- The type of our compiler schemes
+type GmCompiler = CoreExpr -> GmEnvironment -> GmCode
+
+-- Takes an standard Core SC and returns (Global name, Arity, Insts)
+-- Follows semantics of compilerR from SPJ implementorial
+-- Mostly just handoff to compileR
 compileSc :: (Name, [Name], CoreExpr) -> GmCompiledSC
 compileSc (name, env, body)
 	= (name, length env, compileR body (zip env [0..]))
 
-type GmCompiler = CoreExpr -> GmEnvironment -> GmCode
 
-type GmEnvironment = ASSOC Name Int
-
+-- CoreExpr -> (Assoc Name NumElemsToSlide) -> GmCode
+-- hands off to compileC to handle pattern match and slides
+-- n' unwinds
 compileR :: GmCompiler
 compileR e env = compileC e env ++ [Slide (length env + 1), Unwind]
 
+-- CoreExpr -> (Assoc Name NumElemsToSlide) -> GmCode
+-- Generates code to construct graph of an expe in env
+-- and leave a pointer to it on top of stack
 compileC :: GmCompiler 
 compileC (EVar v) env 
 	| elem v (aDomain env)			= [Push n]
 	| otherwise						= [PushGlobal v]
-	where
-		n = aLookup env v (error "shit the bed")
+	where n = aLookup env v (error "shit the bed")
 compileC (ENum n) env 				= [PushInt n]
 compileC (EAp e1 e2) env 			= compileC e2 env ++ 
 									  compileC e1 (argOffset 1 env) ++
 									  [Mkap]
+
 
 argOffset :: Int -> GmEnvironment -> GmEnvironment
 argOffset n env = [(v, n+m) | (v,m) <- env] 
@@ -178,8 +204,12 @@ mapAccuml f acc (x:xs) 	= (acc2, x':xs')
 		(acc1, x') 	= f acc x
 		(acc2, xs') 	= mapAccuml f acc1 xs
 
+
+{-
+ -	*NOTE* heap set [1..20] for ease of analysis
+ -}
 hInitial :: Heap a
-hInitial = (0, [1..100], [])
+hInitial = (0, [1..20], [])
 
 hAlloc :: Heap a -> a -> (Heap a, Addr)
 hAlloc (size, (next:free), cts) n = ((size+1, free, (next, n) : cts), next)

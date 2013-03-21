@@ -1,7 +1,6 @@
 module GPrelude where
 import GADT
 
-
 ---------------------------------------------------------------------------------
 -- Prelude and tests and such.
 ---------------------------------------------------------------------------------
@@ -15,12 +14,10 @@ preludeDefs =
 
 idTest :: CoreProgram
 idTest = 
-	[("main", [], (
-		(EAp (EVar "Id") 
-				(EAp (EVar "Id2") (ENum 21)))
-		))
+	[("Id", ["x"], EVar "x"),
+	("main", [], (
+		(EAp (EVar "Id") (ENum 21))))
 	]
-
 
 --underSaturatedTest :: CoreProgram
 --underSaturatedTest =
