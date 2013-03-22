@@ -1,4 +1,8 @@
 
+function test(){
+	alert("here i am");
+}
+
 /*****************************************************************************
  *	Some Important Notes
 *****************************************************************************/
@@ -46,7 +50,10 @@ function tail(list){
      return h;
 }
 
-Array.prototype.drop = function(from, to) {
+
+Array.prototype.drop = function(N) {
+  var from = 0;
+  var to = N-1;
   var rest = this.slice((to || from) + 1 || this.length);
   this.length = from < 0 ? this.length + from : from;
   return this.push.apply(this, rest);
@@ -83,7 +90,7 @@ function NGlobal(numargs, instructions){
 }
 
 // data Instruction
-function UnWind(){
+function Unwind(){
 
 }
 
@@ -109,25 +116,67 @@ function Slide(Int){
 
 /* The rest of these defs are probably useless */
 
-var Stats = 0;
+//var Stats = 0;
 
 /* Stack :: [Addr] */
-var GmStack = [];
+//var GmStack = [];
 
 /* Code :: [Instruction] */
-var GmCode = [];
+//var GmCode = [];
 
 /* Heap :: (Int, [Int], [Int -> Node]) */
-var GmHeap = {
-	objCount = 0,
-	Addrs = [],
-	AddrObjMap = {}
-};
+//var GmHeap = {
+//	objCount = 0,
+//	freeAddrs = [],
+//	addrObjMap = {}
+//};
 
 /* GmGlobals = [(Name, Addr)] */
-var GmGlobals = {};
+//var GmGlobals = {};
 
-var GmState = [GmCode, GmStack, GmHeap, GmGlobals]
+//var GmState = [GmCode, GmStack, GmHeap, GmGlobals]
+
+/*****************************************************************************
+ *	Test Environment
+*****************************************************************************/
+
+/*
+ *	Until i get the serialization done, i'll be using a handrolled
+ *	test state representing post-compile pre-eval idTest (GPrelude.hs)
+ *	$ ghci run.hs; compile idTest
+ */
+
+var idCode = new NGlobal(
+	1, 
+	[new Push(0), new Slide(2), new Unwind()]
+);
+
+var mainCode = new NGlobal(
+	0, 
+	[new PushInt(1), new PushGlobal("Id"), 
+	 new Mkap(), 	 new Unwind()]
+);
+
+var GmCode = [new PushGlobal("main"), new Unwind()];
+
+var GmStack = [];
+
+var GmHeap = {
+	objCount:2, 
+	freeAddrs:[3,4,5,6,7,8,9,10,11,12,13,14,15], 
+	addrObjMap:{
+		2 : idCode,
+		1 : mainCode
+	}
+};
+
+var GmGlobals = {
+	"main": 1,
+	"Id":2
+};
+
+var GmState = [GmCode, GmStack, GmHeap, GmGlobals]; 
+
 
 /*****************************************************************************
  *	Some Compiler Utility Functions
@@ -140,19 +189,36 @@ var GmState = [GmCode, GmStack, GmHeap, GmGlobals]
  */
 
 /* hAlloc :: GmHeap -> Node -> GmHeap */
+
+
 function hAlloc(GmHeap, Node){
-	size 	 		= GmHeap[0];
-	addrs 	 		= GmHeap[1];
-	addrObjs 		= GmHeap[2];
-	next 	 		= head(addrs);
-	newAddrs 		= tail(addrs);
-	addrObjs[next] 	= Node;
-	newHeap 		= [(size-1), newAddrs, addrObjs];
+	size 	 		  = GmHeap.objCount;
+	freeAddrs 	 	  = GmHeap.freeAddrs;
+	addrObjMapx 	  = GmHeap.addrObjMap;
+	next 	 		  = head(freeAddrs);
+	newAddrs 		  = tail(freeAddrs);
+	addrObjMapx[next] = Node;
+	newHeap 		  = {objCount	: (size-1), 
+						freeAddrs	: newAddrs,
+						addrObjMap	: addrObjMapx};
 	return [newHeap, next];
 }
 
 function hLookup(GmHeap, Addr){
-	return GmHeap.AddrObjMap[Addr];
+	node = GmHeap.addrObjMap[Addr];
+	if(node == undefined){
+		console.log("undefined hLookup")
+	}
+	return node;
+}
+
+/*	Add error for non-existant name here */
+function aLookup(GmGlobals, Name){
+	global = GmGlobals[Name];
+	if(global == undefined){
+		console.log("undefined aLookup");
+	}
+	return global;
 }
 
 function getCode(GmState){
@@ -164,10 +230,10 @@ function putCode(GmCode, GmState){
 }
 
 function getHeap(GmState){
-	return GmState[3];
+	return GmState[2];
 }
 
-function putHeap(GmHeap, GmState)
+function putHeap(GmHeap, GmState){
 	return [GmState[0], GmState[1], GmHeap, GmState[3]];
 }
 
@@ -184,8 +250,10 @@ function getGlobals(GmState){
 }
 
 function putGlobals(GmGlobals, GmState){
-	return [GmState[0], GmState[1], GmState[2], GmGlobals]];
+	return [GmState[0], GmState[1], GmState[2], GmGlobals];
 }
+
+// All these tested 12:45 22/03
 
 /*****************************************************************************
  *	Our G-code instructions
@@ -193,7 +261,7 @@ function putGlobals(GmGlobals, GmState){
 
 /*
  *	Will all require extensive testing. Really gotta be careful
- *	wherever we're using a handrolled data type representation.
+ *	wherever we're using a handrolled data type representations.
  */
 
 
@@ -203,25 +271,33 @@ function putGlobals(GmGlobals, GmState){
  *  Heap consists of (Free, Addrs, [Addr->Name])
  */
 
+
 /* pushglobal :: Name -> GmState -> GmState */
 function pushglobal(Name, State){
-	stack 	 = getStack(State);
-	heap 	 = getHeap(State);
-	nameAddr = hLookup(Name, heap);
-	newStack = nameAddr.concat(stack);
+	console.log("pushglobal called");	
+	stack 	 	= getStack(State);
+	globals 	= getGlobals(State);
+	addr 		= aLookup(globals, Name);
+	//newStack 	= addr.concat(stack);
+	stack.push(addr);
+	newStack 	= stack;
 	return putStack(newStack, State);
-}
+}	// Looks good 12:45 22/03
 
 /* Pushint :: Int -> GmState -> GmState */
 function pushint(Int, State){
+	console.log("pushint called");
 	heap  			= getHeap(State);
+	stack 			= getStack(State);
 	//where node is instanceof func NNum(){}
 	node 			= new NNum(Int);
-	(newHeap, addr) = hAlloc(heap, node);
-	newStack 		= addr.concat(stack)
-	newState		= putStack ( putHeap(newState) );
+	[newHeap, addr] = hAlloc(heap, node);
+	stack.push(addr);
+	newStack 		= stack;
+	newState		= putStack(newStack, State);
+	newNewState		= putHeap(newHeap, newState);
 	return newState;
-}
+}	// Looking alright 12:49 22/03
 
 /*
 -- Construct a new NAp Addr Addr
@@ -234,28 +310,43 @@ function pushint(Int, State){
 */
 /* Mkap :: GmState -> GmState */
 function mkap(oldState){
+	console.log("mkap called");
 	stack 				= getStack(oldState);
-	a1 					= head(stack);
-	a2 					= head(stack);
+	//replacing heads with pops because a:b:c
+	a1 					= stack.pop();
+	console.log("mkap a1: " + a1);
+	a2 					= stack.pop();
+	console.log("mkap a2: " + a2);
 	stackRest 			= stack;
 	node 				= new NAp(a1, a2);
-	(newHeap, nodeAddr) = hAlloc(node);
-	newStack 			= nodeAddr.concat(stackRest);
+	[newHeap, nodeAddr] = hAlloc(node);
+	//newStack 			= nodeAddr.concat(stackRest);
+	stack.push(nodeAddr);
+	newStack			= stack;
 	return putState(newStack, oldState);
-}
+}	// going to need two nodes to test this
 
 // Push-specific utility func
 function getArg(NAp){
-	return NAp.a2;
+	a2 = NAp.a2;
+	if(a2 == undefined){
+		console.log("undefined getArg");
+	}
+	return a2;
 }
 /* see GEval.hs if(when) you forget how this works*/
 /* Push :: Int -> GmState -> GmState */
 function push(N, State){
+	console.log("push called");
 	stack 		= getStack(State);
+	heap 		= getHeap(State)
 	nodeAddr 	= stack[1 + N];
-	arg 		= getArg(hLookup(getHeap(State), nodeAddr));
-	return putStack(node.concat(stack), oldState));
-}
+	arg 		= getArg(hLookup(heap, nodeAddr));
+	//newStack 	= node.concat(stack)
+	stack.push(arg);
+	newStack 	= stack;
+	return putStack(newStack, State);
+}	// again, heap specific.
 
 /* Literally just drops N, moves bottom/front Node
  * to replace. If old stack = [2,1,0], new stack
@@ -264,10 +355,14 @@ function push(N, State){
  * defined above. */
 /* slide :: Int -> GmState -> GmState */
 function slide(N, State){
+	console.log("slide called");
 	// be careful with implementation of head/tail
-	a 			= head(getStack(State));
-	as 			= tail(getStack(State));
-	newStack 	= a.concat( ( as.drop(N) ) );
+	stack 		= getStack(State);
+	a 			= head(stack);
+	as 			= tail(stack);
+	as.drop(N);
+	as.push(a);
+	newStack 	= as;
 	return putStack(newStack, State);
 }
 
@@ -287,29 +382,35 @@ unwind state =
 
 /* Unwind :: GmState -> GmState */
 function unwind(State){
+	console.log("unwind called");
 	// be careful with implementation of head/tail	
 	stack 	= getStack(State);
 	heap 	= getHeap(State);
 	a 		= head(stack);
-	as 		= head(stack);
+	as 		= tail(stack);
+	aslen	= as.length;
 	node 	= hLookup(heap, a);
 	if(node instanceof NNum){
 		return State;
 	} 
 	if(node instanceof NAp){
 		//Check these next 4 lines carefully
-		leftArg 	= NAp.a1;
-		newStack 	= leftArg.concat(a.concat(as));
+		a1 			= node.a1;
+		as.push(a);
+		as.push(a1);
+		newStack 	= as;
 		var unwind 	= new Unwind();
 		return putCode([unwind], (putStack(newStack, State)));
 	}
 	if(node instanceof NGlobal){
-		numargs 	= NGlobal.numargs;
-		code 		= NGlobal.instructions;
-		if(as.length < numargs){
+		console.log("unwind NGlobal called");
+		numargs 	= node.numargs;
+		code 		= node.instructions;
+		console.log("numargs: " + numargs + " | code: " + code);
+		if(aslen < numargs){
 			console.error("unwinding undersaturated");
 		} else {
-			putCode(code, state);
+			return(putCode(code, State));
 		}
 	} else {
 		console.error("unwind failing. check line 281");
@@ -322,15 +423,17 @@ function unwind(State){
 
 /* gmFinal :: GmState -> Bool */
 function gmFinal(State){
+	console.log("gmFinal called");
 	code = getCode(State);
 	if(code.length == 0){
 		return true;
 	} else {
 		return false;
 	}
-}
+} //	working fine 13:37 22/03
 
 /* eval :: GmState -> [GmState] */
+/*
 function eval(State){
 	var restStates 	= new Object;
 	if(gmFinal(State)){
@@ -341,15 +444,15 @@ function eval(State){
 	}
 	return State.concat(restStates);
 }
+*/
 
 /* step :: GmState -> GmState */
 function step(State){
 	// again, check these heads work
 	code 		= getCode(State);
 	i 			= head(code);
-	is 			= head(code);
+	is 			= tail(code);
 	newState 	= putCode(is, State);
-
 	// these could be really cool higher order things
 	// ala GCompiler.hs but ehhhhhhhh
 	if(i instanceof PushGlobal){
