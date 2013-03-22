@@ -10,14 +10,12 @@ import GADT
 preludeDefs :: CoreProgram
 preludeDefs = 
 	[("Id", ["x"], EVar "x"),	-- Identity, here we come...
-	 ("Id2", ["y"], EVar "y")]
+	 ("Id2", ["y"], EVar "y"),
+	 ("K", ["x", "y"], EVar "y")]
 
-idTest :: CoreProgram
-idTest = 
-	[("Id", ["x"], EVar "x"),
-	("main", [], (
-		(EAp (EVar "Id") (ENum 21))))
-	]
+kTest :: CoreProgram
+kTest = 
+	[("main", [], (EAp (EAp (EVar "K") (ENum 1)) (ENum 2)))]
 
 --underSaturatedTest :: CoreProgram
 --underSaturatedTest =

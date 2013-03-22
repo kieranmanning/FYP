@@ -113,6 +113,14 @@ putStats stats' (i, stack, heap, globals, stats) =
 -- Compiler.
 ---------------------------------------------------------------------------------
 
+{-	Control Flow
+ -	
+ -	compile = \program -> buildHeap program
+ -
+ - 	buildHeap compiles program + prelude to
+ -
+ -}
+
 -- Take ScDefns and start with init'd empty GmState
 compile :: CoreProgram -> GmState
 compile program =
@@ -128,8 +136,7 @@ buildInitialHeap program
 	where
 		compiled = map compileSc (program ++ preludeDefs) ++ compiledPrimitives
 
--- Represents a compiled global with presumably global name,
--- arity and code.
+-- Represents an SC compiled to its global name, arity and instructions
 type GmCompiledSC = (Name, Int, GmCode)
 
 -- Takes a compiled SC and creates a global with its arity

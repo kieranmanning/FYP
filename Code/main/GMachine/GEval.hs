@@ -6,6 +6,8 @@ import GADT
 -- Evaluation.
 ---------------------------------------------------------------------------------
 
+
+-- Pop state. if !finalState, step through and continue eval'ing
 eval :: GmState -> [GmState] 
 eval state = state : restStates 
 			where
@@ -18,7 +20,7 @@ eval state = state : restStates
 doAdmin :: GmState -> GmState 
 doAdmin s = putStats (statIncSteps (getStats s)) s
 
--- Test if we've any more graph to eval
+-- Test if we've any more states to eval
 gmFinal :: GmState -> Bool 
 gmFinal s = 
 	case (getCode s) of 
@@ -41,7 +43,8 @@ dispatch (Push n)		= push n
 dispatch (Slide n) 		= slide n 
 dispatch  Unwind 		= unwind
 
--- Pushes the 
+-- Updates the stack with the location of the global
+-- in question, assumed to be in the stack.
 pushglobal :: Name -> GmState -> GmState 
 pushglobal f state = 
 	putStack (a : getStack state) state
@@ -54,8 +57,13 @@ pushint n state =
 	putHeap heap' (putStack (addr: getStack state) state)
 	where (heap', addr) = hAlloc (getHeap state) (NNum n)
 
--- Take top two addrs from stack, construct NAp, alloc
--- space for it on heap and add with new pointer on stack
+-- Construct a new NAp Addr Addr
+-- Addr1 and Addr2 are popped directly from the 
+-- front of the stack. 
+-- New node (NAp) will have addr Anew
+-- New heap = hAlloc space for our new NAp node
+-- Replace front two addrs in stack with addr of new node
+-- Return state 
 mkap :: GmState -> GmState 
 mkap state =
 	putHeap heap' (putStack (a:as') state)
@@ -65,6 +73,10 @@ mkap state =
 
 -- Traverse back up tree by 'Int' after SC and add pointer 
 -- to argument found (on the right...?) to the stack
+-- NOTE: Only called when (stack !! n + 1) is an NAp
+-- NOTENOTE: It actually does *just* go up n + 1 (jump the
+-- current node, which i think is always an SC) and grab
+-- the right hand arg of that NAp
 push :: Int -> GmState -> GmState 
 push n state =
 	putStack (a:as) state 
