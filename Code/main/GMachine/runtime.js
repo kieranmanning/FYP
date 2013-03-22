@@ -1,5 +1,31 @@
 
 /*****************************************************************************
+ *	Some Important Notes
+*****************************************************************************/
+
+/*	- Naming Conventions
+ *	In general, functions are camelCase lower-case first letter.
+ *	DataType constructors are Capitalized.
+ *
+ *	Paramaters to functions start with an upper-case letter, to
+ *	easier distinguish from internally created vars. This is important
+ *	since there are so many repititions of similar words.
+ *
+ *	In general, a var begins its life as name and is superseded
+ * 	by newName.
+ *	
+ *	- Data Types
+ *	Data types are represented as functions of their constructors
+ *	taking the constructor args as func args. More explanation 
+ *	further down.
+ *
+ *	- Death to javascript.
+ *	Just yeah.	
+ *
+ */
+
+
+/*****************************************************************************
  *	Some General Utility Functions
 *****************************************************************************/
 
@@ -43,8 +69,10 @@ function NNum(n){
 	this.n = n;
 }
 
-function NGlobal(arity, instructions){
-	this.arity = arity;
+function NGlobal(numargs, instructions){
+	//ugh. javascript stole my arity keyword.
+	//probably doesn't even do anything cool with it.
+	this.numargs = numargs;
 	this.instructions = instructions
 }
 
@@ -99,6 +127,12 @@ var GmState = [GmCode, GmStack, GmHeap, GmGlobals]
  *	Some Compiler Utility Functions
 *****************************************************************************/
 
+/*
+ *	Think it's safe to say these funcs are all ok. They mostly
+ *	correspond to the util functions in GCompiler.hs. You might
+ *	find further enlightenment there.
+ */
+
 /* hAlloc :: GmHeap -> Node -> GmHeap */
 function hAlloc(GmHeap, Node){
 	size = GmHeap[0];
@@ -152,30 +186,35 @@ function putGlobals(GmGlobals, GmState){
 *****************************************************************************/
 
 /*
+ *	Will all require extensive testing. Really gotta be careful
+ *	wherever we're using a handrolled data type representation.
+ */
+
+
+/*
  *	Reminder
  *  Stack is just an array of Ints, 
  *  Heap consists of (Free, Addrs, [Addr->Name])
  */
 
 /* pushglobal :: Name -> GmState -> GmState */
-function pushglobal(Name, oldState){
-	oldStack = getStack(oldState);
-	heap 	 = getHeap(oldState);
+function pushglobal(Name, State){
+	stack 	 = getStack(State);
+	heap 	 = getHeap(State);
 	nameAddr = hLookup(Name, heap);
-	newStack = nameAddr.concat(oldStack);
-	return putStack(newStack, oldState);
+	newStack = nameAddr.concat(stack);
+	return putStack(newStack, State);
 }
 
 /* Pushint :: Int -> GmState -> GmState */
-function pushint(Int, oldState){
-	heap  = getHeap(oldState);
+function pushint(Int, State){
+	heap  			= getHeap(State);
 	//where node is instanceof func NNum(){}
-	node = new NNum(Int);
-	(newHeap, addr)  = hAlloc(heap, node);
-	newStack = addr.concat(stack)
-	newState = putStack(oldState);
-	newNewState = putHeap(newState);
-	return newNewState;
+	node 			= new NNum(Int);
+	(newHeap, addr) = hAlloc(heap, node);
+	newStack 		= addr.concat(stack)
+	newState		= putStack ( putHeap(newState) );
+	return newState;
 }
 
 /*
@@ -189,38 +228,41 @@ function pushint(Int, oldState){
 */
 /* Mkap :: GmState -> GmState */
 function mkap(oldState){
-	stack = getStack(oldState);
-	a1 = head(stack);
-	a2 = head(stack);
-	stackRest = stack;
-	node = new NAp(a1, a2);
+	stack 				= getStack(oldState);
+	a1 					= head(stack);
+	a2 					= head(stack);
+	stackRest 			= stack;
+	node 				= new NAp(a1, a2);
 	(newHeap, nodeAddr) = hAlloc(node);
-	newStack = nodeAddr.concat(stackRest);
+	newStack 			= nodeAddr.concat(stackRest);
 	return putState(newStack, oldState);
 }
 
+// Push-specific utility func
+function getArg(NAp){
+	return NAp.a2;
+}
 /* see GEval.hs if(when) you forget how this works*/
 /* Push :: Int -> GmState -> GmState */
-function push(N, OldState){
-	function getArg(NAp){
-		return NAp.a2;
-	}
-	oldStack = getStack(oldState);
-	nodeAddr = oldStack[1 + N];
-	arg = getArg(hLookup(getHeap(OldState), nodeAddr);
-	return putStack(node.concat(oldStack), oldState);
+function push(N, State){
+	stack 		= getStack State);
+	nodeAddr 	= stack[1 + N];
+	arg 		= getArg(hLookup(getHeap State), nodeAddr);
+	return putStack(node.concat(stack), oldState);
 }
 
 /* Literally just drops N, moves bottom/front Node
  * to replace. If old stack = [2,1,0], new stack
  * after a slide 1 will be [2, 0]. Node that heap
- * isn't actually changed by this. */
+ * isn't actually changed by this. Array.drop()
+ * defined above. */
 /* slide :: Int -> GmState -> GmState */
-function slide(N, OldState){
-	a = head(getStack(oldState));
-	as = tail(getStack(oldState));
-	newStack = a.concat( (oldStack.drop(N)));
-	return putStack(newStack, oldstate);
+function slide(N, State){
+	// be careful with implementation of head/tail
+	a 			= head(getStack(State));
+	as 			= tail(getStack(State));
+	newStack 	= a.concat( ( as.drop(N) ) );
+	return putStack(newStack, State);
 }
 
 /*
@@ -238,38 +280,32 @@ unwind state =
 */
 
 /* Unwind :: GmState -> GmState */
-function unwind(oldState){
-	stack = getStack(oldState);
-	heap = getHeap(oldState);
-	a = head(stack);
-	as = head(stack);
-
-	node = hLookup(heap, a);
-	if(node == NNum a)
-
-
+function unwind(State){
+	// be careful with implementation of head/tail	
+	stack 	= getStack(State);
+	heap 	= getHeap(State);
+	a 		= head(stack);
+	as 		= head(stack);
+	node 	= hLookup(heap, a);
+	if(node instanceof NNum){
+		return State;
+	} 
+	if(node instanceof NAp){
+		//Check these next 4 lines carefully
+		leftArg = NAp.a1;
+		newStack = leftArg.concat(a.concat(as));
+		var unwind = new Unwind();
+		return putCode([unwind], (putStack(newStack, State)));
+	}
+	if(node instanceof NGlobal){
+		numargs = NGlobal.numargs;
+		code = NGlobal.instructions;
+		if(as.length < numargs){
+			console.error("unwinding undersaturated");
+		} else {
+			putCode(code, state);
+		}
+	} else {
+		console.error("unwind failing. check line 281");
+	}
 }
-
-/*****************************************************************************
- *	Evaluator
-*****************************************************************************/
-
-/* eval :: GmState -> [GmState] */
-function eval(GmState){
-
-}
-
-/* gmFinal :: GmState -> Bool */
-function gmFinal(GmState){
-	code = getCode(GmState);
-	return (code.length == 0);
-}
-
-/* step :: GmState -> GmState */
-function step(GmState){
-	iConsIs = getCode(GmState);
-	i = iConsIs.reverse().pop();
-	is = iConsIs.reverse();
-}
-
-
