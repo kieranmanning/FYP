@@ -17,6 +17,10 @@ kTest :: CoreProgram
 kTest = 
 	[("main", [], (EAp (EAp (EVar "K") (ENum 1)) (ENum 2)))]
 
+idTest :: CoreProgram
+idTest =
+	[("main", [], (EAp (EVar "Id") (ENum 1)))]
+
 --underSaturatedTest :: CoreProgram
 --underSaturatedTest =
 --	[("main", [], (EAp (EVar "Id") ()))]

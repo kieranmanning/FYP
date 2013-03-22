@@ -31,11 +31,18 @@ emptyState :: GmState
 emptyState = ([], [], (0, [0..20], []), [], 0)
 
 {-
-	JavaScript strategy.
 
-	Names of our functions will reside in Globals after compilation.
-	hLookup heap globals[f] will return the code to construct f 
-	
+gmState2String :: GmState -> String 
+gmState2String (c, s, h, g, st) = 
+	"var GmCode = " 	++ show(c) ++ " ; \n" ++
+	"var GmStack = " 	++ show(s) ++ " ; \n" ++
+	"var GmGlobals = " 	++ show(g) ++ " ; \n"
 
+gmCode2String :: GmCode-> String -> String
+gmCode2String (x:xs) acc
+	| x == (PushGlobal name) = "var" ++ name ++ "=PushGlobal(" 
+	  ++ name ++ ");" ++ (gmCode2String xs acc)
+	| x == Unwind = "var unwind = Unwind();" 
+	  ++ (gmCode2String xs acc)
 
 -}

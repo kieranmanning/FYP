@@ -19,6 +19,12 @@
  *	taking the constructor args as func args. More explanation 
  *	further down.
  *
+ *	- Haskell -> JS gotchas
+ *	There's no list comprehensions, so i've implemented a head/tail
+ *	but they are pretty dodgy	
+ *
+ *
+ *
  *	- Death to javascript.
  *	Just yeah.	
  *
@@ -309,3 +315,67 @@ function unwind(State){
 		console.error("unwind failing. check line 281");
 	}
 }
+
+/*****************************************************************************
+ *	Evaluator
+*****************************************************************************/
+
+/* gmFinal :: GmState -> Bool */
+function gmFinal(State){
+	code = getCode(State);
+	if(code.length == 0){
+		return true;
+	} else {
+		return false;
+	}
+}
+
+/* eval :: GmState -> [GmState] */
+function eval(State){
+	var restStates 	= new Object;
+	if(gmFinal(State)){
+		restStates 	= [];
+	} else {
+		nextState 	= step(State);
+		restStates 	= eval(nextState);
+	}
+	return State.concat(restStates);
+}
+
+/* step :: GmState -> GmState */
+function step(State){
+	// again, check these heads work
+	code 		= getCode(State);
+	i 			= head(code);
+	is 			= head(code);
+	newState 	= putCode(is, State);
+
+	// these could be really cool higher order things
+	// ala GCompiler.hs but ehhhhhhhh
+	if(i instanceof PushGlobal){
+		f = i.Name;
+		return pushglobal(f, newState);
+	}
+	if(i instanceof PushInt){
+		n = i.Int;
+		return pushint(n, newState);
+	}
+	if(i instanceof Mkap){
+		return mkap(newState);
+	}
+	if(i instanceof Push){
+		n = i.Int;
+		return push(n, newState);
+	}
+	if(i instanceof Slide){
+		n = i.Int;
+		return slide(n, State);
+	}
+	if(i instanceof Unwind){
+		return unwind(State);
+	}
+}
+
+/*****************************************************************************
+ *	Output Dump...
+*****************************************************************************/
