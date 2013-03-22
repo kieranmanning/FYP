@@ -21,7 +21,7 @@
  *
  *	- Haskell -> JS gotchas
  *	There's no list comprehensions, so i've implemented a head/tail
- *	but they are pretty dodgy	
+ *	but they are pretty dodgy. NOTE: Fixed
  *
  *
  *
@@ -35,15 +35,15 @@
  *	Some General Utility Functions
 *****************************************************************************/
 
+
 function head(list){
-	x = list;
-	return x.reverse().pop();
+	x = list[0];
+	return x;
 }
 
 function tail(list){
-	x = list;
-	discard = x.reverse().pop();
-	return x.reverse();
+     h = list.slice(1, (list.length));
+     return h;
 }
 
 Array.prototype.drop = function(from, to) {
@@ -141,13 +141,13 @@ var GmState = [GmCode, GmStack, GmHeap, GmGlobals]
 
 /* hAlloc :: GmHeap -> Node -> GmHeap */
 function hAlloc(GmHeap, Node){
-	size = GmHeap[0];
-	addrs = GmHeap[1];
-	addrObjs = GmHeap[2];
-	next 	 = head(addrs);
-	newAddrs = tail(addrs);
-	addrObjs[next] = Node;
-	newHeap = [(size-1), newAddrs, addrObjs];
+	size 	 		= GmHeap[0];
+	addrs 	 		= GmHeap[1];
+	addrObjs 		= GmHeap[2];
+	next 	 		= head(addrs);
+	newAddrs 		= tail(addrs);
+	addrObjs[next] 	= Node;
+	newHeap 		= [(size-1), newAddrs, addrObjs];
 	return [newHeap, next];
 }
 
@@ -251,10 +251,10 @@ function getArg(NAp){
 /* see GEval.hs if(when) you forget how this works*/
 /* Push :: Int -> GmState -> GmState */
 function push(N, State){
-	stack 		= getStack State);
+	stack 		= getStack(State);
 	nodeAddr 	= stack[1 + N];
-	arg 		= getArg(hLookup(getHeap State), nodeAddr);
-	return putStack(node.concat(stack), oldState);
+	arg 		= getArg(hLookup(getHeap(State), nodeAddr));
+	return putStack(node.concat(stack), oldState));
 }
 
 /* Literally just drops N, moves bottom/front Node
@@ -298,14 +298,14 @@ function unwind(State){
 	} 
 	if(node instanceof NAp){
 		//Check these next 4 lines carefully
-		leftArg = NAp.a1;
-		newStack = leftArg.concat(a.concat(as));
-		var unwind = new Unwind();
+		leftArg 	= NAp.a1;
+		newStack 	= leftArg.concat(a.concat(as));
+		var unwind 	= new Unwind();
 		return putCode([unwind], (putStack(newStack, State)));
 	}
 	if(node instanceof NGlobal){
-		numargs = NGlobal.numargs;
-		code = NGlobal.instructions;
+		numargs 	= NGlobal.numargs;
+		code 		= NGlobal.instructions;
 		if(as.length < numargs){
 			console.error("unwinding undersaturated");
 		} else {
@@ -379,3 +379,4 @@ function step(State){
 /*****************************************************************************
  *	Output Dump...
 *****************************************************************************/
+
