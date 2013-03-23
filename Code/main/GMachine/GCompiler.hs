@@ -34,17 +34,22 @@ data Instruction
 	| PushInt Int 
 	| Push Int 
 	| Mkap
-	| Slide Int
-	deriving(Show)
+	| Update Int 
+	| Pop Int
+	deriving(Eq, Show)
 
+{-}
 instance Eq Instruction where
 	Unwind			== Unwind			= True
 	PushGlobal n1 	== PushGlobal n2 	= n1 == n2 
 	PushInt x 		== PushInt y 		= x == y
 	Push x 			== Push y 			= x == y
 	Mkap			== Mkap				= True
+	Update x 		== Update y 		= x == y
+	Pop x			== Pop y 			= x == y
 	Slide x			== Slide y			= x == y
 	_				== _				= False
+-}
 -- } END GMCODE DEF AND UTILS
 
 
@@ -70,9 +75,10 @@ type Heap a = (Int, [Int], [(Int, a)])
 -- NNum value | NAp Addr Addr | NGlobal arity instructions
 data Node 
 	= NNum Int 
-	| NAp Addr Addr 
-	| NGlobal Int GmCode
-	deriving(Show)
+	| NAp Addr Addr  		
+	| NGlobal Int GmCode 	-- NGlobal Arity Code
+	| NInd Addr 			-- Indirection
+	deriving(Eq, Show)
 
 getHeap :: GmState -> GmHeap
 getHeap (i, stack, heap, globals, stats) = heap
@@ -168,7 +174,9 @@ compileSc (name, env, body)
 -- hands off to compileC to handle pattern match and slides
 -- n' unwinds
 compileR :: GmCompiler
-compileR e env = compileC e env ++ [Slide (length env + 1), Unwind]
+--compileR e env = compileC e env ++ [Slide (length env + 1), Unwind]
+compileR e env = compileC e env ++ [Update d, Pop d, Unwind]
+	where d = (length env)
 
 -- CoreExpr -> (Assoc Name NumElemsToSlide) -> GmCode
 -- Generates code to construct graph of an expe in env

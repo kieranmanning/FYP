@@ -1,6 +1,5 @@
-
 function test(){
-	alert("here i am");
+
 }
 
 /*****************************************************************************
@@ -27,10 +26,11 @@ function test(){
  *	There's no list comprehensions, so i've implemented a head/tail
  *	but they are pretty dodgy. NOTE: Fixed
  *
- *
- *
  *	- Death to javascript.
  *	Just yeah.	
+ *
+ *	- Name
+ *	Needs a name. cataλyst too cheesy? not exactly pressing at any rate.
  *
  */
 
@@ -89,6 +89,10 @@ function NGlobal(numargs, instructions){
 	this.instructions = instructions
 }
 
+function NInd(a){
+	this.a = a
+}
+
 // data Instruction
 function Unwind(){
 
@@ -110,7 +114,12 @@ function Mkap(){
 
 }
 
-function Slide(Int){
+function Update(A){
+	this.a = A;
+
+}
+
+function Pop(Int){
 	this.Int = Int;
 }
 
@@ -146,15 +155,19 @@ function Slide(Int){
  *	$ ghci run.hs; compile idTest
  */
 
+// breaking on...
+//	getCode(step(step(step(step(step(GmState))))))
+
 var idCode = new NGlobal(
 	1, 
-	[new Push(0), new Slide(2), new Unwind()]
+	[new Push(0), new Update(1), new Pop(1), new Unwind()]
 );
 
 var mainCode = new NGlobal(
 	0, 
 	[new PushInt(1), new PushGlobal("Id"), 
-	 new Mkap(), 	 new Unwind()]
+	 new Mkap(), 	 new Update(0),
+	 new Pop(0),	 new Unwind()]
 );
 
 var GmCode = [new PushGlobal("main"), new Unwind()];
@@ -189,25 +202,27 @@ var GmState = [GmCode, GmStack, GmHeap, GmGlobals];
  */
 
 /* hAlloc :: GmHeap -> Node -> GmHeap */
-
-
 function hAlloc(GmHeap, Node){
 	size 	 		  = GmHeap.objCount;
 	freeAddrs 	 	  = GmHeap.freeAddrs;
+	console.log("freeAddrs: " + freeAddrs);
 	addrObjMapx 	  = GmHeap.addrObjMap;
 	next 	 		  = head(freeAddrs);
 	newAddrs 		  = tail(freeAddrs);
+	console.log("newAddrs: " + newAddrs); 
 	addrObjMapx[next] = Node;
-	newHeap 		  = {objCount	: (size-1), 
+	console.log("AddrObj: " + addrObjMapx);
+	newHeap 		  = {objCount	: (size+1), 
 						freeAddrs	: newAddrs,
 						addrObjMap	: addrObjMapx};
+	console.log("leaving hAlloc: " + newHeap.freeAddrs );
 	return [newHeap, next];
 }
 
 function hLookup(GmHeap, Addr){
 	node = GmHeap.addrObjMap[Addr];
 	if(node == undefined){
-		console.log("undefined hLookup")
+		console.log("undefined hLookup");
 	}
 	return node;
 }
@@ -245,7 +260,7 @@ function putStack(GmStack, GmState){
 	return [GmState[0], GmStack, GmState[2], GmState[3]];
 }
 
-function getGlobals(GmState){
+function getGlobals(GmState){ 
 	return GmState[3];
 }
 
@@ -319,11 +334,16 @@ function mkap(oldState){
 	console.log("mkap a2: " + a2);
 	stackRest 			= stack;
 	node 				= new NAp(a1, a2);
+	testHeap = getHeap(oldState);
+	console.log(testHeap);
+	console.log(node);
 	[newHeap, nodeAddr] = hAlloc(node);
 	//newStack 			= nodeAddr.concat(stackRest);
+	console.log("this far?");
 	stack.push(nodeAddr);
 	newStack			= stack;
-	return putState(newStack, oldState);
+	newState = putHeap(newHeap, oldState);
+	return putState(newStack, newState);
 }	// going to need two nodes to test this
 
 // Push-specific utility func
@@ -348,12 +368,50 @@ function push(N, State){
 	return putStack(newStack, State);
 }	// again, heap specific.
 
+/*
+update n state = newState
+	where
+		stack = getStack state 
+		oldAddr = stack !! (n+1)
+		(newHeap, newAddr) = hAlloc (getHeap(state)) (NInd oldAddr)
+		(a, as) = splitAt (n+1) stack 
+		tempStack = a ++ (newAddr : (drop 1 as))
+		newStack = drop 1 stack
+		newState = (putStack newStack (putHeap newHeap(state)))
+*/
+
+/* update :: Int -> GmState -> GmState */
+function update(N, State){
+	console.log("update called");
+	stack = getStack(State);
+	oldAddr = stack[N+1];
+	if(oldAddr == undefined){
+		console.log("accessing undefined stack space - line 376");
+	}
+	[newHeap, newAddr] = hAlloc(getHeap(State), (new NInd(oldAddr)));
+	stack[N+1] = newAddr;
+	stack.drop(1);
+	newStack = stack;
+	newState = putStack(newStack, State);
+	newNewState = putHeap(newHeap, newState);
+	return newNewState;
+}
+
+/* pop :: Int -> GmState -> GmState */
+function pop(N, State){
+	console.log("pop called");
+	stack = getStack(State);
+	newStack = stack.splice(N, stack.length);
+	return putStack(newStack, State);
+}	// working fine
+
 /* Literally just drops N, moves bottom/front Node
  * to replace. If old stack = [2,1,0], new stack
  * after a slide 1 will be [2, 0]. Node that heap
  * isn't actually changed by this. Array.drop()
  * defined above. */
 /* slide :: Int -> GmState -> GmState */
+/*
 function slide(N, State){
 	console.log("slide called");
 	// be careful with implementation of head/tail
@@ -365,20 +423,8 @@ function slide(N, State){
 	newStack 	= as;
 	return putStack(newStack, State);
 }
-
-/*
-unwind :: GmState -> GmState 
-unwind state =
-	newState (hLookup heap a)
-	where
-		(a:as) = getStack state
-		heap  = getHeap state
-		newState (NNum n) = state
-		newState (NAp a1 a2) = putCode [Unwind] (putStack (a1:a:as) state)
-		newState (NGlobal n c)
-			| (length as) < n 		= error "unwinding undersaturated"
-			| otherwise 			= putCode c state
 */
+
 
 /* Unwind :: GmState -> GmState */
 function unwind(State){
@@ -392,7 +438,13 @@ function unwind(State){
 	node 	= hLookup(heap, a);
 	if(node instanceof NNum){
 		return State;
-	} 
+	}
+	if(node instanceof NInd){
+		addr 		= node.a;
+		newStack 	= stack.drop(1);
+		newStack.push(addr);
+		return putStack(newStack, State);
+	}	 
 	if(node instanceof NAp){
 		//Check these next 4 lines carefully
 		a1 			= node.a1;
@@ -421,31 +473,6 @@ function unwind(State){
  *	Evaluator
 *****************************************************************************/
 
-/* gmFinal :: GmState -> Bool */
-function gmFinal(State){
-	console.log("gmFinal called");
-	code = getCode(State);
-	if(code.length == 0){
-		return true;
-	} else {
-		return false;
-	}
-} //	working fine 13:37 22/03
-
-/* eval :: GmState -> [GmState] */
-/*
-function eval(State){
-	var restStates 	= new Object;
-	if(gmFinal(State)){
-		restStates 	= [];
-	} else {
-		nextState 	= step(State);
-		restStates 	= eval(nextState);
-	}
-	return State.concat(restStates);
-}
-*/
-
 /* step :: GmState -> GmState */
 function step(State){
 	// again, check these heads work
@@ -470,14 +497,49 @@ function step(State){
 		n = i.Int;
 		return push(n, newState);
 	}
-	if(i instanceof Slide){
+	if(i instanceof Update){
+		a = i.a;
+		return update(a, newState);
+	}
+	if(i instanceof Pop){
 		n = i.Int;
-		return slide(n, State);
+		return pop(n, newState);
 	}
 	if(i instanceof Unwind){
 		return unwind(State);
 	}
 }
+
+/* gmFinal :: GmState -> Bool */
+function gmFinal(State){
+	console.log("gmFinal called");
+	code = getCode(State);
+	if(code.length == 0){
+		return true;
+	} else {
+		return false;
+	}
+} //	working fine 13:37 22/03
+
+var accStates = [];
+
+/* eval :: GmState -> [GmState] */
+function evalx(State){
+	var iterations = 0;
+	var currentState = State;
+	while(!gmFinal(currentState)){
+		accStates.push(currentState);
+		nextState = step(currentState);
+		currentState = nextState;
+		if(iterations > 100){
+			console.log("eval to infinity. killing");
+			return false;
+		}
+	}
+	return currentState;
+}
+
+
 
 /*****************************************************************************
  *	Output Dump...

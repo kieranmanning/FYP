@@ -40,7 +40,8 @@ dispatch (PushGlobal f)	= pushglobal f
 dispatch (PushInt n)	= pushint n 
 dispatch  Mkap 			= mkap 
 dispatch (Push n)		= push n
-dispatch (Slide n) 		= slide n 
+dispatch (Update n) 	= update n 
+dispatch (Pop n) 		= pop n
 dispatch  Unwind 		= unwind
 
 -- Updates the stack with the location of the global
@@ -88,12 +89,29 @@ push n state =
 getArg :: Node -> Addr 
 getArg (NAp a1 a2) = a2
 
--- Tidies stack post SC instantiating. Drops x addrs
+update :: Int -> GmState -> GmState
+update n state = newState
+	where
+		stack = getStack state 
+		oldAddr = stack !! (n+1)
+		(newHeap, newAddr) = hAlloc (getHeap(state)) (NInd oldAddr)
+		(a, as) = splitAt (n+1) stack 
+		tempStack = a ++ (newAddr : (drop 1 as))
+		newStack = drop 1 tempStack
+		newState = (putStack newStack (putHeap newHeap(state)))
+
+-- seems fine
+pop :: Int -> GmState -> GmState
+pop n state = putStack(drop n (getStack state)) state
+
+{-
+-- Tidies stack post SC instantiating. Drops x addrs0
 -- from stack and moves everything up (figuratively)
 slide :: Int -> GmState -> GmState 
 slide n state =
 	putStack (a: drop n as) state 
 	where (a:as) = getStack state
+-}
 
 -- This will require explanation.
 -- Firstly, if there is a Num on top of the graph, then
@@ -103,6 +121,8 @@ slide n state =
 -- In the case of an SC, we need to checkout if we have
 -- enough arguments to fully saturate the SC and if so
 -- put the node's code into GmState 
+-- For an indirection, replace the stack top with the 
+-- addr that the indirection points to.
 unwind :: GmState -> GmState 
 unwind state =
 	newState (hLookup heap a)
@@ -110,6 +130,7 @@ unwind state =
 		(a:as) = getStack state
 		heap  = getHeap state
 		newState (NNum n) = state
+		newState (NInd a1) = putStack (a1:as) state
 		newState (NAp a1 a2) = putCode [Unwind] (putStack (a1:a:as) state)
 		newState (NGlobal n c)
 			| (length as) < n 		= error "unwinding undersaturated"
