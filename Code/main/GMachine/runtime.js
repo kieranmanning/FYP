@@ -32,6 +32,13 @@ function test(){
  *	- Name
  *	Needs a name. cataλyst too cheesy? not exactly pressing at any rate.
  *
+ *	- In place operators
+ *	For me: be careful with in-place operators, they are the devil.
+ *	For anyone else: there are some code hunks that might seem a 
+ *	bit odd, in particular when accessing lists. JS pop/push effect
+ *	the opposite end of a list to haskell, and their in-place nature
+ *	(along with that of slice) make certain operations a little bit
+ *	un-intuitive.
  */
 
 
@@ -47,8 +54,9 @@ function head(list){
 
 function tail(list){
 	var x = list;
-     var h = x.slice(1, (list.length));
-     return h;
+	console.log("x: " + JSON.stringify(x));
+    var h = x.slice(1, (list.length));
+    return h;
 }
 
 Array.prototype.drop = function(N) {
@@ -515,6 +523,7 @@ function step(xState){
 	// again, check these heads work
 	var code 		= getCode(State);
 	var i 			= head(code);
+	console.log(JSON.stringify(code));
 	var is 			= tail(code);
 	var newState 	= putCode(is, State);
 	// these could be really cool higher order things
@@ -543,7 +552,7 @@ function step(xState){
 		return pop(n, newState);
 	}
 	if(i instanceof Unwind){
-		return unwind(State);
+		return unwind(newState);
 	}
 }
 
@@ -569,9 +578,10 @@ function evalx(State){
 		//accStates.push(currentState);
 		accStates = [currentState].concat(accStates);
 		nextState = step(currentState);
-		var currentState = nextState;
+		currentState = nextState;
 		if(iterations > 50){
 			console.log("eval to infinity. killing");
+			iterations = 0;
 			return currentState;
 		}
 		iterations = iterations + 1;
