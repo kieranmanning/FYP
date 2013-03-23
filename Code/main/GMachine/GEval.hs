@@ -94,7 +94,7 @@ update n state = newState
 	where
 		stack = getStack state 
 		oldAddr = stack !! (n+1)
-		(newHeap, newAddr) = hAlloc (getHeap(state)) (NInd oldAddr)
+		(newHeap, newAddr) = hAlloc (getHeap(state)) (NInd 	(stack!!0))
 		(a, as) = splitAt (n+1) stack 
 		tempStack = a ++ (newAddr : (drop 1 as))
 		newStack = drop 1 tempStack
@@ -130,7 +130,10 @@ unwind state =
 		(a:as) = getStack state
 		heap  = getHeap state
 		newState (NNum n) = state
-		newState (NInd a1) = putStack (a1:as) state
+		{- 	****ERRRRRRRRR next line dodgy, adding the Unwind instruction
+			made laziness evaluate successfully for id example but i'm not 
+			sure what the underlying problem was. -}
+		newState (NInd a1) =  putCode [Unwind] (putStack (a1:as) state)
 		newState (NAp a1 a2) = putCode [Unwind] (putStack (a1:a:as) state)
 		newState (NGlobal n c)
 			| (length as) < n 		= error "unwinding undersaturated"
