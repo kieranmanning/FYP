@@ -1,3 +1,4 @@
+// need something to call from the html test page so things load.
 function test(){
 
 }
@@ -25,6 +26,9 @@ function test(){
  *	- Haskell -> JS gotchas
  *	There's no list comprehensions, so i've implemented a head/tail
  *	but they are pretty dodgy. NOTE: Fixed
+ *	Note that haskell treats list decons as [head:tail] whereas JS
+ *	is all like [tail:head], where head will be what it hits with
+ *	JS primitive push/pop.
  *
  *	- Death to javascript.
  *	Just yeah.	
@@ -41,11 +45,9 @@ function test(){
  *	un-intuitive.
  */
 
-
 /*****************************************************************************
  *	Some General Utility Functions
 *****************************************************************************/
-
 
 function head(list){
 	var x = list[0];
@@ -485,6 +487,9 @@ function unwind(xState){
 		newStack.drop(1);
 		//newStack.push(addr);
 		newStack		= [addr].concat(newStack);
+		/*
+		 *	Dodgy edge-case code in the [new Unwind()]
+ 		 */
 		return putCode([new Unwind()], putStack(newStack, State));
 	}	 
 	if(node instanceof NAp){

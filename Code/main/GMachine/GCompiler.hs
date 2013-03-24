@@ -14,6 +14,7 @@ import GADT
 type GmState 
 	= (	GmCode,
 		GmStack,
+		GmDump,
 		GmHeap,
 		GmGlobals,
 		GmStats)
@@ -36,6 +37,12 @@ data Instruction
 	| Mkap
 	| Update Int 
 	| Pop Int
+	| Alloc Int 
+		| Update Int
+	| Eval
+	| Add | Sub | Mul | Div
+	| Eq  | Ne  | Lt  | Le | Gt | Ge
+	| Cond GmCode GmCode
 	deriving(Eq, Show)
 
 {-}
@@ -52,6 +59,16 @@ instance Eq Instruction where
 -}
 -- } END GMCODE DEF AND UTILS
 
+type GmDump = [GmDumpItem]
+
+type GmDumpItem = (GmCode, GmStack)
+
+getDump :: GmState -> GmDump 
+getDump (code, stack, dump, heap, globals, stats) = dump 
+
+putDump :: GmDump -> GmState -> GmState
+putDump dump' (i, stack, dump, heap, globals, stats) =
+	(i, stack, dump', heap, globals, stats)
 
 -- BEGIN GMSTACK DEF AND UTILS {
 type GmStack = [Addr]
@@ -59,11 +76,11 @@ type GmStack = [Addr]
 type Addr = Int
 
 getStack :: GmState -> GmStack 
-getStack (i, stack, heap, globals, stats) = stack
+getStack (i, stack, dump, heap, globals, stats) = stack
 
 putStack :: GmStack -> GmState -> GmState
-putStack stack' (i, stack, heap, globals, stats) =
-	(i, stack', heap, globals, stats)
+putStack stack' (i, stack, dump, heap, globals, stats) =
+	(i, stack', dump, heap, globals, stats)
 -- } END GMSTACK DEF AND UTILS
 
 -- BEGIN GMHEAP {
@@ -81,18 +98,18 @@ data Node
 	deriving(Eq, Show)
 
 getHeap :: GmState -> GmHeap
-getHeap (i, stack, heap, globals, stats) = heap
+getHeap (i, stack, dump, heap, globals, stats) = heap
 
 putHeap :: GmHeap -> GmState -> GmState
-putHeap heap' (i, stack, heap, globals, stats) =
-	(i, stack, heap', globals, stats)
+putHeap heap' (i, stack, dump, heap, globals, stats) =
+	(i, stack, dump, heap', globals, stats)
 -- } END GMHEAP
 
 -- BEGIN GmGLOBALS {
 type GmGlobals = ASSOC Name Addr
 
 getGlobals :: GmState -> GmGlobals 
-getGlobals (i, stack, heap, globals, stats) = globals
+getGlobals (i, stack, dump, heap, globals, stats) = globals
 -- } END GMGLOBALS
 
 -- BEGIN GMSTATS {
@@ -108,11 +125,11 @@ statGetSteps :: GmStats -> Int
 statGetSteps s = s
 
 getStats :: GmState -> GmStats 
-getStats (i, stack, heap, globals, stats) = stats
+getStats (i, stack, dump, heap, globals, stats) = stats
 
 putStats :: GmStats -> GmState -> GmState 
-putStats stats' (i, stack, heap, globals, stats) =
-	(i, stack, heap, globals, stats')
+putStats stats' (i, stack, dump, heap, globals, stats) =
+	(i, stack, dump, heap, globals, stats')
 -- } END GMSTATS
 
 ---------------------------------------------------------------------------------
