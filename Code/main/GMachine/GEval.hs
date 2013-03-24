@@ -43,6 +43,8 @@ dispatch (Push n)		= push n
 dispatch (Update n) 	= update n 
 dispatch (Pop n) 		= pop n
 dispatch  Unwind 		= unwind
+dispatch Eval 			= evalx
+dispatch Add 			= add
 
 -- Updates the stack with the location of the global
 -- in question, assumed to be in the stack.
@@ -89,6 +91,8 @@ push n state =
 getArg :: Node -> Addr 
 getArg (NAp a1 a2) = a2
 
+
+-- needs cleanup
 update :: Int -> GmState -> GmState
 update n state = newState
 	where
@@ -104,6 +108,73 @@ update n state = newState
 pop :: Int -> GmState -> GmState
 pop n state = putStack(drop n (getStack state)) state
 
+evalx :: GmState -> GmState 
+evalx state = putDump dump' newState 
+	where 
+		dump'   = (i, s) : (getDump state)
+		(a:s)  = getStack state 
+		i 	   = getCode state
+		newState = putCode [Unwind] (putStack [a] state)
+
+boxInteger :: Int -> GmState -> GmState 
+boxInteger n state = 
+	putStack (a:getStack state) (putHeap h' state)
+	where
+		(h', a) = hAlloc (getHeap state) (NNum n)
+
+unboxInteger :: Addr -> GmState -> Int 
+unboxInteger a state =
+	ub (hLookup (getHeap state) a)
+	where 
+		ub (NNum i) = i
+		ub _		= error "Unboxing non-integer"
+
+boxBoolean :: Bool -> GmState -> GmState 
+boxBoolean b state =
+	putStack (a:getStack state) (putHeap h' state)
+	where
+		(h', a) = hAlloc (getHeap state) (NNum b')
+		b' | b  = 1
+		   | otherwise = 0
+
+{-
+unboxBoolean :: Addr -> GmState -> Bool
+unboxBoolean a state = 
+	ub (hLookup (getHeap state) a)
+-}
+
+-- represent monadic (ERRRR ARITY ONE...) operators
+primitive1 :: (b -> GmState -> GmState)		-- boxing func
+		   -> (Addr -> GmState -> a)		-- unboxing func
+		   -> (a -> b)						-- operator
+		   -> (GmState -> GmState)			-- state transition
+primitive1 box unbox op state 
+	= box (op (unbox a state)) (putStack as state)
+	where
+		(a:as)	= getStack state
+
+-- generics dyadic operator handling
+primitive2 :: (b -> GmState -> GmState)		-- boxing
+		   -> (Addr -> GmState -> a)		-- unboxing
+		   -> (a -> a -> b)					-- op
+		   -> (GmState -> GmState)			-- state trans
+primitive2 box unbox op state 
+	= box (op (unbox a0 state) (unbox a1 state)) (putStack as state)
+	where
+		(a0:a1:as) = getStack state
+
+arithmetic1 :: (Int -> Int)	-> (GmState -> GmState)
+arithmetic1 = primitive1 boxInteger unboxInteger
+
+arithmetic2 :: (Int -> Int -> Int) -> (GmState -> GmState)
+arithmetic2 = primitive2 boxInteger unboxInteger
+
+comparison :: (Int -> Int -> Bool) -> (GmState -> GmState)
+comparison = primitive2 boxBoolean unboxInteger
+
+add :: GmState -> GmState
+add = arithmetic2 (+)
+
 {-
 -- Tidies stack post SC instantiating. Drops x addrs0
 -- from stack and moves everything up (figuratively)
@@ -116,23 +187,32 @@ slide n state =
 -- This will require explanation.
 -- Firstly, if there is a Num on top of the graph, then
 -- we are done. Replace the code with [] to signify this
--- (which will be acknowledge by gmFinal.)
+-- (which will be acknowledge by gmFinal.) 
 -- If there is an NAp, we need to continue unwinding.
 -- In the case of an SC, we need to checkout if we have
 -- enough arguments to fully saturate the SC and if so
 -- put the node's code into GmState 
 -- For an indirection, replace the stack top with the 
 -- addr that the indirection points to.
+
+-- type GmDump = [GmDumpItem]
+-- type GmDumpItem = (GmCode, GmStack)
+
 unwind :: GmState -> GmState 
 unwind state =
 	newState (hLookup heap a)
 	where
 		(a:as) = getStack state
 		heap  = getHeap state
-		newState (NNum n) = state
-		{- 	****ERRRRRRRRR next line dodgy, adding the Unwind instruction
-			made laziness evaluate successfully for id example but i'm not 
-			sure what the underlying problem was. -}
+		newState (NNum n) 
+		-- this is going to be a pain to javascripterize.
+		-- currently works because ((c,s):ds) wont be called
+		-- unless needed. IF ONLY SOMEONE WOULD COME UP WITH
+		-- A WAY TO INTRODUCE LAZINESS TO JAVASCRIPT...
+			| (getDump state) == [] = state
+			| otherwise  = putDump ds (putCode (c) (putStack (a:s) state))
+			where
+				((c,s):ds) = getDump state
 		newState (NInd a1) =  putCode [Unwind] (putStack (a1:as) state)
 		newState (NAp a1 a2) = putCode [Unwind] (putStack (a1:a:as) state)
 		newState (NGlobal n c)

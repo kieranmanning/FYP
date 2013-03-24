@@ -1,4 +1,5 @@
 // need something to call from the html test page so things load.
+// replace this with a main(){eval(prog)} when finished.
 function test(){
 
 }
@@ -6,6 +7,14 @@ function test(){
 /*****************************************************************************
  *	Some Important Notes
 *****************************************************************************/
+/*
+ *	-Contents
+ *		1. General utils 
+ *		2. G-Machine state representation
+ *		3. Test Env (remove in final)
+ *		4. G-machine state utility functions
+ *
+ */
 
 /*	- Naming Conventions
  *	In general, functions are camelCase lower-case first letter.
@@ -43,6 +52,9 @@ function test(){
  *	the opposite end of a list to haskell, and their in-place nature
  *	(along with that of slice) make certain operations a little bit
  *	un-intuitive.
+ *
+ *	- Javascript var keyword
+ *	"So *that's* what that does..."
  */
 
 /*****************************************************************************

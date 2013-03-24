@@ -23,11 +23,11 @@ type GmState
 type GmCode = [Instruction]
 
 getCode :: GmState -> GmCode
-getCode (i, stack, heap, globals, stats) = i 
+getCode (i, stack, dump, heap, globals, stats)  = i 
 
 putCode :: GmCode -> GmState -> GmState
-putCode i' (i, stack, heap, globals, stats) =
-	(i', stack, heap, globals, stats)
+putCode i' (i, stack, dump, heap, globals, stats) =
+	(i', stack, dump, heap, globals, stats)
 
 data Instruction 
 	= Unwind
@@ -35,7 +35,6 @@ data Instruction
 	| PushInt Int 
 	| Push Int 
 	| Mkap
-	| Update Int 
 	| Pop Int
 	| Alloc Int 
 		| Update Int
@@ -69,6 +68,8 @@ getDump (code, stack, dump, heap, globals, stats) = dump
 putDump :: GmDump -> GmState -> GmState
 putDump dump' (i, stack, dump, heap, globals, stats) =
 	(i, stack, dump', heap, globals, stats)
+
+dumpInitial = []
 
 -- BEGIN GMSTACK DEF AND UTILS {
 type GmStack = [Addr]
@@ -147,7 +148,7 @@ putStats stats' (i, stack, dump, heap, globals, stats) =
 -- Take ScDefns and start with init'd empty GmState
 compile :: CoreProgram -> GmState
 compile program =
-	(initialCode, [], heap, globals, statInitial)
+	(initialCode, [], dumpInitial, heap, globals, statInitial)
 	where
 		(heap, globals) = buildInitialHeap program
 

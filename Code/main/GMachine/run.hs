@@ -12,13 +12,13 @@ runProg = eval . compile
 test = last . eval . compile
 
 testGlobals prog = s 
-	where (c, s, h, g, st) = last ( eval ( compile prog ))
+	where (c, s, d, h, g, st) = last ( eval ( compile prog ))
 
 testStack prog = s 
-	where (c, s, h, g, st) = last ( eval ( compile prog ))
+	where (c, s, d, h, g, st) = last ( eval ( compile prog ))
 
 testCode prog = "Uneval'd code from compiling: " ++ (show c)
-	where (c, s, h, g, st) = compile prog 
+	where (c, s, d, h, g, st) = compile prog 
 
 --testHeap prog = h 
 --	where (c, s, h, g, st) = 
@@ -28,7 +28,7 @@ testGetAllFuncs (c, s, h, g, st) =
 	map (hLookup h) (map snd g) 
 
 emptyState :: GmState
-emptyState = ([], [], (0, [0..20], []), [], 0)
+emptyState = ([], [], [], (0, [0..20], []), [], 0)
 
 {-
 
