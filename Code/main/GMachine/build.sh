@@ -1,6 +1,6 @@
 #!/bin/bash
 
-files=( GCompiler.hs GEval.hs GPrelude.hs GDisplay.hs run.hs )
+files=( GCompiler.hs GEval.hs GPrelude.hs GDisplay.hs run.hs Haskell2JS.hs)
 
 #timeDelay=3;
 

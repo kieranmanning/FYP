@@ -13,7 +13,6 @@ function test(){
  *		2. G-Machine state representation
  *		3. Test Env (remove in final)
  *		4. G-machine state utility functions
- *
  */
 
 /*	- Naming Conventions
@@ -68,7 +67,7 @@ function head(list){
 
 function tail(list){
 	var x = list;
-	console.log("x: " + JSON.stringify(x));
+	//console.log("x: " + JSON.stringify(x));
     var h = x.slice(1, (list.length));
     return h;
 }
@@ -171,46 +170,23 @@ function Pop(Int){
  *	Test Environment
 *****************************************************************************/
 
-/*
- *	Until i get the serialization done, i'll be using a handrolled
- *	test state representing post-compile pre-eval idTest (GPrelude.hs)
- *	$ ghci run.hs; compile idTest
- */
+/* PRINT OUT FROM HASKELL2JS.HS...SUCCESS! */
 
-// breaking on...
-//	getCode(step(step(step(step(step(GmState))))))
-
-var idCode = new NGlobal(
-	1, 
-	[new Push(0), new Update(1), new Pop(1), new Unwind()]
-);
-
-var mainCode = new NGlobal(
-	0, 
-	[new PushInt(1), new PushGlobal("Id"), 
-	 new Mkap(), 	 new Update(0),
-	 new Pop(0),	 new Unwind()]
-);
-
-var GmCode = [new PushGlobal("main"), new Unwind()];
-
+var GmCode = [new PushGlobal("main"),new Unwind()];
+ 
 var GmStack = [];
-
+ 
+var GmDump = [];
+ 
 var GmHeap = {
-	objCount:2, 
-	freeAddrs:[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], 
-	addrObjMap:{
-		2 : idCode,
-		1 : mainCode
-	}
+ objCount:2,
+freeAddrs:[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+addrObjMap:{2:new NGlobal(1,[new Push(0),new Update(1),new Pop(1),new Unwind()]),1:new NGlobal(0,[new PushInt(1),new PushGlobal("Id"),new Mkap(),new Update(0),new Pop(0),new Unwind()])}
 };
-
-var GmGlobals = {
-	"main": 1,
-	"Id":2
-};
-
-var GmState = [GmCode, GmStack, GmHeap, GmGlobals]; 
+ 
+var GmGlobals = {"main":1,"Id":2};
+ 
+var GmState = [GmCode, GmStack, GmHeap, GmGlobals] 
 
 
 /*****************************************************************************
@@ -233,7 +209,7 @@ function hAlloc(xGmHeap, Node){
 	}
 	//console.log("Heap: " + GmHeap);
 	var freeAddrs 	 	  = GmHeap.freeAddrs;
-	console.log(freeAddrs);
+	//console.log(freeAddrs);
 	//console.log("freeAddrs: " + freeAddrs);
 	var addrObjMapx 	  = GmHeap.addrObjMap;
 	var next 	 		  = head(freeAddrs);
@@ -323,7 +299,7 @@ function putGlobals(GmGlobals, GmState){
 
 /* pushglobal :: Name -> GmState -> GmState */
 function pushglobal(Name, xState){
-	console.log("pushglobal called");	
+	//console.log("pushglobal called");	
 	var State 		= xState;	
 	var stack 	 	= getStack(State);
 	var globals 	= getGlobals(State);
@@ -337,7 +313,7 @@ function pushglobal(Name, xState){
 
 /* Pushint :: Int -> GmState -> GmState */
 function pushint(Int, xState){
-	console.log("pushint called");
+	//console.log("pushint called");
 	var State 			= xState;
 	var heap  			= getHeap(State);
 	var stack 			= getStack(State);
@@ -366,21 +342,21 @@ function pushint(Int, xState){
 /* Mkap :: GmState -> GmState */
 function mkap(xState){
 	var oldState 			= xState;
-	console.log("mkap called");
+	//console.log("mkap called");
 	var stack 				= getStack(oldState);
 	var heap 				= getHeap(oldState);	
 	//replacing heads with pops because a:b:c
 	var a1 					= stack[0];
 	stack.splice(0,1);
-	console.log("mkap a1: " + a1);
+	//console.log("mkap a1: " + a1);
 	var a2 					= stack[0];
 	stack.splice(0,1);
-	console.log("mkap a2: " + a2);
+	//console.log("mkap a2: " + a2);
 	var stackRest 			= stack;
 	var node 				= new NAp(a1, a2);
 	//console.log(node);
 	[newHeap, nodeAddr] 	= hAlloc(heap, node);
-	console.log(nodeAddr);
+	//console.log(nodeAddr);
 	//newStack 			= nodeAddr.concat(stackRest);
 	//console.log("this far?");
 	//stack.push(nodeAddr);
@@ -402,7 +378,7 @@ function getArg(NAp){
 /* see GEval.hs if(when) you forget how this works*/
 /* Push :: Int -> GmState -> GmState */
 function push(N, xState){
-	console.log("push called");
+	//console.log("push called");
 	var State 		= xState;
 	var stack 		= getStack(State);
 	var heap 		= getHeap(State)
@@ -430,7 +406,7 @@ update n state = newState
 
 /* update :: Int -> GmState -> GmState */
 function update(N, xState){
-	console.log("update called");
+	//console.log("update called");
 	var State 			= xState;
 	var stack 			= getStack(State);
 	var oldAddr 		= stack[N+1];
@@ -451,7 +427,7 @@ function update(N, xState){
 
 /* pop :: Int -> GmState -> GmState */
 function pop(N, xState){
-	console.log("pop called");
+	//console.log("pop called");
 	var State 	 = xState;
 	var stack 	 = getStack(State);
 	var newStack = stack.splice(N, stack.length);
@@ -482,7 +458,7 @@ function slide(N, State){
 /* Unwind :: GmState -> GmState */
 function unwind(xState){
 	var State 	= xState;
-	console.log("unwind called");
+	//console.log("unwind called");
 	// be careful with implementation of head/tail	
 	var stack 	= getStack(State);
 	var heap 	= getHeap(State);
@@ -535,12 +511,12 @@ function unwind(xState){
 
 /* step :: GmState -> GmState */
 function step(xState){
-	console.log("step called");
+	//console.log("step called");
 	var State 		= xState;
 	// again, check these heads work
 	var code 		= getCode(State);
 	var i 			= head(code);
-	console.log(JSON.stringify(code));
+	//console.log(JSON.stringify(code));
 	var is 			= tail(code);
 	var newState 	= putCode(is, State);
 	// these could be really cool higher order things
@@ -605,6 +581,8 @@ function evalx(State){
 		var code = getCode(currentState);
 		console.log("Iteration " + iterations + " - code: " + JSON.stringify(code));
 	}
+	var topAddr = head(getStack(currentState));
+	console.log( hLookup(getHeap(currentState), topAddr) );
 	return currentState;
 }
 

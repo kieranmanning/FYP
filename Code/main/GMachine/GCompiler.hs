@@ -37,7 +37,7 @@ data Instruction
 	| Mkap
 	| Pop Int
 	| Alloc Int 
-		| Update Int
+	| Update Int
 	| Eval
 	| Add | Sub | Mul | Div
 	| Eq  | Ne  | Lt  | Le | Gt | Ge
