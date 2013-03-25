@@ -54,6 +54,10 @@ function test(){
  *
  *	- Javascript var keyword
  *	"So *that's* what that does..."
+ *
+ *	- Efficiency and general code quality
+ *	Needs to be refactored for efficiency and general cleanliness.
+ *	Dump unnecessary comments etc. to keep file size low.
  */
 
 /*****************************************************************************
@@ -187,6 +191,10 @@ addrObjMap:{2:new NGlobal(1,[new Push(0),new Update(1),new Pop(1),new Unwind()])
 var GmGlobals = {"main":1,"Id":2};
  
 var GmState = [GmCode, GmStack, GmHeap, GmGlobals] 
+
+function main(){
+	return evalx(GmState)
+}
 
 
 /*****************************************************************************

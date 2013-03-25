@@ -15,8 +15,8 @@ gmState2JS (c, s, d, h, g, st) =
 	gmDump2JS d ++ "\n \n" ++ 
 	gmHeap2JS h ++ "\n \n" ++ 
 	gmGlobals2JS g ++ "\n \n" ++
-	"var GmState = [GmCode, GmStack, GmHeap, GmGlobals] \n \n"
-
+	"var GmState = [GmCode, GmStack, GmHeap, GmGlobals] \n \n" ++
+	"function main(){\n\treturn evalx(GmState);\n}"
 
 gmCode2JS :: GmCode -> JS
 gmCode2JS is = "var GmCode = [" ++ isJsList ++ "];"
@@ -37,7 +37,7 @@ gmGlobals2JS g = "var GmGlobals = {" ++ kvlist ++ "};"
 
 gmHeap2JS :: GmHeap -> JS
 gmHeap2JS (oc, fa, h) = 
-	"var GmHeap = {\n objCount:" ++ (show oc) ++ ",\n" ++
+	"var GmHeap = {\nobjCount:" ++ (show oc) ++ ",\n" ++
 	"freeAddrs:" ++ (show fa) ++ ",\n" ++ 
 	"addrObjMap:{" ++ (addrObjMap2JS h) ++ "}\n};"
 
