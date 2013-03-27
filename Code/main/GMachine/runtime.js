@@ -485,10 +485,8 @@ function boxBoolean(b, xState){
 function primitive1(box, unbox, op, xState){
 	var State = xState;
 	var Stack = getStack(State);
-	var a;
-	var as;
-	a = head(Stack);
-	as = tail(Stack);
+	var a = head(Stack);
+	var as = tail(Stack);
 	console.log(as);
 	var val = unbox(a, State);
 	var result = op(val);
@@ -652,6 +650,9 @@ function step(xState){
 	if(i instanceof Add){
 		return add(newState);
 	}
+	if(i instanceof Neg){
+		return neg(newState);
+	}
 	if(i instanceof Eval){
 		return evalInst(newState);
 	}
@@ -706,12 +707,12 @@ var GmDump = [];
  
 var GmHeap = {
 objCount:4,
-freeAddrs:[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23],
+freeAddrs:[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
 addrObjMap:{
 4:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Update(1),new Pop(1),new Unwind()]),
 3:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Add(),new Update(2),new Pop(2),new Unwind()]),
 2:new NGlobal(1,[new Push(0),new Update(1),new Pop(1),new Unwind()]),
-1:new NGlobal(0,[new PushInt(2),new PushInt(5),new PushGlobal("+"),new Mkap(),new Mkap(),new Update(0),new Pop(0),new Unwind()])}
+1:new NGlobal(0,[new PushInt(1),new PushGlobal("neg"),new Mkap(),new Update(0),new Pop(0),new Unwind()])}
 };
  
 var GmGlobals = {"main":1,"Id":2,"+":3,"neg":4};
