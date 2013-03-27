@@ -1,48 +1,39 @@
-module Run where
+module Main where
 import GCompiler
 import GDisplay
 import GADT
 import GEval
 import GPrelude
+import Haskell2JS
+import Data.Maybe
+import System.IO
+import System.Environment
+import System.Console.GetOpt
 
---eval :: GmState -> [GmState] 
---compile :: CoreProgram -> GmState
-runProg = eval . compile
+runProg x = gmState2JS (compile x) 
 
-test = last . eval . compile
+run = last . eval . compile
 
-testGlobals prog = s 
-	where (c, s, h, g, st) = last ( eval ( compile prog ))
-
-testStack prog = s 
-	where (c, s, h, g, st) = last ( eval ( compile prog ))
-
-testCode prog = "Uneval'd code from compiling: " ++ (show c)
-	where (c, s, h, g, st) = compile prog 
-
---testHeap prog = h 
---	where (c, s, h, g, st) = 
-
---testGetAllFuncs :: GmState -> 
-testGetAllFuncs (c, s, h, g, st) = 
-	map (hLookup h) (map snd g) 
-
-emptyState :: GmState
-emptyState = ([], [], (0, [0..20], []), [], 0)
-
+main = do
+	[i, o] <- getArgs
+	f <- readFile i
+	writeFile o (runProg (read f))
 {-
+data Flag = Version | OutFile String | InFile String
+	deriving (Show)
 
-gmState2String :: GmState -> String 
-gmState2String (c, s, h, g, st) = 
-	"var GmCode = " 	++ show(c) ++ " ; \n" ++
-	"var GmStack = " 	++ show(s) ++ " ; \n" ++
-	"var GmGlobals = " 	++ show(g) ++ " ; \n"
+options :: [OptDescr Flag]
+options = [Option ['v'] ["version"] (NoArg Version) "show version number", 
+		   Option ['o'] ["outfile"] (ReqArg outp "FILE") "specify name of output file"]
 
-gmCode2String :: GmCode-> String -> String
-gmCode2String (x:xs) acc
-	| x == (PushGlobal name) = "var" ++ name ++ "=PushGlobal(" 
-	  ++ name ++ ");" ++ (gmCode2String xs acc)
-	| x == Unwind = "var unwind = Unwind();" 
-	  ++ (gmCode2String xs acc)
+inp, outp :: Maybe String -> Flag 
+outp = OutFile "stdout"
+inp = InFile . fromMaybe "stdin" 
 
--}
+compilerOpts :: [String] -> IO ([Flag], [String])
+compilerOpts argv = 
+	case (getOpt Permute options argv) of
+	   (o,n,[]  ) -> return (o,n)
+	   (_,_,errs) -> ioError (userError (concat errs ++ usageInfo header options))
+  where header = "Usage: ic [OPTION...] files..."
+  -}
