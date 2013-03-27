@@ -15,8 +15,8 @@ gmState2JS (c, s, d, h, g, st) =
 	gmDump2JS d ++ "\n \n" ++ 
 	gmHeap2JS h ++ "\n \n" ++ 
 	gmGlobals2JS g ++ "\n \n" ++
-	"var GmState = [GmCode, GmStack, GmHeap, GmGlobals] \n \n" ++
-	"function main(){\n\treturn evalx(GmState);\n}"
+	"var GmState = [GmCode, GmStack, GmDump, GmHeap, GmGlobals]; \n \n" ++
+	"function main(){\n\treturn evalProg(GmState);\n}"
 
 gmCode2JS :: GmCode -> JS
 gmCode2JS is = "var GmCode = [" ++ isJsList ++ "];"
@@ -39,10 +39,10 @@ gmHeap2JS :: GmHeap -> JS
 gmHeap2JS (oc, fa, h) = 
 	"var GmHeap = {\nobjCount:" ++ (show oc) ++ ",\n" ++
 	"freeAddrs:" ++ (show fa) ++ ",\n" ++ 
-	"addrObjMap:{" ++ (addrObjMap2JS h) ++ "}\n};"
+	"addrObjMap:{\n" ++ (addrObjMap2JS h) ++ "}\n};"
 
 addrObjMap2JS :: [(Int, Node)] -> JS 
-addrObjMap2JS x = intercalate "," (map addrObj2JS x)
+addrObjMap2JS x = intercalate ",\n" (map addrObj2JS x)
 
 addrObj2JS :: (Int, Node) -> JS 
 addrObj2JS (x, n) = show x ++ ":" ++ (gmNode2JS n)
@@ -69,3 +69,7 @@ gmInstruction2JS i = do
 		Update x 	 -> "new Update(" ++ (show x) ++ ")"
 		Eval 		 -> "new Eval()"
 		Add 		 -> "new Add()"
+		Neq 	     -> "new Neq()"
+		Neg 		 -> "new Neg()"
+		Eq 			 -> "new Eq()"
+		Cond c1 c2 	 -> "new Cond(" ++ (show c1) ++ "," ++ (show c2) ++ ")"

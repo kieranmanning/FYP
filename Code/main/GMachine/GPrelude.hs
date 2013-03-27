@@ -27,3 +27,11 @@ preludeDefs =
 idTest :: CoreProgram
 idTest =
 	[("main", [], (EAp (EVar "Id") (ENum 1)))]
+
+arithTest :: CoreProgram
+arithTest = 
+	[("main", [], EAp (EAp (EVar "+") (ENum 5)) (ENum 2))]
+
+negTest :: CoreProgram
+negTest =
+	[("main", [], EAp (EVar "neg") (ENum 1))]

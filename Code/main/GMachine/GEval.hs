@@ -33,6 +33,10 @@ step :: GmState -> GmState
 step state = dispatch i (putCode is state)
 		where (i:is) = getCode state
 
+stepx :: GmState -> Int -> GmState 
+stepx state x | x == 0 = state 
+			  | otherwise = stepx (step state) (x-1)
+
 -- Handle instructions. Intepret instruction symbols
 -- and return actions effecting the state 
 dispatch :: Instruction -> GmState -> GmState
@@ -45,6 +49,7 @@ dispatch (Pop n) 		= pop n
 dispatch  Unwind 		= unwind
 dispatch Eval 			= evalx
 dispatch Add 			= add
+dispatch Neg 			= neg
 
 -- Updates the stack with the location of the global
 -- in question, assumed to be in the stack.
@@ -174,6 +179,9 @@ comparison = primitive2 boxBoolean unboxInteger
 
 add :: GmState -> GmState
 add = arithmetic2 (+)
+
+neg :: GmState -> GmState
+neg = arithmetic1 (negate)
 
 {-
 -- Tidies stack post SC instantiating. Drops x addrs0

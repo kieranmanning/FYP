@@ -58,5 +58,5 @@ data Expr a
 		(Expr a)
 		[Alter a]
 	| ELam [a] (Expr a)
-	deriving(Show)
+	deriving(Show, Read)
 

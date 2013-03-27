@@ -19,7 +19,6 @@ type GmState
 		GmGlobals,
 		GmStats)
 
--- BEGIN GMCODE DEF AND UTILS {
 type GmCode = [Instruction]
 
 getCode :: GmState -> GmCode
@@ -39,24 +38,10 @@ data Instruction
 	| Alloc Int 
 	| Update Int
 	| Eval
-	| Add | Sub | Mul | Div
-	| Eq  | Ne  | Lt  | Le | Gt | Ge
+	| Add | Sub | Mul | Div | Neg
+	| Eq  | Neq | Lt  | Le | Gt | Ge
 	| Cond GmCode GmCode
 	deriving(Eq, Show)
-
-{-}
-instance Eq Instruction where
-	Unwind			== Unwind			= True
-	PushGlobal n1 	== PushGlobal n2 	= n1 == n2 
-	PushInt x 		== PushInt y 		= x == y
-	Push x 			== Push y 			= x == y
-	Mkap			== Mkap				= True
-	Update x 		== Update y 		= x == y
-	Pop x			== Pop y 			= x == y
-	Slide x			== Slide y			= x == y
-	_				== _				= False
--}
--- } END GMCODE DEF AND UTILS
 
 type GmDump = [GmDumpItem]
 
@@ -71,7 +56,6 @@ putDump dump' (i, stack, dump, heap, globals, stats) =
 
 dumpInitial = []
 
--- BEGIN GMSTACK DEF AND UTILS {
 type GmStack = [Addr]
 
 type Addr = Int
@@ -82,9 +66,7 @@ getStack (i, stack, dump, heap, globals, stats) = stack
 putStack :: GmStack -> GmState -> GmState
 putStack stack' (i, stack, dump, heap, globals, stats) =
 	(i, stack', dump, heap, globals, stats)
--- } END GMSTACK DEF AND UTILS
 
--- BEGIN GMHEAP {
 type GmHeap = Heap Node
 
 -- Heap object count, unused addrs, addr->obj mapping
@@ -104,16 +86,14 @@ getHeap (i, stack, dump, heap, globals, stats) = heap
 putHeap :: GmHeap -> GmState -> GmState
 putHeap heap' (i, stack, dump, heap, globals, stats) =
 	(i, stack, dump, heap', globals, stats)
--- } END GMHEAP
 
--- BEGIN GmGLOBALS {
+
 type GmGlobals = ASSOC Name Addr
 
 getGlobals :: GmState -> GmGlobals 
 getGlobals (i, stack, dump, heap, globals, stats) = globals
--- } END GMGLOBALS
 
--- BEGIN GMSTATS {
+
 type GmStats = Int 
 
 statInitial :: GmStats 
@@ -131,7 +111,6 @@ getStats (i, stack, dump, heap, globals, stats) = stats
 putStats :: GmStats -> GmState -> GmState 
 putStats stats' (i, stack, dump, heap, globals, stats) =
 	(i, stack, dump, heap, globals, stats')
--- } END GMSTATS
 
 ---------------------------------------------------------------------------------
 -- Compiler.
@@ -148,7 +127,7 @@ putStats stats' (i, stack, dump, heap, globals, stats) =
 -- Take ScDefns and start with init'd empty GmState
 compile :: CoreProgram -> GmState
 compile program =
-	(initialCode, [], dumpInitial, heap, globals, statInitial)
+	(initialCode, [], [], heap, globals, statInitial)
 	where
 		(heap, globals) = buildInitialHeap program
 
@@ -173,7 +152,7 @@ allocateSc heap (name, nargs, instns) =
 
 -- Starting code
 initialCode :: GmCode 
-initialCode = [PushGlobal "main", Unwind]
+initialCode = [PushGlobal "main", Eval]
 
 -- env of [NodeName, StackLocation]
 type GmEnvironment = ASSOC Name Int
@@ -218,7 +197,13 @@ argOffset n env = [(v, n+m) | (v,m) <- env]
 ---------------------------------------------------------------------------------
 
 compiledPrimitives :: [GmCompiledSC]
-compiledPrimitives = []
+compiledPrimitives = 
+	[("+", 2, [Push 1, Eval, Push 1, Eval, Add, Update 2, Pop 2, Unwind]),
+	 ("neg", 1, [Push 0, Eval, Neg, Update 1, Pop 1, Unwind])
+	 --("==", 2, [Push 1, Eval, Push 1, Eval, Eq, Update 2, Pop 2, Unwind]),
+	 --("!=", 2, [Push 1, Eval, Push 1, Eval, Neq, Update 2, Pop 2, Unwind]),
+	 --("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
+	 	]
 
 ---------------------------------------------------------------------------------
 -- Compiler Utils.
@@ -242,7 +227,7 @@ mapAccuml f acc (x:xs) 	= (acc2, x':xs')
  -	*NOTE* heap set [1..20] for ease of analysis
  -}
 hInitial :: Heap a
-hInitial = (0, [1..20], [])
+hInitial = (0, [1..30], [])
 
 hAlloc :: Heap a -> a -> (Heap a, Addr)
 hAlloc (size, (next:free), cts) n = ((size+1, free, (next, n) : cts), next)
