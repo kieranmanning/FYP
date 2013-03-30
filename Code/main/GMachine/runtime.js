@@ -442,6 +442,21 @@ function pack(t, n, xState){
 	return putStack(newStack, (putHeap(newHeap, State)));
 }
 
+function casejump(tagbranches, xState){
+	var State = xState;
+	var stack = getStack(State);
+	var i = getCode(State);
+	var node = hLookup(getHeap(State), head(stack));
+	var tag = node.t;
+	for(var j=0;j<tagbranches.length;j++){
+		if(tagbranches[j][0] == tag){
+			var branchCode = tagbranches[j][1];
+			return putCode(branchCode.concat(i), State);
+		}
+	}
+	console.error("shit the bed in casejump");
+}
+
 /* update :: Int -> GmState -> GmState */
 function update(N, xState){
 	//console.log("update called");
@@ -449,7 +464,7 @@ function update(N, xState){
 	var stack 			= getStack(State);
 	var oldAddr 		= stack[N+1];
 	if(oldAddr == undefined){
-		console.log("accessing undefined stack space - line 376");
+		console.log("accessing undefined stack space in update");
 	}
 	var newHeap;
 	var newAddr;

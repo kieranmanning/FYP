@@ -128,6 +128,14 @@ pack t n state = putStack stack' (putHeap heap' state)
 		(heap', a) = hAlloc (getHeap state) (NConstr t addrs)
 		stack' = a:(drop n $ getStack state)		
 
+casejump :: [(Int, GmCode)] -> GmState -> GmState
+casejump [(t,i')] state = putCode (branchCode++i) state
+	where
+		a = head $ getStack state
+		(NConstr t ss) = hLookup (getHeap state) a 
+		branchCode = aLookup [(t,i')] t $ error "casejump failed to find branch"
+		i = getCode state		
+
 evalx :: GmState -> GmState 
 evalx state = putDump dump' newState 
 	where 
