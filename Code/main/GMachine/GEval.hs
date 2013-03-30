@@ -102,6 +102,32 @@ update n state = newState
 pop :: Int -> GmState -> GmState
 pop n state = putStack(drop n (getStack state)) state
 
+alloc :: Int -> GmState -> GmState
+alloc n state = putStack stack' (putHeap heap' state)
+	where
+		(heap', addrs) = allocNodes n (getHeap state)
+		stack' = addrs ++ (getStack state)
+
+allocNodes :: Int -> GmHeap -> (GmHeap, [Addr])
+allocNodes 0 heap = (heap, [])
+allocNodes n heap = (heap2, a:as)
+	where
+		(heap1, as) = allocNodes (n-1) heap 
+		(heap2, a) = hAlloc heap1 (NInd hNull)
+
+slide :: Int -> GmState -> GmState
+slide n state =
+	putStack (a: drop n as) state
+	where
+		(a:as) = getStack state
+
+pack :: Int -> Int -> GmState -> GmState
+pack t n state = putStack stack' (putHeap heap' state)
+	where
+		addrs = take n $ getStack state
+		(heap', a) = hAlloc (getHeap state) (NConstr t addrs)
+		stack' = a:(drop n $ getStack state)		
+
 evalx :: GmState -> GmState 
 evalx state = putDump dump' newState 
 	where 

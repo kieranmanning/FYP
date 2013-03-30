@@ -389,16 +389,35 @@ function push(N, xState){
 }	// again, heap specific.
 
 /*
-update n state = newState
+alloc :: Int -> GmState -> GmState
+alloc n state = putStack stack' (putHeap heap' state)
 	where
-		stack = getStack state 
-		oldAddr = stack !! (n+1)
-		(newHeap, newAddr) = hAlloc (getHeap(state)) (NInd oldAddr)
-		(a, as) = splitAt (n+1) stack 
-		tempStack = a ++ (newAddr : (drop 1 as))
-		newStack = drop 1 stack
-		newState = (putStack newStack (putHeap newHeap(state)))
+		(heap', addrs) = allocNodes n (getHeap state)
+		stack' = addrs ++ (getStack state)
+
+allocNodes :: Int -> GmHeap -> (GmHeap, [Addr])
+allocNodes 0 heap = (heap, [])
+allocNodes n heap = (heap2, a:as)
+	where
+		(heap1, as) = allocNodes (n-1) heap 
+		(heap2, a) = hAlloc heap1 (NInd hNull)
 */
+
+function slide(N, State){
+	console.log("slide called");
+	// be careful with implementation of head/tail
+	var stack 		= getStack(State);
+	var a 			= head(stack);
+	var as 			= tail(stack);
+	as.drop(N);
+	as.push(a);
+	var newStack 	= as;
+	return putStack(newStack, State);
+}
+
+function pack(t, n, state){
+
+}
 
 /* update :: Int -> GmState -> GmState */
 function update(N, xState){
@@ -541,19 +560,7 @@ function add(xState){
 	return primitive2(boxInteger, unboxInteger, op, State);
 }
 
-/*
-function slide(N, State){
-	console.log("slide called");
-	// be careful with implementation of head/tail
-	stack 		= getStack(State);
-	a 			= head(stack);
-	as 			= tail(stack);
-	as.drop(N);
-	as.push(a);
-	newStack 	= as;
-	return putStack(newStack, State);
-}
-*/
+
 
 /* Unwind :: GmState -> GmState */
 function unwind(xState){

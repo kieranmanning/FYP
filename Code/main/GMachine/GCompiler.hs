@@ -40,6 +40,7 @@ putCode i' (o, i, stack, dump, heap, globals, stats) =
 
 data Instruction 
 	= Unwind
+	| Slide
 	| PushGlobal Name 
 	| PushInt Int 
 	| Push Int 
@@ -51,6 +52,9 @@ data Instruction
 	| Add | Sub | Mul | Div | Neg
 	| Eq  | Neq | Lt  | Le | Gt | Ge
 	| Cond GmCode GmCode
+	| Pack Int Int 
+	| Casejump [(Int, GmCode)]
+	| Split Int 
 	deriving(Eq, Show)
 
 type GmDump = [GmDumpItem]
@@ -88,6 +92,7 @@ data Node
 	| NAp Addr Addr  		
 	| NGlobal Int GmCode 	-- NGlobal Arity Code
 	| NInd Addr 			-- Indirection
+	| NConstr Int [Addr]
 	deriving(Eq, Show)
 
 getHeap :: GmState -> GmHeap
