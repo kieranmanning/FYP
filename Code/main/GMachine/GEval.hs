@@ -160,6 +160,15 @@ arithmetic2 = primitive2 boxInteger unboxInteger
 comparison :: (Int -> Int -> Bool) -> (GmState -> GmState)
 comparison = primitive2 boxBoolean unboxInteger
 
+{-
+cond :: GmState -> GmState
+cond state = do
+	case n of
+		(NNum 1)	-> 
+		(NNum 0)	-> 
+		otherwise	-> error "shit the bed"
+-}
+
 add :: GmState -> GmState
 add = arithmetic2 (+)
 
@@ -180,10 +189,15 @@ unwind state =
 		newState (NInd a1) =  putCode [Unwind] (putStack (a1:as) state)
 		newState (NAp a1 a2) = putCode [Unwind] (putStack (a1:a:as) state)
 		newState (NGlobal n c)
-			| (length as) < n 		= error "unwinding undersaturated"
-			| otherwise  = putCode c (putStack stack' state)
+			| (length as) < n = 
+				putCode i (putStack ((last as):s) (putDump dump' state))
+			| otherwise  = 
+				putCode c (putStack (rearrange n heap as) state)
 			where
-				stack' = rearrange n heap as
+				i = fst $ head $ getDump state
+				s = snd $ head $ getDump state
+				dump' = tail $ getDump state
+
 
 rearrange :: Int -> GmHeap -> GmStack -> GmStack
 rearrange n heap as =

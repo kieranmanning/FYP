@@ -587,8 +587,15 @@ function unwind(xState){
 	if(node instanceof NGlobal){
 		var numargs 	= node.numargs;
 		var code 		= node.instructions;
+		var i 			= head(getDump(State))[0];
+		var s 			= head(getDump(State))[1];
 		if(aslen < numargs){
-			console.error("unwinding undersaturated");
+			var newStack = stack[stack.length].concat(s);
+			var newDump = getDump(state).drop(1);
+			console.log("HERE BE DRAGONS");
+			return putCode(i,(putStack(newStack,(putDump(newDump, State)))));
+			//console.error("unwinding undersaturated");
+
 		} else {
 			var newStack = rearrange(numargs, heap, as);
 			return(putCode(code, putStack(newStack, State)));
@@ -597,6 +604,7 @@ function unwind(xState){
 		console.error("unwind failing");
 	}
 }
+
 
 /* rearrange :: Int -> GmHeap -> GmStack -> GmStack */
 function rearrange(n, heap, as){

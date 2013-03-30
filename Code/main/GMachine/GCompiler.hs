@@ -172,8 +172,25 @@ compileSc (name, env, body)
 -- n' unwinds
 compileR :: GmCompiler
 --compileR e env = compileC e env ++ [Slide (length env + 1), Unwind]
-compileR e env = compileC e env ++ [Update d, Pop d, Unwind]
+compileR e env = compileE e env ++ [Update d, Pop d, Unwind]
 	where d = (length env)
+
+compileE :: GmCompiler
+compileE (ENum n) env 				 = [PushInt n]
+compileE (EAp(EAp(EVar op)e1)e2)env = do
+	case aElem op builtInDyadic of
+		False -> compileC (EAp(EAp(EVar op)e1)e2)env 
+		True -> compileE e1 env ++ compileE e1 env ++ [getDyadicInst op]
+compileE (EAp(EVar "neg")e) env =
+	compileE e env ++ [Neg]
+compileE e env  = compileC e env
+
+builtInDyadic :: [(Name, Instruction)]
+builtInDyadic =
+	[("+", Add)]
+
+getDyadicInst :: Name -> Instruction
+getDyadicInst op = aLookup builtInDyadic op $ error "no such built in"
 
 -- CoreExpr -> (Assoc Name NumElemsToSlide) -> GmCode
 -- Generates code to construct graph of an expe in env
@@ -188,6 +205,11 @@ compileC (EAp e1 e2) env 			= compileC e2 env ++
 									  compileC e1 (argOffset 1 env) ++
 									  [Mkap]
 
+compileArgs :: [(Name, CoreExpr)] -> GmEnvironment -> GmEnvironment
+compileArgs defs env =
+	zip (map fst defs) [n-1, n-2..0] ++ argOffset n env
+	where
+		n = length defs
 
 argOffset :: Int -> GmEnvironment -> GmEnvironment
 argOffset n env = [(v, n+m) | (v,m) <- env] 
@@ -266,6 +288,8 @@ type ASSOC a b = [(a, b)]
 aLookup [] k' def = def 
 aLookup ((k,v):bs) k' def 	| k == k' = v 
 							| k /= k' = aLookup bs k' def
+
+aElem item assoc = elem item (map fst assoc)
 
 aDomain :: ASSOC a b -> [a]
 aDomain alist = [key | (key, val) <- alist]							

@@ -7,7 +7,7 @@ import GADT
 
 --test = eval ( compile ( idTest ) )
 
-{-
+
 preludeDefs :: CoreProgram
 preludeDefs = 
 	[("Id", ["x"], EVar "x"),	-- Identity, here we come...
@@ -17,11 +17,6 @@ preludeDefs =
 kTest :: CoreProgram
 kTest = 
 	[("main", [], (EAp (EAp (EVar "K") (ENum 1)) (ENum 2)))]
--}
-
-preludeDefs :: CoreProgram
-preludeDefs = 
-	[("Id", ["x"], EVar "x")]	-- Identity, here we come...
 
 
 idTest :: CoreProgram
@@ -35,3 +30,4 @@ arithTest =
 negTest :: CoreProgram
 negTest =
 	[("main", [], EAp (EVar "neg") (ENum 1))]
+
