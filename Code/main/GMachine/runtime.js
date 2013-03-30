@@ -79,6 +79,9 @@ function tail(list){
 }
 
 Array.prototype.drop = function(N) {
+  if(N == 0){
+  	return this;
+  }
   var from = 0;
   var to = N-1;
   var rest = this.slice((to || from) + 1 || this.length);
@@ -118,6 +121,11 @@ function NGlobal(numargs, instructions){
 
 function NInd(a){
 	this.a = a
+}
+
+function NConstr(t, a){
+	this.t = t;
+	this.a = a;
 }
 
 // data Instruction
@@ -403,8 +411,9 @@ allocNodes n heap = (heap2, a:as)
 		(heap2, a) = hAlloc heap1 (NInd hNull)
 */
 
-function slide(N, State){
-	console.log("slide called");
+function slide(N, xState){
+	//console.log("slide called");
+	var State 		= xState;
 	// be careful with implementation of head/tail
 	var stack 		= getStack(State);
 	var a 			= head(stack);
@@ -415,8 +424,22 @@ function slide(N, State){
 	return putStack(newStack, State);
 }
 
-function pack(t, n, state){
-
+// check for case of n == 0
+function pack(t, n, xState){
+	var State = xState;
+	var stack = getStack(State);
+	var heap  = getHeap(State);
+	var addrs = [];
+	for(var x = 0; x < n; x++){
+		addrs[x] = stack[x];
+	}
+	console.log(n);
+	stack.drop(n);
+	var newHeap;
+	var a;
+	[newHeap, a] = hAlloc(heap, new NConstr(t, addrs));
+	var newStack = [a].concat(stack);
+	return putStack(newStack, (putHeap(newHeap, State)));
 }
 
 /* update :: Int -> GmState -> GmState */
