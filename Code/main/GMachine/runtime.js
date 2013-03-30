@@ -367,14 +367,14 @@ function push(N, xState){
 	//console.log("push called");
 	var State 		= xState;
 	var stack 		= getStack(State);
-	var heap 		= getHeap(State)
-	var nodeAddr 	= stack[1 + N];
-	var arg 		= getArg(hLookup(heap, nodeAddr));
-	//newStack 	= node.concat(stack)
-	//stack.push(arg);
-	stack 			= [arg].concat(stack);
-	var newStack 	= stack;
-	var newState 	=  putStack(newStack, State);
+	var newStack	= [stack[N]].concat(stack);
+	var newState 	= putStack(newStack, State);
+	//var heap 		= getHeap(State)
+	//var nodeAddr 	= stack[1 + N];
+	//var arg 		= getArg(hLookup(heap, nodeAddr));
+	//stack 			= [arg].concat(stack);
+	//var newStack 	= stack;
+	//var newState 	=  putStack(newStack, State);
 	return newState;
 }	// again, heap specific.
 
@@ -531,12 +531,6 @@ function add(xState){
 	return primitive2(boxInteger, unboxInteger, op, State);
 }
 
-/* Literally just drops N, moves bottom/front Node
- * to replace. If old stack = [2,1,0], new stack
- * after a slide 1 will be [2, 0]. Node that heap
- * isn't actually changed by this. Array.drop()
- * defined above. */
-/* slide :: Int -> GmState -> GmState */
 /*
 function slide(N, State){
 	console.log("slide called");
@@ -596,11 +590,21 @@ function unwind(xState){
 		if(aslen < numargs){
 			console.error("unwinding undersaturated");
 		} else {
-			return(putCode(code, State));
+			var newStack = rearrange(numargs, heap, as);
+			return(putCode(code, putStack(newStack, State)));
 		}
 	} else {
 		console.error("unwind failing");
 	}
+}
+
+/* rearrange :: Int -> GmHeap -> GmStack -> GmStack */
+function rearrange(n, heap, as){
+	var newas = [];
+	for(var x = 0; x < n; x++){
+		newas[x] = getArg( hLookup(heap, as[x]));
+	}
+	return newas.concat(as.drop(n));
 }
 
 /*****************************************************************************
@@ -712,7 +716,7 @@ addrObjMap:{
 4:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Update(1),new Pop(1),new Unwind()]),
 3:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Add(),new Update(2),new Pop(2),new Unwind()]),
 2:new NGlobal(1,[new Push(0),new Update(1),new Pop(1),new Unwind()]),
-1:new NGlobal(0,[new PushInt(1),new PushGlobal("neg"),new Mkap(),new Update(0),new Pop(0),new Unwind()])}
+1:new NGlobal(0,[new PushInt(2),new PushInt(5),new PushGlobal("+"),new Mkap(),new Mkap(),new Update(0),new Pop(0),new Unwind()])}
 };
  
 var GmGlobals = {"main":1,"Id":2,"+":3,"neg":4};

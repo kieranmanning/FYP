@@ -65,13 +65,6 @@ pushint n state =
 	putHeap heap' (putStack (addr: getStack state) state)
 	where (heap', addr) = hAlloc (getHeap state) (NNum n)
 
--- Construct a new NAp Addr Addr
--- Addr1 and Addr2 are popped directly from the 
--- front of the stack. 
--- New node (NAp) will have addr Anew
--- New heap = hAlloc space for our new NAp node
--- Replace front two addrs in stack with addr of new node
--- Return state 
 mkap :: GmState -> GmState 
 mkap state =
 	putHeap heap' (putStack (a:as') state)
@@ -79,23 +72,19 @@ mkap state =
 		(heap', a) 	= hAlloc (getHeap state) (NAp a1 a2)
 		(a1:a2:as')	= (getStack state)
 
--- Traverse back up tree by 'Int' after SC and add pointer 
--- to argument found (on the right...?) to the stack
--- NOTE: Only called when (stack !! n + 1) is an NAp
--- NOTENOTE: It actually does *just* go up n + 1 (jump the
--- current node, which i think is always an SC) and grab
--- the right hand arg of that NAp
 push :: Int -> GmState -> GmState 
 push n state =
-	putStack (a:as) state 
+	putStack stack' state 
 	where 
 		as = getStack state 
-		a  = getArg (hLookup (getHeap state) (as !! (n+1)))
+		stack' =  (as !! n ):as
+
 
 -- Get's right hand ('arg') of NAp node
 getArg :: Node -> Addr 
-getArg (NAp a1 a2) = a2
-
+getArg n = do 
+	case n of
+		(NAp a1 a2) -> a2
 
 -- needs cleanup
 update :: Int -> GmState -> GmState
@@ -142,12 +131,6 @@ boxBoolean b state =
 		b' | b  = 1
 		   | otherwise = 0
 
-{-
-unboxBoolean :: Addr -> GmState -> Bool
-unboxBoolean a state = 
-	ub (hLookup (getHeap state) a)
--}
-
 -- represent monadic (ERRRR ARITY ONE...) operators
 primitive1 :: (b -> GmState -> GmState)		-- boxing func
 		   -> (Addr -> GmState -> a)		-- unboxing func
@@ -183,29 +166,6 @@ add = arithmetic2 (+)
 neg :: GmState -> GmState
 neg = arithmetic1 (negate)
 
-{-
--- Tidies stack post SC instantiating. Drops x addrs0
--- from stack and moves everything up (figuratively)
-slide :: Int -> GmState -> GmState 
-slide n state =
-	putStack (a: drop n as) state 
-	where (a:as) = getStack state
--}
-
--- This will require explanation.
--- Firstly, if there is a Num on top of the graph, then
--- we are done. Replace the code with [] to signify this
--- (which will be acknowledge by gmFinal.) 
--- If there is an NAp, we need to continue unwinding.
--- In the case of an SC, we need to checkout if we have
--- enough arguments to fully saturate the SC and if so
--- put the node's code into GmState 
--- For an indirection, replace the stack top with the 
--- addr that the indirection points to.
-
--- type GmDump = [GmDumpItem]
--- type GmDumpItem = (GmCode, GmStack)
-
 unwind :: GmState -> GmState 
 unwind state =
 	newState (hLookup heap a)
@@ -213,10 +173,6 @@ unwind state =
 		(a:as) = getStack state
 		heap  = getHeap state
 		newState (NNum n) 
-		-- this is going to be a pain to javascripterize.
-		-- currently works because ((c,s):ds) wont be called
-		-- unless needed. IF ONLY SOMEONE WOULD COME UP WITH
-		-- A WAY TO INTRODUCE LAZINESS TO JAVASCRIPT...
 			| (getDump state) == [] = state
 			| otherwise  = putDump ds (putCode (c) (putStack (a:s) state))
 			where
@@ -225,4 +181,12 @@ unwind state =
 		newState (NAp a1 a2) = putCode [Unwind] (putStack (a1:a:as) state)
 		newState (NGlobal n c)
 			| (length as) < n 		= error "unwinding undersaturated"
-			| otherwise 			= putCode c state
+			| otherwise  = putCode c (putStack stack' state)
+			where
+				stack' = rearrange n heap as
+
+rearrange :: Int -> GmHeap -> GmStack -> GmStack
+rearrange n heap as =
+	take n as' ++ drop n as 
+	where
+		as' = map (getArg . hLookup heap) (take n as)
