@@ -136,6 +136,12 @@ casejump [(t,i')] state = putCode (branchCode++i) state
 		branchCode = aLookup [(t,i')] t $ error "casejump failed to find branch"
 		i = getCode state		
 
+split :: Int -> GmState -> GmState
+split n state = putStack stack' state
+	where
+		(NConstr t a) = hLookup (getHeap state) (head $ getStack state) 
+		stack' = a ++ (getStack state)
+
 evalx :: GmState -> GmState 
 evalx state = putDump dump' newState 
 	where 

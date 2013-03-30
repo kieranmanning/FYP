@@ -457,6 +457,20 @@ function casejump(tagbranches, xState){
 	console.error("shit the bed in casejump");
 }
 
+function split(n, xState){
+	var State = xState;
+	var stack = getStack(State);
+	var node = hLookup(getHeap(State), head(stack));
+	var addrs = node.a;
+	var addrsUsed = [];
+	stack.drop(1);
+	for(var i=0;i<n;i++){
+		addrsUsed[i] = addrs[i];
+	}
+	var newStack = addrsUsed.concat(stack);
+	return putStack(newStack, State);
+}
+
 /* update :: Int -> GmState -> GmState */
 function update(N, xState){
 	//console.log("update called");
