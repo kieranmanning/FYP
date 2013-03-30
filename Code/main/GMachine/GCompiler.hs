@@ -40,7 +40,7 @@ putCode i' (o, i, stack, dump, heap, globals, stats) =
 
 data Instruction 
 	= Unwind
-	| Slide
+	| Slide Int
 	| PushGlobal Name 
 	| PushInt Int 
 	| Push Int 
@@ -196,9 +196,26 @@ compileE (EAp(EAp(EVar op)e1)e2)env = do
 	case aElem op builtInDyadic of
 		False -> compileC (EAp(EAp(EVar op)e1)e2)env 
 		True -> compileE e1 env ++ compileE e1 env ++ [getDyadicInst op]
-compileE (EAp(EVar "neg")e) env =
-	compileE e env ++ [Neg]
+compileE (EAp(EVar "neg")e) env = compileE e env ++ [Neg]
+compileE (ECase expr alts) env = 
+	compileE expr env ++ [Casejump $ compileD alts env]
+compileE (EConstr t a) env = [Pack t a]
 compileE e env  = compileC e env
+
+compileD :: [CoreAlt] -> GmEnvironment -> [(Int, GmCode)]
+compileD alts env = compileAlts compileE' alts env
+
+compileAlts :: (Int -> GmCompiler) 
+			-> [CoreAlt]
+			-> GmEnvironment
+			-> [(Int, GmCode)]
+compileAlts comp alts env =
+	[(tag, comp (length names) body (zip names [0..] ++ argOffset (length names) env))
+		| (tag,names,body) <- alts]
+
+compileE' :: Int -> GmCompiler
+compileE' offset expr env =
+	[Split offset] ++ compileE expr env ++ [Slide offset]
 
 builtInDyadic :: [(Name, Instruction)]
 builtInDyadic =
@@ -219,6 +236,7 @@ compileC (ENum n) env 				= [PushInt n]
 compileC (EAp e1 e2) env 			= compileC e2 env ++ 
 									  compileC e1 (argOffset 1 env) ++
 									  [Mkap]
+compileC (EConstr t a) env 			= [Pack t a]									 
 
 compileArgs :: [(Name, CoreExpr)] -> GmEnvironment -> GmEnvironment
 compileArgs defs env =

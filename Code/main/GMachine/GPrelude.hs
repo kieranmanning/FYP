@@ -31,3 +31,8 @@ negTest :: CoreProgram
 negTest =
 	[("main", [], EAp (EVar "neg") (ENum 1))]
 
+caseTest :: CoreProgram
+caseTest = 
+	[("main", [], ECase (EConstr 2 0) [(1, [], ENum 1), (2, [], ENum 2)])]
+
+

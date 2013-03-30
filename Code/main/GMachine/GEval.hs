@@ -43,6 +43,10 @@ dispatch :: Instruction -> GmState -> GmState
 dispatch (PushGlobal f)	= pushglobal f
 dispatch (PushInt n)	= pushint n 
 dispatch  Mkap 			= mkap 
+dispatch (Slide n)		= slide n
+dispatch (Split n)		= split n
+dispatch (Pack t n)		= pack t n
+dispatch (Casejump ti)	= casejump ti
 dispatch (Push n)		= push n
 dispatch (Update n) 	= update n 
 dispatch (Pop n) 		= pop n
@@ -91,7 +95,6 @@ update :: Int -> GmState -> GmState
 update n state = newState
 	where
 		stack = getStack state 
-		oldAddr = stack !! (n+1)
 		(newHeap, newAddr) = hAlloc (getHeap(state)) (NInd 	(stack!!0))
 		(a, as) = splitAt (n+1) stack 
 		tempStack = a ++ (newAddr : (drop 1 as))
@@ -129,18 +132,18 @@ pack t n state = putStack stack' (putHeap heap' state)
 		stack' = a:(drop n $ getStack state)		
 
 casejump :: [(Int, GmCode)] -> GmState -> GmState
-casejump [(t,i')] state = putCode (branchCode++i) state
+casejump cases state = putCode (branchCode++i) state
 	where
 		a = head $ getStack state
 		(NConstr t ss) = hLookup (getHeap state) a 
-		branchCode = aLookup [(t,i')] t $ error "casejump failed to find branch"
+		branchCode = aLookup cases t $ error "casejump failed to find branch"
 		i = getCode state		
 
 split :: Int -> GmState -> GmState
 split n state = putStack stack' state
 	where
 		(NConstr t a) = hLookup (getHeap state) (head $ getStack state) 
-		stack' = a ++ (getStack state)
+		stack' = a ++ (drop 1 $ getStack state)
 
 evalx :: GmState -> GmState 
 evalx state = putDump dump' newState 
@@ -237,6 +240,11 @@ unwind state =
 				i = fst $ head $ getDump state
 				s = snd $ head $ getDump state
 				dump' = tail $ getDump state
+		newState (NConstr n as) 
+			| (getDump state) == [] = state 
+			| otherwise = putDump ds (putCode c (putStack (a:s) state))
+			where
+				((c,s):ds) = getDump state
 
 
 rearrange :: Int -> GmHeap -> GmStack -> GmStack

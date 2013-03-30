@@ -476,10 +476,6 @@ function update(N, xState){
 	//console.log("update called");
 	var State 			= xState;
 	var stack 			= getStack(State);
-	var oldAddr 		= stack[N+1];
-	if(oldAddr == undefined){
-		console.log("accessing undefined stack space in update");
-	}
 	var newHeap;
 	var newAddr;
 	[newHeap, newAddr] 	= hAlloc(getHeap(State), (new NInd(stack[0])));
