@@ -222,39 +222,57 @@ function aLookup(GmGlobals, Name){
 	return global;
 }
 
-function getCode(GmState){
+function getOutput(GmState){
 	return GmState[0];
 }
 
+function putOutput(GmOutput, GmState){
+	var newState = [GmOutput, GmState[1], GmState[2], GmState[3], Gmstate[4], Gmstate[5]];
+	return newState;	
+}
+
+function getCode(GmState){
+	return GmState[1];
+}
+
 function putCode(GmCode, GmState){
-	var newState = [GmCode, GmState[1], GmState[2], GmState[3], GmState[4]];
-	return newState;
-}
-
-function getHeap(GmState){
-	return GmState[3];
-}
-
-function putHeap(GmHeap, GmState){
-	var newState = [GmState[0], GmState[1], GmState[2], GmHeap, GmState[4]];
+	var newState = [GmState[0], GmCode, GmState[2], GmState[3], GmState[4], GmState[5]];
 	return newState;
 }
 
 function getStack(GmState){
-	return GmState[1];
+	return GmState[2];
 }
 
 function putStack(GmStack, GmState){
-	var newState = [GmState[0], GmStack, GmState[2], GmState[3], GmState[4]];
+	var newState = [GmState[0], GmState[1], GmStack, GmState[3], GmState[4], GmState[5]];
 	return newState;
 }
 
 function getDump(GmState){
-	return GmState[2];
+	return GmState[3];
 }
 
 function putDump(GmDump, GmState){
-	var newState = [GmState[0], GmState[1], GmDump, GmState[3], GmState[4]];
+	var newState = [GmState[0], GmState[1], GmState[2], GmDump, GmState[4], GmState[5]];
+	return newState;
+}
+
+function getHeap(GmState){
+	return GmState[4];
+}
+
+function putHeap(GmHeap, GmState){
+	var newState = [GmState[0], GmState[1], GmState[2], GmState[3], GmHeap, GmState[5]];
+	return newState;
+}
+
+function getGlobals(GmState){ 
+	return GmState[5];
+}
+
+function putGlobals(GmGlobals, GmState){
+	var newState = [GmState[0], GmState[1], GmState[2], GmState[3], GmState[4], GmGlobals];
 	return newState;
 }
 
@@ -262,14 +280,6 @@ function dumpEmpty(GmDump){
 	return ((GmDump[0].length == 0) && (GmDump[1].length == 0))
 }
 
-function getGlobals(GmState){ 
-	return GmState[4];
-}
-
-function putGlobals(GmGlobals, GmState){
-	var newState = [GmState[0], GmState[1], GmState[2], GmState[3], GmGlobals];
-	return newState;
-}
 
 // All these tested 12:45 22/03
 
@@ -711,6 +721,8 @@ function evalProg(State){
  *	Output Dump...
 *****************************************************************************/
 
+var GmOutput = [];
+ 
 var GmCode = [new PushGlobal("main"),new Eval()];
  
 var GmStack = [];
@@ -718,18 +730,20 @@ var GmStack = [];
 var GmDump = [];
  
 var GmHeap = {
-objCount:4,
-freeAddrs:[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
+objCount:6,
+freeAddrs:[7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
 addrObjMap:{
-4:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Update(1),new Pop(1),new Unwind()]),
-3:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Add(),new Update(2),new Pop(2),new Unwind()]),
+6:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Update(1),new Pop(1),new Unwind()]),
+5:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Add(),new Update(2),new Pop(2),new Unwind()]),
+4:new NGlobal(2,[new Push(1),new Update(2),new Pop(2),new Unwind()]),
+3:new NGlobal(1,[new Push(0),new Update(1),new Pop(1),new Unwind()]),
 2:new NGlobal(1,[new Push(0),new Update(1),new Pop(1),new Unwind()]),
-1:new NGlobal(0,[new PushInt(2),new PushInt(5),new PushGlobal("+"),new Mkap(),new Mkap(),new Update(0),new Pop(0),new Unwind()])}
+1:new NGlobal(0,[new PushInt(5),new PushInt(5),new Add(),new Update(0),new Pop(0),new Unwind()])}
 };
  
-var GmGlobals = {"main":1,"Id":2,"+":3,"neg":4};
+var GmGlobals = {"main":1,"Id":2,"Id2":3,"K":4,"+":5,"neg":6};
  
-var GmState = [GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
+var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
  
 function main(){
 	return evalProg(GmState);

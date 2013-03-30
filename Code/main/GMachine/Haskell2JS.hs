@@ -9,14 +9,18 @@ import Data.List
 type JS = String
 
 gmState2JS :: GmState -> JS 
-gmState2JS (c, s, d, h, g, st) =
+gmState2JS (o, c, s, d, h, g, st) =
+	gmOutput2JS o ++ "\n \n" ++
 	gmCode2JS c ++ "\n \n" ++ 
 	gmStack2JS s ++ "\n \n" ++ 
 	gmDump2JS d ++ "\n \n" ++ 
 	gmHeap2JS h ++ "\n \n" ++ 
 	gmGlobals2JS g ++ "\n \n" ++
-	"var GmState = [GmCode, GmStack, GmDump, GmHeap, GmGlobals]; \n \n" ++
+	"var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; \n \n" ++
 	"function main(){\n\treturn evalProg(GmState);\n}"
+
+gmOutput2JS :: GmOutput -> JS 
+gmOutput2JS o = "var GmOutput = [];"
 
 gmCode2JS :: GmCode -> JS
 gmCode2JS is = "var GmCode = [" ++ isJsList ++ "];"
