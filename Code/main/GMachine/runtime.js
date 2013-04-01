@@ -316,6 +316,25 @@ function pushint(Int, xState){
 	return newNewState;
 }	// Looking alright 12:49 22/03
 
+function pushint(Int, xState){
+	var State = xState;
+	var heap = getHeap state;
+	var stack = getStack state;
+	var globals = getGlobals state;
+	var exists = false;
+	for(var i=0;i<globals.length;i++){
+		if(globals[i] == Int){
+			var newStack = [i].concat(stack);
+			return putStack(newStack, State);
+		}
+	} 
+	var newHeap;
+	var addr;
+	[newHeap, addr] = hAlloc(heap, new NNum(Int));
+	var newStack = [addr].concat(stack);
+	var newGlobals = []
+}
+
 /*
 -- Construct a new NAp Addr Addr
 -- Addr1 and Addr2 are popped directly from the 
