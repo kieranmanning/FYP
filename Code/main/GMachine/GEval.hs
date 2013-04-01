@@ -204,6 +204,16 @@ arithmetic2 = primitive2 boxInteger unboxInteger
 comparison :: (Int -> Int -> Bool) -> (GmState -> GmState)
 comparison = primitive2 boxBoolean unboxInteger
 
+cond :: GmCode -> GmCode -> GmState -> GmState
+cond i1 i2 state = putCode i' (putStack as state)
+	where
+		i = getCode state 
+		(a:as) = getStack state 
+		(NNum b) = hLookup (getHeap state) a 
+		i' | b == 0 = (i2 ++ i)
+		   | b == 1 = (i1 ++ i)
+		   | otherwise = error $ "cond called on nonbool"
+
 add :: GmState -> GmState
 add = arithmetic2 (+)
 

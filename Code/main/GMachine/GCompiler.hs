@@ -209,11 +209,14 @@ compileArgs defs env =
 compiledPrimitives :: [GmCompiledSC]
 compiledPrimitives = 
 	[("+", 2, [Push 1, Eval, Push 1, Eval, Add, Update 2, Pop 2, Unwind]),
-	 ("neg", 1, [Push 0, Eval, Neg, Update 1, Pop 1, Unwind])
-	 --("==", 2, [Push 1, Eval, Push 1, Eval, Eq, Update 2, Pop 2, Unwind]),
-	 --("!=", 2, [Push 1, Eval, Push 1, Eval, Neq, Update 2, Pop 2, Unwind]),
-	 --("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
-	 	]
+	 ("-", 2, [Push 1, Eval, Push 1, Eval, Sub, Update 2, Pop 2, Unwind]),
+	 ("*", 2, [Push 1, Eval, Push 1, Eval, Mul, Update 2, Pop 2, Unwind]),
+	 ("/", 2, [Push 1, Eval, Push 1, Eval, Div, Update 2, Pop 2, Unwind]),
+	 ("neg", 1, [Push 0, Eval, Neg, Update 1, Pop 1, Unwind]),
+	 ("==", 2, [Push 1, Eval, Push 1, Eval, Eq, Update 2, Pop 2, Unwind]),
+	 ("!=", 2, [Push 1, Eval, Push 1, Eval, Neq, Update 2, Pop 2, Unwind]),
+	 ("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
+	 ]
 
 ---------------------------------------------------------------------------------
 -- Compiler Utils.
