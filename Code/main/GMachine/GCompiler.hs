@@ -240,7 +240,7 @@ mapAccuml f acc (x:xs) 	= (acc2, x':xs')
  -	*NOTE* heap set [1..20] for ease of analysis
  -}
 hInitial :: Heap a
-hInitial = (0, [1..30], [])
+hInitial = (0, [1..100], [])
 
 hAlloc :: Heap a -> a -> (Heap a, Addr)
 hAlloc (size, (next:free), cts) n = ((size+1, free, (next, n) : cts), next)

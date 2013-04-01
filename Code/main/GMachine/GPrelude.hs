@@ -40,3 +40,27 @@ recTest :: CoreProgram
 recTest = 
 	[("rec", ["x"], EAp (EVar "rec") (EAp (EVar "+") (EVar "x"))),
 	 ("main", [], EAp (EVar "rec") (ENum 9))]
+
+abTest :: CoreProgram
+abTest = 
+	[("xeq0", ["x"], EAp(EAp(EVar"==")(ENum 0))(EVar "x")),
+	 ("rec", ["x"], EAp(EAp(EAp(EVar "if")cond)(ENum 0))e2),
+	 ("main", [], EAp(EVar "rec")(ENum 3))]
+	 where
+	 	e2 = (EAp(EVar "rec")(EAp(EAp(EVar "-")(EVar "x"))(ENum 1)))
+	 	cond = (EAp(EVar "xeq0")(EVar "x"))
+
+subTest :: CoreProgram
+subTest = 
+	[("main", [], EAp(EAp(EVar"-")(ENum 1))(ENum 7))]
+
+ifTest :: CoreProgram
+ifTest = 
+	[("xm1", ["x"], EAp (EAp (EVar "-") (EVar "x")) (ENum 1)),
+	 ("xeq1", ["x"], EAp(EAp(EVar "==")(EVar "x"))(ENum 1)),
+	 ("rec", ["x"], EAp(EAp(EAp(EVar "if")(EVar "xeq1"))(ENum 1))(ENum 2)),
+	 ("main", [], EAp(EVar "rec")(ENum 1))]
+
+if2Test :: CoreProgram
+if2Test = 
+	[("main", [], EAp(EAp( EAp(EVar "if")(EAp(EAp(EVar "==")(ENum 1))(ENum 0)) )(ENum 1))(ENum 2))]

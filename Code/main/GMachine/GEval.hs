@@ -47,7 +47,10 @@ dispatch (Push n)		= push n
 dispatch (Update n) 	= update n 
 dispatch (Pop n) 		= pop n
 dispatch  Unwind 		= unwind
+dispatch (Cond a b) 	= cond a b
 dispatch Eval 			= evalx
+dispatch Sub 			= sub 
+dispatch Eq 			= eq
 dispatch Add 			= add
 dispatch Neg 			= neg
 
@@ -217,6 +220,12 @@ cond i1 i2 state = putCode i' (putStack as state)
 add :: GmState -> GmState
 add = arithmetic2 (+)
 
+sub :: GmState -> GmState
+sub = arithmetic2 (-)
+
+eq :: GmState -> GmState
+eq = comparison (==)
+
 neg :: GmState -> GmState
 neg = arithmetic1 (negate)
 
@@ -261,7 +270,7 @@ unwind state =
 		newState (NInd a1) =  putCode [Unwind] (putStack (a1:as) state)
 		newState (NAp a1 a2) = putCode [Unwind] (putStack (a1:a:as) state)
 		newState (NGlobal n c)
-			| (length as) < n 		= error "unwinding undersaturated"
+			| (length (a:as)-1) < n = error "unwinding undersaturated"
 			| otherwise 			= putCode c (putStack (rearrange n heap (a:as)) state)
 
 rearrange :: Int -> GmHeap -> GmStack -> GmStack
