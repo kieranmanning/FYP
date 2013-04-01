@@ -93,6 +93,9 @@ type GmGlobals = ASSOC Name Addr
 getGlobals :: GmState -> GmGlobals 
 getGlobals (i, stack, dump, heap, globals, stats) = globals
 
+putGlobals :: GmGlobals -> GmState -> GmState
+putGlobals globals' (i, stack, dump, heap, globals, stats) =
+	(i, stack, dump, heap, globals', stats)
 
 type GmStats = Int 
 
@@ -189,8 +192,15 @@ compileC (EAp e1 e2) env 			= compileC e2 env ++
 									  [Mkap]
 
 
+
 argOffset :: Int -> GmEnvironment -> GmEnvironment
 argOffset n env = [(v, n+m) | (v,m) <- env] 
+
+compileArgs :: [(Name, CoreExpr)] -> GmEnvironment -> GmEnvironment
+compileArgs defs env = 
+	zip (map fst defs) [n-1, n-2..0] ++ argOffset n env 
+		where 
+			n = length defs
 
 ---------------------------------------------------------------------------------
 -- Compiler Primitives.

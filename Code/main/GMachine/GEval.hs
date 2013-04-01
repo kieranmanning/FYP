@@ -59,11 +59,29 @@ pushglobal f state =
 	where 
 		a = aLookup (getGlobals state) f (error ("Undeclared global " ++ f))
 
+{-
 -- Put int into heap and add its addr to stack.
 pushint :: Int -> GmState -> GmState 
 pushint n state =
 	putHeap heap' (putStack (addr: getStack state) state)
 	where (heap', addr) = hAlloc (getHeap state) (NNum n)
+-}
+
+pushint :: Int -> GmState -> GmState
+pushint n state =
+	case aLookup globals (show n) (-1) of
+		(-1) -> putStack stack' (putHeap heap' (putGlobals globals' state))
+				where
+					(heap', addr) = hAlloc heap $ NNum n 
+					stack' = addr : stack 
+					globals' = ((show n), addr) : globals 
+		addr -> putStack stack' state 
+			    where
+			    	stack' = addr : stack 
+		where
+			heap = getHeap state 
+			stack = getStack state 
+			globals = getGlobals state 
 
 -- Construct a new NAp Addr Addr
 -- Addr1 and Addr2 are popped directly from the 
@@ -85,12 +103,21 @@ mkap state =
 -- NOTENOTE: It actually does *just* go up n + 1 (jump the
 -- current node, which i think is always an SC) and grab
 -- the right hand arg of that NAp
+{-
 push :: Int -> GmState -> GmState 
 push n state =
 	putStack (a:as) state 
 	where 
 		as = getStack state 
 		a  = getArg (hLookup (getHeap state) (as !! (n+1)))
+-}
+
+push :: Int -> GmState -> GmState
+push n state =
+	putStack stack' state 
+	where
+		stack = getStack state 
+		stack' = (stack !! n):stack
 
 -- Get's right hand ('arg') of NAp node
 getArg :: Node -> Addr 
@@ -225,4 +252,10 @@ unwind state =
 		newState (NAp a1 a2) = putCode [Unwind] (putStack (a1:a:as) state)
 		newState (NGlobal n c)
 			| (length as) < n 		= error "unwinding undersaturated"
-			| otherwise 			= putCode c state
+			| otherwise 			= putCode c (putStack (rearrange n heap (a:as)) state)
+
+rearrange :: Int -> GmHeap -> GmStack -> GmStack
+rearrange n heap as =
+	take n as' ++ drop n as 
+	where
+		as' = map (getArg . hLookup heap) (tail as)
