@@ -233,12 +233,6 @@ function Cond(c1, c2){
 function hAlloc(xGmHeap, Node){
 	var Heap			  = xGmHeap
 	var size 	 		  = Heap.objCount;
-	/*
-	if(size >= Heap.freeAddrs.length){
-		console.log("Heap space exhausted");
-		throw "stop execution";
-	}
-	*/
 	var freeAddrs 	 	  = Heap.freeAddrs;
 	var addrObjMapx 	  = Heap.addrObjMap;
 	var next 	 		  = head(freeAddrs);
@@ -382,24 +376,15 @@ function pushint(Int, xState){
 /* Mkap :: GmState -> GmState */
 function mkap(xState){
 	var oldState 			= xState;
-	//console.log("mkap called");
 	var stack 				= getStack(oldState);
 	var heap 				= getHeap(oldState);	
-	//replacing heads with pops because a:b:c
 	var a1 					= stack[0];
 	stack.splice(0,1);
-	//console.log("mkap a1: " + a1);
 	var a2 					= stack[0];
 	stack.splice(0,1);
-	//console.log("mkap a2: " + a2);
 	var stackRest 			= stack;
 	var node 				= new NAp(a1, a2);
-	//console.log(node);
 	[newHeap, nodeAddr] 	= hAlloc(heap, node);
-	//console.log(nodeAddr);
-	//newStack 			= nodeAddr.concat(stackRest);
-	//console.log("this far?");
-	//stack.push(nodeAddr);
 	stack 					= [nodeAddr].concat(stack);
 	var newStack			= stack;
 	var newState 			= putHeap(newHeap, oldState);
@@ -546,14 +531,18 @@ function unboxInteger(A, xState){
 /* boxBoolean :: Bool -> GmState -> GmState */
 function boxBoolean(b, xState){
 	var State = xState;
-	if(b == True){
+	if(b == true){
 		var newB = 1;
 	} else {
-		var newB = 0;
+		if(b == false){
+			var newB = 2;
+		} else {
+			console.error("unexpected boolean representation");
+		}
 	}
 	var newHeap;
 	var a;
-	[newHeap, a] = hAlloc(getHeap(State), (new NNum(newB)))
+	[newHeap, a] = hAlloc(getHeap(State), (new NConstr(newB, [])))
 	var newStack = [a].concat(getStack(State));
 	return putStack(newStack, 
 		   putHeap(newHeap, State));
@@ -607,16 +596,18 @@ function cond(i1, i2, xState){
 	var a = head(stack);
 	var as = tail(stack);
 	var node = hLookup(getHeap(State), a);
-	if(!(node instanceof NNum)){
+	console.log("node.t: " + node.t);
+	if(!(node instanceof NConstr)){
 		console.error("cond called on non-bool");
 		return "SHITTHEBED";
 	}
-	if(node.n == 0){
+	if(node.t == 2){
 		return putCode(i2.concat(i), putStack(as, State));
 	}
-	if(node.n == 1){
+	if(node.t == 1){
 		return putCode(i1.concat(i), putStack(as, State));
 	}
+	console.error("unsuccesful cond");
 }
 
 /* working */
@@ -698,7 +689,20 @@ function unwind(xState){
 		if(dumpEmpty(dump)){
 			return State;
 		} else {
-			console.log("here");
+			[c, s] = head(dump);
+			ds = tail(dump);
+			var newState = putDump(ds, 
+						  (putCode(c, 
+						  (putStack([a].concat(s), 
+						  (State))))))
+			return newState;
+		};
+	}
+	if(node instanceof NConstr){
+		var dump = getDump(State);
+		if(dumpEmpty(dump)){
+			return State;
+		} else {
 			[c, s] = head(dump);
 			ds = tail(dump);
 			var newState = putDump(ds, 
