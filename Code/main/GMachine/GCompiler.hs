@@ -12,7 +12,8 @@ import GADT
  -	The components mean the usual.
  -}
 type GmState 
-	= (	GmCode,
+	= (	GmOutput,
+		GmCode,
 		GmStack,
 		GmDump,
 		GmHeap,
@@ -21,15 +22,25 @@ type GmState
 
 type GmCode = [Instruction]
 
+type GmOutput = [Char]
+
+getOutput :: GmState -> GmOutput
+getOutput (o, i, stack, dump, heap, globals, stats) = o
+
+putOutput :: GmOutput -> GmState -> GmState
+putOutput o' (o, i, stack, dump, heap, globals, stats) =
+	(o', i, stack, dump, heap, globals, stats)
+
 getCode :: GmState -> GmCode
-getCode (i, stack, dump, heap, globals, stats)  = i 
+getCode (o, i, stack, dump, heap, globals, stats)  = i 
 
 putCode :: GmCode -> GmState -> GmState
-putCode i' (i, stack, dump, heap, globals, stats) =
-	(i', stack, dump, heap, globals, stats)
+putCode i' (o, i, stack, dump, heap, globals, stats) =
+	(o, i', stack, dump, heap, globals, stats)
 
 data Instruction 
-	= Unwind
+	= Slide Int 
+	| Unwind
 	| PushGlobal Name 
 	| PushInt Int 
 	| Push Int 
@@ -41,6 +52,9 @@ data Instruction
 	| Add | Sub | Mul | Div | Neg
 	| Eq  | Neq | Lt  | Le | Gt | Ge
 	| Cond GmCode GmCode
+	| Pack Int Int
+	| Casejump [(Int, GmCode)]
+	| Split Int
 	deriving(Eq, Show)
 
 type GmDump = [GmDumpItem]
@@ -48,11 +62,11 @@ type GmDump = [GmDumpItem]
 type GmDumpItem = (GmCode, GmStack)
 
 getDump :: GmState -> GmDump 
-getDump (code, stack, dump, heap, globals, stats) = dump 
+getDump (o, code, stack, dump, heap, globals, stats) = dump 
 
 putDump :: GmDump -> GmState -> GmState
-putDump dump' (i, stack, dump, heap, globals, stats) =
-	(i, stack, dump', heap, globals, stats)
+putDump dump' (o, i, stack, dump, heap, globals, stats) =
+	(o, i, stack, dump', heap, globals, stats)
 
 dumpInitial = []
 
@@ -61,11 +75,11 @@ type GmStack = [Addr]
 type Addr = Int
 
 getStack :: GmState -> GmStack 
-getStack (i, stack, dump, heap, globals, stats) = stack
+getStack (o, i, stack, dump, heap, globals, stats) = stack
 
 putStack :: GmStack -> GmState -> GmState
-putStack stack' (i, stack, dump, heap, globals, stats) =
-	(i, stack', dump, heap, globals, stats)
+putStack stack' (o, i, stack, dump, heap, globals, stats) =
+	(o, i, stack', dump, heap, globals, stats)
 
 type GmHeap = Heap Node
 
@@ -78,24 +92,25 @@ data Node
 	| NAp Addr Addr  		
 	| NGlobal Int GmCode 	-- NGlobal Arity Code
 	| NInd Addr 			-- Indirection
+	| NConstr Int [Addr]
 	deriving(Eq, Show)
 
 getHeap :: GmState -> GmHeap
-getHeap (i, stack, dump, heap, globals, stats) = heap
+getHeap (o, i, stack, dump, heap, globals, stats) = heap
 
 putHeap :: GmHeap -> GmState -> GmState
-putHeap heap' (i, stack, dump, heap, globals, stats) =
-	(i, stack, dump, heap', globals, stats)
+putHeap heap' (o, i, stack, dump, heap, globals, stats) =
+	(o, i, stack, dump, heap', globals, stats)
 
 
 type GmGlobals = ASSOC Name Addr
 
 getGlobals :: GmState -> GmGlobals 
-getGlobals (i, stack, dump, heap, globals, stats) = globals
+getGlobals (o, i, stack, dump, heap, globals, stats) = globals
 
 putGlobals :: GmGlobals -> GmState -> GmState
-putGlobals globals' (i, stack, dump, heap, globals, stats) =
-	(i, stack, dump, heap, globals', stats)
+putGlobals globals' (o, i, stack, dump, heap, globals, stats) =
+	(o, i, stack, dump, heap, globals', stats)
 
 type GmStats = Int 
 
@@ -109,11 +124,11 @@ statGetSteps :: GmStats -> Int
 statGetSteps s = s
 
 getStats :: GmState -> GmStats 
-getStats (i, stack, dump, heap, globals, stats) = stats
+getStats (o, i, stack, dump, heap, globals, stats) = stats
 
 putStats :: GmStats -> GmState -> GmState 
-putStats stats' (i, stack, dump, heap, globals, stats) =
-	(i, stack, dump, heap, globals, stats')
+putStats stats' (o, i, stack, dump, heap, globals, stats) =
+	(o, i, stack, dump, heap, globals, stats')
 
 ---------------------------------------------------------------------------------
 -- Compiler.
@@ -130,7 +145,7 @@ putStats stats' (i, stack, dump, heap, globals, stats) =
 -- Take ScDefns and start with init'd empty GmState
 compile :: CoreProgram -> GmState
 compile program =
-	(initialCode, [], [], heap, globals, statInitial)
+	([], initialCode, [], [], heap, globals, statInitial)
 	where
 		(heap, globals) = buildInitialHeap program
 

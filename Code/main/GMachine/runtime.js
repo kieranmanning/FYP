@@ -624,7 +624,7 @@ function unwind(xState){
 		var numargs 	= node.numargs;
 		var code 		= node.instructions;
 		if((stack.length-1) < numargs){
-			console.error("unwinding undersaturated");
+			console.error("unwinding undersaturated. see 3.7.2");
 		} else {
 			var newState = 
 				putCode(code, 

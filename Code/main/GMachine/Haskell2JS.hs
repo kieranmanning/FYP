@@ -9,7 +9,7 @@ import Data.List
 type JS = String
 
 gmState2JS :: GmState -> JS 
-gmState2JS (c, s, d, h, g, st) =
+gmState2JS (o, c, s, d, h, g, st) =
 	gmCode2JS c ++ "\n \n" ++ 
 	gmStack2JS s ++ "\n \n" ++ 
 	gmDump2JS d ++ "\n \n" ++ 
