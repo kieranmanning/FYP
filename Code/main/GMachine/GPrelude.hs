@@ -15,18 +15,20 @@ preludeDefs =
 	 ("K", ["x", "y"], EVar "y")]
 -}
 
-kTest :: CoreProgram
-kTest = 
-	[("K", ["x", "y"], EVar "x"),
-	("main", [], (EAp (EAp (EVar "K") (ENum 1)) (ENum 9)))]
-
 preludeDefs :: CoreProgram
 preludeDefs = 
 	[("Id", ["x"], EVar "x")]	-- Identity, here we come...
 
-idTest :: CoreProgram
-idTest =
-	[("main", [], (EAp (EVar "Id") (EAp (EVar "Id")(ENum 1))))]
+kTest :: CoreProgram
+kTest =
+	[("K", ["x", "y"], EVar "x"),
+	 ("main", [], EAp (EAp (EVar "K") (ENum 1)) divbyzero)]
+	where
+		divbyzero = EAp (EAp (EVar "/") (ENum 1)) (ENum 0)
+
+caseTest :: CoreProgram
+caseTest = 
+	[("main", [], ECase (EConstrAp 1 0 []) [(1, [], ENum 1), (2, [], ENum 2)])]
 
 arithTest :: CoreProgram
 arithTest = 
@@ -35,11 +37,6 @@ arithTest =
 negTest :: CoreProgram
 negTest =
 	[("main", [], EAp (EVar "neg") (ENum 1))]
-
-recTest :: CoreProgram
-recTest = 
-	[("rec", ["x"], EAp (EVar "rec") (EAp (EVar "+") (EVar "x"))),
-	 ("main", [], EAp (EVar "rec") (ENum 9))]
 
 abTest :: CoreProgram
 abTest = 
@@ -56,11 +53,4 @@ subTest =
 
 ifTest :: CoreProgram
 ifTest = 
-	[("xm1", ["x"], EAp (EAp (EVar "-") (EVar "x")) (ENum 1)),
-	 ("xeq1", ["x"], EAp(EAp(EVar "==")(EVar "x"))(ENum 1)),
-	 ("rec", ["x"], EAp(EAp(EAp(EVar "if")(EVar "xeq1"))(ENum 1))(ENum 2)),
-	 ("main", [], EAp(EVar "rec")(ENum 2))]
-
-if2Test :: CoreProgram
-if2Test = 
 	[("main", [], EAp(EAp( EAp(EVar "if")(EAp(EAp(EVar "==")(ENum 1))(ENum 0)) )(ENum 1))(ENum 2))]

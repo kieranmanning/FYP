@@ -123,6 +123,11 @@ function NInd(a){
 	this.a = a
 }
 
+function NConstr(t, a){
+	this.t = t;
+	this.a = a;
+}
+
 // data Instruction
 function Unwind(){
 
@@ -140,6 +145,14 @@ function Push(Int){
 	this.Int = Int;
 }
 
+function Split(n){
+	this.n = n;
+}
+
+function Slide(n){
+	this.n = n;
+}
+
 function Mkap(){
 
 }
@@ -147,6 +160,21 @@ function Mkap(){
 function Update(A){
 	this.a = A;
 
+}
+
+function Pack(t, n){
+	this.t = t;
+	this.n = n;
+}
+
+function Cond(i1, i2){
+	this.i1 = i1;
+	this.i2 = i2;
+}
+
+function Casejump(a, b){
+	this.a = a;
+	this.b = b;
 }
 
 function Pop(Int){
@@ -237,39 +265,57 @@ function aLookup(GmGlobals, Name){
 	return global;
 }
 
-function getCode(GmState){
+function getOutput(GmState){
 	return GmState[0];
 }
 
+function putOutput(GmOutput, GmState){
+	var newState = [GmOutput, GmState[1], GmState[2], GmState[3], Gmstate[4], Gmstate[5]];
+	return newState;	
+}
+
+function getCode(GmState){
+	return GmState[1];
+}
+
 function putCode(GmCode, GmState){
-	var newState = [GmCode, GmState[1], GmState[2], GmState[3], GmState[4]];
-	return newState;
-}
-
-function getHeap(GmState){
-	return GmState[3];
-}
-
-function putHeap(GmHeap, GmState){
-	var newState = [GmState[0], GmState[1], GmState[2], GmHeap, GmState[4]];
+	var newState = [GmState[0], GmCode, GmState[2], GmState[3], GmState[4], GmState[5]];
 	return newState;
 }
 
 function getStack(GmState){
-	return GmState[1];
+	return GmState[2];
 }
 
 function putStack(GmStack, GmState){
-	var newState = [GmState[0], GmStack, GmState[2], GmState[3], GmState[4]];
+	var newState = [GmState[0], GmState[1], GmStack, GmState[3], GmState[4], GmState[5]];
 	return newState;
 }
 
 function getDump(GmState){
-	return GmState[2];
+	return GmState[3];
 }
 
 function putDump(GmDump, GmState){
-	var newState = [GmState[0], GmState[1], GmDump, GmState[3], GmState[4]];
+	var newState = [GmState[0], GmState[1], GmState[2], GmDump, GmState[4], GmState[5]];
+	return newState;
+}
+
+function getHeap(GmState){
+	return GmState[4];
+}
+
+function putHeap(GmHeap, GmState){
+	var newState = [GmState[0], GmState[1], GmState[2], GmState[3], GmHeap, GmState[5]];
+	return newState;
+}
+
+function getGlobals(GmState){ 
+	return GmState[5];
+}
+
+function putGlobals(GmGlobals, GmState){
+	var newState = [GmState[0], GmState[1], GmState[2], GmState[3], GmState[4], GmGlobals];
 	return newState;
 }
 
@@ -277,14 +323,6 @@ function dumpEmpty(GmDump){
 	return ((GmDump[0].length == 0) && (GmDump[1].length == 0))
 }
 
-function getGlobals(GmState){ 
-	return GmState[4];
-}
-
-function putGlobals(GmGlobals, GmState){
-	var newState = [GmState[0], GmState[1], GmState[2], GmState[3], GmGlobals];
-	return newState;
-}
 
 // All these tested 12:45 22/03
 
@@ -385,6 +423,52 @@ function push(N, xState){
 	return newState;
 }	// again, heap specific.
 
+// check for case of n == 0
+function pack(t, n, xState){
+	var State = xState;
+	var stack = getStack(State);
+	var heap  = getHeap(State);
+	var addrs = [];
+	for(var x = 0; x < n; x++){
+		addrs[x] = stack[x];
+	}
+	var newHeap;
+	var addr;
+	[newHeap, addr] = hAlloc(heap, new NConstr(t, addrs));
+	stack.drop(n);
+	var newStack = [addr].concat(stack);
+	return putStack(newStack, (putHeap(newHeap, State)));
+}
+
+
+function casejump(tagbranches, xState){
+	var State = xState;
+	var stack = getStack(State);
+	var i = getCode(State);
+	var node = hLookup(getHeap(State), head(stack));
+	var tag = node.t;
+	for(var j=0;j<tagbranches.length;j++){
+		if(tagbranches[j][0] == tag){
+			var branchCode = tagbranches[j][1];
+			return putCode(branchCode.concat(i), State);
+		}
+	}
+	console.error("shit the bed in casejump");
+}
+
+function split(n, xState){
+	var State = xState;
+	var stack = getStack(State);
+	var node = hLookup(getHeap(State), head(stack));
+	var addrs = node.a;
+	var addrsUsed = [];
+	stack.drop(1);
+	for(var i=0;i<n;i++){
+		addrsUsed[i] = addrs[i];
+	}
+	var newStack = addrsUsed.concat(stack);
+	return putStack(newStack, State);
+}
 
 /* update :: Int -> GmState -> GmState */
 function update(N, xState){
@@ -551,6 +635,14 @@ function add(xState){
 	return primitive2(boxInteger, unboxInteger, op, State);
 }
 
+function div(xState){
+	var State = xState;
+	function op(x, y){
+		return x / y;
+	}
+	return primitive2(boxInteger, unboxInteger, op, State);
+}
+
 function sub(xState){
 	var State = xState;
 	function op(x, y){
@@ -690,8 +782,26 @@ function step(xState){
 		var n = i.Int;
 		return pop(n, newState);
 	}
+	if(i instanceof Split){
+		var n = i.n;
+		return split(n);
+	}
+	if(i instanceof Pack){
+		var n = i.n;
+		return pack(n);
+	}
 	if(i instanceof Unwind){
 		return unwind(newState);
+	}
+	if(i instanceof Pack){
+		var n = i.n;
+		var t = i.t;
+		return pack(t, n);
+	}
+	if(i instanceof Casejump){
+		var a = i.a;
+		var b = i.b;
+		return casejump(a, b);
 	}
 	if(i instanceof Add){
 		return add(newState);
@@ -713,6 +823,7 @@ function step(xState){
 		var c2 = i.c2;
 		return cond(c1, c2, newState);
 	}
+	console.error("no such instruction in dispatch: " + i)
 }
 
 /* gmFinal :: GmState -> Bool */
@@ -756,6 +867,8 @@ function evalProg(State){
  *	Output Dump...
 *****************************************************************************/
 
+var GmOutput = []
+
 var GmCode = [new PushGlobal("main"),new Eval()];
  
 var GmStack = [];
@@ -782,7 +895,7 @@ addrObjMap:{
  
 var GmGlobals = {"xeq0":1,"rec":2,"main":3,"Id":4,"+":5,"-":6,"*":7,"/":8,"neg":9,"==":10,"!=":11,"if":12};
  
-var GmState = [GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
+var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
  
 function main(){
 	return evalProg(GmState);

@@ -76,6 +76,7 @@ gmInstruction2JS i = do
 		Div 		 -> "new Div()"
 		Mul 		 -> "new Mul()"
 		Cond c1 c2 	 -> "new Cond(" ++ (zz c1 c2) ++ ")"
+		Pack t a 	 -> "new Pack(" ++ intercalate "," [(show t),(show a)] ++ ")"
 		x			 -> error $ "not found: " ++ (show x)
 		where 
 			zz c1 c2 = "[" ++ intercalate "," (map gmInstruction2JS c1) ++ "],"

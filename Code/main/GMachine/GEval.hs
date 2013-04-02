@@ -43,16 +43,22 @@ dispatch :: Instruction -> GmState -> GmState
 dispatch (PushGlobal f)	= pushglobal f
 dispatch (PushInt n)	= pushint n 
 dispatch  Mkap 			= mkap 
+dispatch (Slide n)		= slide n
 dispatch (Push n)		= push n
 dispatch (Update n) 	= update n 
+dispatch (Split n) 		= split n
 dispatch (Pop n) 		= pop n
 dispatch  Unwind 		= unwind
+dispatch (Pack t n)		= pack t n
 dispatch (Cond a b) 	= cond a b
+dispatch (Casejump i)	= casejump i
 dispatch Eval 			= evalx
 dispatch Sub 			= sub 
+dispatch Div 			= div2
 dispatch Eq 			= eq
 dispatch Add 			= add
 dispatch Neg 			= neg
+dispatch x 				= error $ "no such instruction: " ++ (show x)
 
 -- Updates the stack with the location of the global
 -- in question, assumed to be in the stack.
@@ -124,6 +130,21 @@ pack t n state = putHeap heap' (putStack stack' state)
 		(heap', addr) = hAlloc heap (NConstr t addrs)
 		stack' = addr : (drop n stack)
 
+casejump :: [(Int, GmCode)] -> GmState -> GmState
+casejump alts state = putCode code' state
+	where
+		a = head (getStack state)
+		(NConstr t ss) = hLookup (getHeap state) a 
+		selected = aLookup alts t $ error "casejump failed to find branch"
+		code' = selected ++ (getCode state)
+
+split :: Int -> GmState -> GmState 
+split n state = putStack stack' state 
+	where
+		(a:as) = getStack state 
+		heap = getHeap state 
+		(NConstr t addrs) = hLookup heap a 
+		stack' = addrs ++ as
 
 -- needs cleanup
 update :: Int -> GmState -> GmState
@@ -221,6 +242,9 @@ add = arithmetic2 (+)
 sub :: GmState -> GmState
 sub = arithmetic2 (-)
 
+div2 :: GmState -> GmState
+div2 = arithmetic2 (div)
+
 eq :: GmState -> GmState
 eq = comparison (==)
 
@@ -241,6 +265,11 @@ unwind state =
 		newState (NNum n) 
 			| (getDump state) == [] = state
 			| otherwise  = putDump ds (putCode (c) (putStack (a:s) state))
+			where
+				((c,s):ds) = getDump state
+		newState (NConstr n as)
+			| (getDump state) == [] = state 
+			| otherwise = putDump ds ( putCode c (putStack (a:s) state))
 			where
 				((c,s):ds) = getDump state
 		newState (NInd a1) =  putCode [Unwind] (putStack (a1:as) state)

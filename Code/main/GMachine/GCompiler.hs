@@ -177,35 +177,39 @@ type GmEnvironment = ASSOC Name Int
 -- The type of our compiler schemes
 type GmCompiler = CoreExpr -> GmEnvironment -> GmCode
 
--- Takes an standard Core SC and returns (Global name, Arity, Insts)
--- Follows semantics of compilerR from SPJ implementorial
--- Mostly just handoff to compileR
 compileSc :: (Name, [Name], CoreExpr) -> GmCompiledSC
 compileSc (name, env, body)
 	= (name, length env, compileR body (zip env [0..]))
 
-
--- CoreExpr -> (Assoc Name NumElemsToSlide) -> GmCode
--- hands off to compileC to handle pattern match and slides
--- n' unwinds
 compileR :: GmCompiler
---compileR e env = compileC e env ++ [Slide (length env + 1), Unwind]
 compileR e env = compileE e env ++ [Update d, Pop d, Unwind]
 	where d = (length env)
 
+compileE' :: Int -> GmCompiler
+compileE' offset expr env =
+	[Split offset] ++ compileE expr env ++ [Slide offset]
+
 compileE :: GmCompiler
 compileE (ENum n) env 				= [PushInt n]
-compileE (EAp(EAp(EVar op)e1)e2) env 	= compileE e2 env 
-							       ++ compileE e1 (argOffset 1 env) 
-							       ++ [getOpInst op]
+compileE (EAp(EAp(EVar op)e1)e2) env = 
+	case isDyadicOp op of
+		True ->  compileE e2 env 
+			  ++ compileE e1 (argOffset 1 env) 
+			  ++ [getOpInst op]
+		False -> compileC (EAp(EAp(EVar op)e1)e2) env
+--compileE (EAp(EAp(EVar op)e1)e2) env = compileE e2 env 
+--							       ++ compileE e1 (argOffset 1 env) 
+--							       ++ [getOpInst op]
 compileE (EAp(EAp(EAp(EVar "if")cond)et)ef) env =
 	compileE cond env ++ [Cond (compileE et env) (compileE ef env)]
 compileE (EAp(EVar "neg")e) env 	= compileE e env ++ [Neg]
+compileE (ECase expr alts) env = 
+	compileE expr env ++ [Casejump $ compileD alts env]
+compileE (EConstrAp tag arity args) env =
+	compilePack (reverse args) env ++ [Pack tag arity]
 compileE e env = compileC e env ++ [Eval]
 
--- CoreExpr -> (Assoc Name NumElemsToSlide) -> GmCode
--- Generates code to construct graph of an expe in env
--- and leave a pointer to it on top of stack
+
 compileC :: GmCompiler 
 compileC (EVar v) env 
 	| elem v (aDomain env)			= [Push n]
@@ -215,9 +219,31 @@ compileC (ENum n) env 				= [PushInt n]
 compileC (EAp e1 e2) env 			= compileC e2 env ++ 
 									  compileC e1 (argOffset 1 env) ++
 									  [Mkap]
+compileC (EConstrAp tag arity args) env =
+	compilePack (reverse args) env ++ [Pack tag arity]
+compileC x env =  error $ "no compilation scheme found. this shouldn't happen"
+
+compileD :: [CoreAlt] -> GmEnvironment -> [(Int, GmCode)]
+compileD alts env = compileAlts compileE' alts env
+
+compilePack :: [CoreExpr] -> GmEnvironment -> [Instruction]
+compilePack [] env = []
+compilePack (a:as) env =
+	compileC a env ++ compilePack as (argOffset 1 env)
+
+compileAlts :: (Int -> GmCompiler) 
+			-> [CoreAlt]
+			-> GmEnvironment
+			-> [(Int, GmCode)]
+compileAlts comp alts env =
+	[(tag, comp (length names) body (zip names [0..] ++ argOffset (length names) env))
+		| (tag,names,body) <- alts]
+
+isDyadicOp :: Name -> Bool
+isDyadicOp name = elem name $ map fst builtInDyadic
 
 getOpInst :: Name -> Instruction
-getOpInst n = aLookup builtInDyadic n $ error "no such dyadic op"
+getOpInst n = aLookup builtInDyadic n $ error $ "no such dyadic op: " ++ (show n)
 
 builtInDyadic :: ASSOC Name Instruction
 builtInDyadic = 

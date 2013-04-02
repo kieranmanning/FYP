@@ -49,6 +49,7 @@ data Expr a
 	= EVar Name
 	| ENum Int
 	| EConstr Int Int
+	| EConstrAp Int Int [Expr a]
 	| EAp (Expr a) (Expr a)
 	| ELet 
 		IsRec
