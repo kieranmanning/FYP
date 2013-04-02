@@ -175,8 +175,18 @@ compileSc (name, env, body)
 -- n' unwinds
 compileR :: GmCompiler
 --compileR e env = compileC e env ++ [Slide (length env + 1), Unwind]
-compileR e env = compileC e env ++ [Update d, Pop d, Unwind]
+compileR e env = compileE e env ++ [Update d, Pop d, Unwind]
 	where d = (length env)
+
+compileE :: GmCompiler
+compileE (ENum n) env 				= [PushInt n]
+compileE (EAp(EAp(EVar op)e1)e2) env 	= compileE e2 env 
+							       ++ compileE e1 (argOffset 1 env) 
+							       ++ [getOpInst op]
+compileE (EAp(EAp(EAp(EVar "if")cond)et)ef) env =
+	compileE cond env ++ [Cond (compileE et env) (compileE ef env)]
+compileE (EAp(EVar "neg")e) env 	= compileE e env ++ [Neg]
+compileE e env = compileC e env ++ [Eval]
 
 -- CoreExpr -> (Assoc Name NumElemsToSlide) -> GmCode
 -- Generates code to construct graph of an expe in env
@@ -191,7 +201,13 @@ compileC (EAp e1 e2) env 			= compileC e2 env ++
 									  compileC e1 (argOffset 1 env) ++
 									  [Mkap]
 
+getOpInst :: Name -> Instruction
+getOpInst n = aLookup builtInDyadic n $ error "no such dyadic op"
 
+builtInDyadic :: ASSOC Name Instruction
+builtInDyadic = 
+	[("+", Add), ("-", Sub), ("*", Mul), ("/", Div),
+	 ("==", Eq), ("!=", Neq)]
 
 argOffset :: Int -> GmEnvironment -> GmEnvironment
 argOffset n env = [(v, n+m) | (v,m) <- env] 

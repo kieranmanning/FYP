@@ -4,9 +4,6 @@ function test(){
 
 }
 
-var True = true;
-var False = false;
-
 /*****************************************************************************
  *	Some Important Notes
 *****************************************************************************/
@@ -82,6 +79,9 @@ function tail(list){
 }
 
 Array.prototype.drop = function(N) {
+  if(N == 0){
+  	return this;
+  }
   var from = 0;
   var to = N-1;
   var rest = this.slice((to || from) + 1 || this.length);
@@ -123,6 +123,11 @@ function NInd(a){
 	this.a = a
 }
 
+function NConstr(t, a){
+	this.t = t;
+	this.a = a;
+}
+
 // data Instruction
 function Unwind(){
 
@@ -158,18 +163,6 @@ function Eval(){
 }
 
 function Add(){
-
-}
-
-function Sub(){
-
-}
-
-function Div(){
-
-}
-
-function Mul(){
 
 }
 
@@ -237,39 +230,57 @@ function aLookup(GmGlobals, Name){
 	return global;
 }
 
-function getCode(GmState){
+function getOutput(GmState){
 	return GmState[0];
 }
 
+function putOutput(GmOutput, GmState){
+	var newState = [GmOutput, GmState[1], GmState[2], GmState[3], Gmstate[4], Gmstate[5]];
+	return newState;	
+}
+
+function getCode(GmState){
+	return GmState[1];
+}
+
 function putCode(GmCode, GmState){
-	var newState = [GmCode, GmState[1], GmState[2], GmState[3], GmState[4]];
-	return newState;
-}
-
-function getHeap(GmState){
-	return GmState[3];
-}
-
-function putHeap(GmHeap, GmState){
-	var newState = [GmState[0], GmState[1], GmState[2], GmHeap, GmState[4]];
+	var newState = [GmState[0], GmCode, GmState[2], GmState[3], GmState[4], GmState[5]];
 	return newState;
 }
 
 function getStack(GmState){
-	return GmState[1];
+	return GmState[2];
 }
 
 function putStack(GmStack, GmState){
-	var newState = [GmState[0], GmStack, GmState[2], GmState[3], GmState[4]];
+	var newState = [GmState[0], GmState[1], GmStack, GmState[3], GmState[4], GmState[5]];
 	return newState;
 }
 
 function getDump(GmState){
-	return GmState[2];
+	return GmState[3];
 }
 
 function putDump(GmDump, GmState){
-	var newState = [GmState[0], GmState[1], GmDump, GmState[3], GmState[4]];
+	var newState = [GmState[0], GmState[1], GmState[2], GmDump, GmState[4], GmState[5]];
+	return newState;
+}
+
+function getHeap(GmState){
+	return GmState[4];
+}
+
+function putHeap(GmHeap, GmState){
+	var newState = [GmState[0], GmState[1], GmState[2], GmState[3], GmHeap, GmState[5]];
+	return newState;
+}
+
+function getGlobals(GmState){ 
+	return GmState[5];
+}
+
+function putGlobals(GmGlobals, GmState){
+	var newState = [GmState[0], GmState[1], GmState[2], GmState[3], GmState[4], GmGlobals];
 	return newState;
 }
 
@@ -277,20 +288,25 @@ function dumpEmpty(GmDump){
 	return ((GmDump[0].length == 0) && (GmDump[1].length == 0))
 }
 
-function getGlobals(GmState){ 
-	return GmState[4];
-}
-
-function putGlobals(GmGlobals, GmState){
-	var newState = [GmState[0], GmState[1], GmState[2], GmState[3], GmGlobals];
-	return newState;
-}
 
 // All these tested 12:45 22/03
 
 /*****************************************************************************
  *	Our G-code instructions
 *****************************************************************************/
+
+/*
+ *	Will all require extensive testing. Really gotta be careful
+ *	wherever we're using a handrolled data type representations.
+ */
+
+
+/*
+ *	Reminder
+ *  Stack is just an array of Ints, 
+ *  Heap consists of (Free, Addrs, [Addr->Name])
+ */
+
 
 /* pushglobal :: Name -> GmState -> GmState */
 function pushglobal(Name, xState){
@@ -319,26 +335,14 @@ function pushint(Int, xState){
 }	// Looking alright 12:49 22/03
 
 /*
-function pushint(Int, xState){
-	var State = xState;
-	var heap = getHeap state;
-	var stack = getStack state;
-	var globals = getGlobals state;
-	var exists = false;
-	for(var i=0;i<globals.length;i++){
-		if(globals[i] == Int){
-			var newStack = [i].concat(stack);
-			return putStack(newStack, State);
-		}
-	} 
-	var newHeap;
-	var addr;
-	[newHeap, addr] = hAlloc(heap, new NNum(Int));
-	var newStack = [addr].concat(stack);
-	var newGlobals = []
-}
+-- Construct a new NAp Addr Addr
+-- Addr1 and Addr2 are popped directly from the 
+-- front of the stack. 
+-- New node (NAp) will have addr Anew
+-- New heap = hAlloc space for our new NAp node
+-- Replace front two addrs in stack with addr of new node
+-- Return state.
 */
-
 /* Mkap :: GmState -> GmState */
 function mkap(xState){
 	var oldState 			= xState;
@@ -375,26 +379,103 @@ function getArg(NAp){
 	}
 	return a2;
 }
-
+/* see GEval.hs if(when) you forget how this works*/
+/* Push :: Int -> GmState -> GmState */
 function push(N, xState){
 	//console.log("push called");
 	var State 		= xState;
 	var stack 		= getStack(State);
 	var newStack	= [stack[N]].concat(stack);
 	var newState 	= putStack(newStack, State);
+	//var heap 		= getHeap(State)
+	//var nodeAddr 	= stack[1 + N];
+	//var arg 		= getArg(hLookup(heap, nodeAddr));
+	//stack 			= [arg].concat(stack);
+	//var newStack 	= stack;
+	//var newState 	=  putStack(newStack, State);
 	return newState;
 }	// again, heap specific.
 
+/*
+alloc :: Int -> GmState -> GmState
+alloc n state = putStack stack' (putHeap heap' state)
+	where
+		(heap', addrs) = allocNodes n (getHeap state)
+		stack' = addrs ++ (getStack state)
+
+allocNodes :: Int -> GmHeap -> (GmHeap, [Addr])
+allocNodes 0 heap = (heap, [])
+allocNodes n heap = (heap2, a:as)
+	where
+		(heap1, as) = allocNodes (n-1) heap 
+		(heap2, a) = hAlloc heap1 (NInd hNull)
+*/
+
+function slide(N, xState){
+	//console.log("slide called");
+	var State 		= xState;
+	// be careful with implementation of head/tail
+	var stack 		= getStack(State);
+	var a 			= head(stack);
+	var as 			= tail(stack);
+	as.drop(N);
+	as.push(a);
+	var newStack 	= as;
+	return putStack(newStack, State);
+}
+
+// check for case of n == 0
+function pack(t, n, xState){
+	var State = xState;
+	var stack = getStack(State);
+	var heap  = getHeap(State);
+	var addrs = [];
+	for(var x = 0; x < n; x++){
+		addrs[x] = stack[x];
+	}
+	console.log(n);
+	stack.drop(n);
+	var newHeap;
+	var a;
+	[newHeap, a] = hAlloc(heap, new NConstr(t, addrs));
+	var newStack = [a].concat(stack);
+	return putStack(newStack, (putHeap(newHeap, State)));
+}
+
+function casejump(tagbranches, xState){
+	var State = xState;
+	var stack = getStack(State);
+	var i = getCode(State);
+	var node = hLookup(getHeap(State), head(stack));
+	var tag = node.t;
+	for(var j=0;j<tagbranches.length;j++){
+		if(tagbranches[j][0] == tag){
+			var branchCode = tagbranches[j][1];
+			return putCode(branchCode.concat(i), State);
+		}
+	}
+	console.error("shit the bed in casejump");
+}
+
+function split(n, xState){
+	var State = xState;
+	var stack = getStack(State);
+	var node = hLookup(getHeap(State), head(stack));
+	var addrs = node.a;
+	var addrsUsed = [];
+	stack.drop(1);
+	for(var i=0;i<n;i++){
+		addrsUsed[i] = addrs[i];
+	}
+	var newStack = addrsUsed.concat(stack);
+	return putStack(newStack, State);
+}
 
 /* update :: Int -> GmState -> GmState */
 function update(N, xState){
 	//console.log("update called");
 	var State 			= xState;
 	var stack 			= getStack(State);
-	var oldAddr 		= stack[N+1];
-	if(oldAddr == undefined){
-		console.log("accessing undefined stack space - line 376");
-	}
 	var newHeap;
 	var newAddr;
 	[newHeap, newAddr] 	= hAlloc(getHeap(State), (new NInd(stack[0])));
@@ -509,30 +590,6 @@ function primitive2(box, unbox, op, xState){
 	return box(result, newState);
 }
 
-var x;
-var y;
-/* cond :: GmCode -> GmCode -> GmState -> GmState */
-function cond(i1, i2, xState){
-	x = i1;
-	y = i2;
-	var State = xState;
-	var i = getCode(State);
-	var stack = getStack(State);
-	var a = head(stack);
-	var as = tail(stack);
-	var node = hLookup(getHeap(State), a);
-	if(!(node instanceof NNum)){
-		console.error("cond called on non-bool");
-		return "SHITTHEBED";
-	}
-	if(node.n == 0){
-		return putCode(i2.concat(i), putStack(as, State));
-	}
-	if(node.n == 1){
-		return putCode(i1.concat(i), putStack(as, State));
-	}
-}
-
 /* working */
 function neg(xState){
 	var State = xState;
@@ -551,35 +608,7 @@ function add(xState){
 	return primitive2(boxInteger, unboxInteger, op, State);
 }
 
-function sub(xState){
-	var State = xState;
-	function op(x, y){
-		return x - y;
-	}
-	return primitive2(boxInteger, unboxInteger, op, State);
-}
 
-function eq(xState){
-	var State = xState;
-	function op(x, y){
-		return (x == y);
-	}
-	return primitive2(boxBoolean, unboxInteger, op, State);
-}
-
-/*
-function slide(N, State){
-	console.log("slide called");
-	// be careful with implementation of head/tail
-	stack 		= getStack(State);
-	a 			= head(stack);
-	as 			= tail(stack);
-	as.drop(N);
-	as.push(a);
-	newStack 	= as;
-	return putStack(newStack, State);
-}
-*/
 
 /* Unwind :: GmState -> GmState */
 function unwind(xState){
@@ -623,14 +652,18 @@ function unwind(xState){
 	if(node instanceof NGlobal){
 		var numargs 	= node.numargs;
 		var code 		= node.instructions;
-		if((stack.length-1) < numargs){
-			console.error("unwinding undersaturated");
+		var i 			= head(getDump(State))[0];
+		var s 			= head(getDump(State))[1];
+		if(aslen < numargs){
+			var newStack = stack[stack.length].concat(s);
+			var newDump = getDump(state).drop(1);
+			console.log("HERE BE DRAGONS");
+			return putCode(i,(putStack(newStack,(putDump(newDump, State)))));
+			//console.error("unwinding undersaturated");
+
 		} else {
-			var newState = 
-				putCode(code, 
-				putStack(rearrange(numargs, heap, stack), State)
-				);
-			return(putCode(code, newState));
+			var newStack = rearrange(numargs, heap, as);
+			return(putCode(code, putStack(newStack, State)));
 		}
 	} else {
 		console.error("unwind failing");
@@ -641,12 +674,10 @@ function unwind(xState){
 /* rearrange :: Int -> GmHeap -> GmStack -> GmStack */
 function rearrange(n, heap, as){
 	var newas = [];
-	var oldas = as;
 	for(var x = 0; x < n; x++){
-		newas[x] = getArg(hLookup(heap, tail(as)[x]));
+		newas[x] = getArg( hLookup(heap, as[x]));
 	}
-	oldas.drop(n);
-	return newas.concat(oldas);
+	return newas.concat(as.drop(n));
 }
 
 /*****************************************************************************
@@ -696,22 +727,11 @@ function step(xState){
 	if(i instanceof Add){
 		return add(newState);
 	}
-	if(i instanceof Sub){
-		return sub(newState);
-	}
 	if(i instanceof Neg){
 		return neg(newState);
 	}
-	if(i instanceof Eq){
-		return eq(newState);
-	}
 	if(i instanceof Eval){
 		return evalInst(newState);
-	}
-	if(i instanceof Cond){
-		var c1 = i.c1;
-		var c2 = i.c2;
-		return cond(c1, c2, newState);
 	}
 }
 
@@ -738,7 +758,7 @@ function evalProg(State){
 		accStates = [currentState].concat(accStates);
 		nextState = step(currentState);
 		currentState = nextState;
-		if(iterations > 200){
+		if(iterations > 50){
 			console.log("eval to infinity. killing");
 			iterations = 0;
 			return currentState;
@@ -756,6 +776,8 @@ function evalProg(State){
  *	Output Dump...
 *****************************************************************************/
 
+var GmOutput = [];
+ 
 var GmCode = [new PushGlobal("main"),new Eval()];
  
 var GmStack = [];
@@ -763,26 +785,20 @@ var GmStack = [];
 var GmDump = [];
  
 var GmHeap = {
-objCount:12,
-freeAddrs:[13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100],
+objCount:6,
+freeAddrs:[7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
 addrObjMap:{
-12:new NGlobal(3,[new Push(0),new Eval(),new Cond([new Push(1)],[new Push(2)]),new Update(3),new Pop(3),new Unwind()]),
-11:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Neq(),new Update(2),new Pop(2),new Unwind()]),
-10:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Eq(),new Update(2),new Pop(2),new Unwind()]),
-9:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Update(1),new Pop(1),new Unwind()]),
-8:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Div(),new Update(2),new Pop(2),new Unwind()]),
-7:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Mul(),new Update(2),new Pop(2),new Unwind()]),
-6:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Sub(),new Update(2),new Pop(2),new Unwind()]),
+6:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Update(1),new Pop(1),new Unwind()]),
 5:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Add(),new Update(2),new Pop(2),new Unwind()]),
-4:new NGlobal(1,[new Push(0),new Eval(),new Update(1),new Pop(1),new Unwind()]),
-3:new NGlobal(0,[new PushInt(2),new PushGlobal("rec"),new Mkap(),new Eval(),new Update(0),new Pop(0),new Unwind()]),
-2:new NGlobal(1,[new Push(0),new PushGlobal("xeq0"),new Mkap(),new Eval(),new Cond([new PushInt(0)],[new PushInt(1),new Push(1),new PushGlobal("-"),new Mkap(),new Mkap(),new PushGlobal("rec"),new Mkap(),new Eval()]),new Update(1),new Pop(1),new Unwind()]),
-1:new NGlobal(1,[new Push(0),new Eval(),new PushInt(0),new Eq(),new Update(1),new Pop(1),new Unwind()])}
+4:new NGlobal(2,[new Push(1),new Update(2),new Pop(2),new Unwind()]),
+3:new NGlobal(1,[new Push(0),new Update(1),new Pop(1),new Unwind()]),
+2:new NGlobal(1,[new Push(0),new Update(1),new Pop(1),new Unwind()]),
+1:new NGlobal(0,[new PushInt(5),new PushInt(5),new Add(),new Update(0),new Pop(0),new Unwind()])}
 };
  
-var GmGlobals = {"xeq0":1,"rec":2,"main":3,"Id":4,"+":5,"-":6,"*":7,"/":8,"neg":9,"==":10,"!=":11,"if":12};
+var GmGlobals = {"main":1,"Id":2,"Id2":3,"K":4,"+":5,"neg":6};
  
-var GmState = [GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
+var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
  
 function main(){
 	return evalProg(GmState);

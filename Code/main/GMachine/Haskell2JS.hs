@@ -69,7 +69,14 @@ gmInstruction2JS i = do
 		Update x 	 -> "new Update(" ++ (show x) ++ ")"
 		Eval 		 -> "new Eval()"
 		Add 		 -> "new Add()"
+		Sub 		 -> "new Sub()"
 		Neq 	     -> "new Neq()"
 		Neg 		 -> "new Neg()"
 		Eq 			 -> "new Eq()"
-		Cond c1 c2 	 -> "new Cond(" ++ (show c1) ++ "," ++ (show c2) ++ ")"
+		Div 		 -> "new Div()"
+		Mul 		 -> "new Mul()"
+		Cond c1 c2 	 -> "new Cond(" ++ (zz c1 c2) ++ ")"
+		x			 -> error $ "not found: " ++ (show x)
+		where 
+			zz c1 c2 = "[" ++ intercalate "," (map gmInstruction2JS c1) ++ "],"
+				    ++ "[" ++ intercalate "," (map gmInstruction2JS c2) ++ "]"
