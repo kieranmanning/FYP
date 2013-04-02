@@ -1,0 +1,264 @@
+\documentclass{beamer}
+
+\usetheme{Copenhagen}
+\useinnertheme{circles}
+\usecolortheme{beaver}
+
+\title{Browser-side Functional Programming}
+\subtitle{Second reader demo}
+\date{April 3rd 2013}
+\author{Kieran Manning \\ 09676121}
+
+\begin{document}
+
+\section{Title}
+
+\frame{\titlepage}
+
+\section{Introduction}
+\begin{frame}
+	\frametitle{An Overview}
+	The Problem? \\
+	- Javascript is unpleasant but ubiquitous. Javascript 
+	Suffers from..
+	\begin{itemize}
+		\item A lack of sane typing
+		\item Verbose and inconsistent syntax
+		\item A lack of laziness
+	\end{itemize}
+	These have been solved in languages such as Haskell, however
+	it looks like we're stuck with Javascript for the forseeable 
+	future. What we need is a way of bringing some functional
+	inspiration to browser-side programming via Javascript.
+\end{frame}
+
+\begin{frame}
+	\frametitle{Implementation}
+	An approach is needed that would...
+	\begin{itemize}
+		\item Bring lazy evaluation and type safety to Javascript
+		\item Be modular, packageable.
+		\item Be as efficient as possible.
+		\item Allow easy seperation of runtime evaluation from 
+		  	  compilation
+		\item Require no changes to Javascript itself
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Core}
+	Name given to a number of intermediate functional language
+	representations descended from System F lambda calculus,
+	consisting notably of...
+	\begin{itemize}
+		\item Super combinator defintions and applications
+		\item Variable names
+		\item Integers
+		\item Data constructors
+		\item Case statements
+	\end{itemize}
+	GHC is capable of outputting a core-like language (see
+	GHC external core) which is lazy and type-checked by GHC
+	itself.
+\end{frame}
+
+\begin{frame}
+	\frametitle{The G-Machine}
+
+	The G-Machine, a functional compilation strategy.
+	\begin{itemize}
+		\item Historically significant but somewhat outdated.
+		\item Takes a core-like language and produces an initial
+			  graph state.
+			  and sequence of instructions...
+		\item ...to be evaluated by a minimal runtime.
+		\item Designed to allow for easy adaptation of runtime
+			  in target languages.
+		\item More efficient and modular than alternative Template
+			  Instantation approach, also explored.
+	\end{itemize}
+	
+\end{frame}
+	
+\begin{frame}
+	\frametitle{A Graph Evaluation Runtime in Javascript}
+	A runtime was required which would fulfill the following
+	requirements:
+	\begin{itemize}
+		\item Take a representation of a G-Machine compiled
+			  graph state.
+		\item Take a list of G-Machine evaluation instructions.
+		\item Understand how to evaluate these instructions.
+		\item Apply these instructions to the supplied graph and
+		\item Return the resultant state of the graph.
+	\end{itemize}	
+	
+\end{frame}
+
+\section{Implementation}
+
+\begin{frame}
+	\frametitle{Implementation, an overview}
+	\begin{enumerate}
+	\item Taking GHC's external core, we parse** that into a
+	Haskell ADT representing the language. 
+	\item We then use the G-Machine compilation schemes to 
+	parse this ADT into 
+		\begin{itemize}
+			\item A heap representing a graph and a stack
+			to index this heap
+			\item A sequence of instructions to be executed 
+			by our runtime.
+		\end{itemize}
+	\item We package this state and instructions into a 
+	form javascript can handle and then pass to the runtime.
+	\item The runtime, written in javascript, executes until
+	we have reached a final state (or something breaks...) 
+	leaving us with a final value on top of the stack.
+	\end{enumerate}
+\end{frame}
+
+\begin{frame}
+	\frametitle{G-Machine implemenation}
+	\begin{itemize}
+	\item Implementing a G-Machine based graph compiler is 
+	a solved
+	problem, and rather than re-inventing the wheel I decided
+	to work off the implementation given in Implementing 
+	Functional Languages: A Tutorial by Simon Peyton Jones
+	and David Lester. 
+	\item Once our core representation has been compiled to
+	a graph, it still needs to be serialized into a form that
+	Javascrpt can handle. Haskell2JS.hs takes a state consisting
+	of a stack, heap, list of globals and sequence of
+	instructions and returns the equivalent represented
+	using Javascript arrays and objects.
+	\end{itemize}
+	
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Runtime implementation}
+	Initial considerations
+	\begin{itemize}
+		\item Data representations? \\
+		- Function objects to represent
+		instructions, nodes: 
+		\begin{verbatim}
+		var x = new function PushInt(Int){this.n = Int;}
+		\end{verbatim}
+		- Arrays, objects to represent our state 
+		\begin{verbatim}
+		var GmHeap = {objCount, freeAddrs, addrObjMap};
+		\end{verbatim}
+		\item Instruction evaluation? \\
+		- JS functions operating on a passed state 
+		\begin{verbatim}
+		function pushint(n, state){push, return state';}	
+		\end{verbatim}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Runtime evaluation 1}
+	Initially, we have
+	\begin{itemize}
+		\item A heap, containing compiled supercombinators
+			  representing our main function, additional 
+			  functions and language primitives ( +, -, if ...)
+		\item An empty stack
+		\item A code sequence consisting of
+		\begin{verbatim} 
+		[ PushGlobal "main", Eval ]
+		\end{verbatim} 
+		\item And a list of globals, mapping function names
+			  to heap addresses
+		\begin{verbatim}
+		[("+", 5), ("main", 1)...]
+		\end{verbatim}
+		\item A dump to handle arithmetic operations when not in
+		WHNF
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Runtime evaluation 2}
+	An overview of our instructions
+	\begin{itemize}
+		\item Slide, Push, Pop etc. effect
+		the stack directly, (de)allocating pointers to the
+		heap as necessary. Update of interest.
+		\item Mkap creates an application node between two
+		heap items. 
+		\item Push\{Int\textbar Global\} index new or existing
+		values in the stack
+		\item Unwind crawls the graph, rearranging as necessary 
+		(directing indirections, applying applications etc.)
+		\item Eval handles non-WHNF operations, deferring to the
+		dump until we can return a WHNF item to the top of the
+		stack.
+	\end{itemize}
+	Nodes
+	\begin{itemize}
+		\item Indirections, @s, Ints, Globals, Constructors
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Runtime evaluation 3}
+	Our Evaluation Strategy
+	\begin{itemize}
+		\item Encounter Pushglobal "main", push addr to stack
+		\item Eval and Unwind stack, place main instructions in 
+		code sequence
+		\item Push arguments of first function in main to stack,
+		followed by behaviour of first function and sufficient 
+		Mkap instructions as to form an application tree.
+		\item Defer state to dump if necessary.
+		\item Reduce this expression and update root node with 
+		value
+		\item Rinse and repeat until code sequence empty. 
+	\end{itemize}
+\end{frame}
+
+\section{Conclusions}
+
+\begin{frame}
+	\frametitle{Conclusions}
+	Some problems
+	\begin{itemize}
+		\item Core versioning issues
+		\item Time management
+		\item Javascript in general (if only someone would
+		      write...)
+	\end{itemize}	
+	Had I more time...
+	\begin{itemize}
+		\item Cleaner heap implementation
+		\item More efficient graph compiler implementation
+		\item More efficient Javascript
+		\item Core parser would be nice but unexciting
+		\item Continue runtime to completion (although it's not
+			  far off)
+	\end{itemize}
+	
+\end{frame}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
