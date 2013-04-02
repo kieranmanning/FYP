@@ -54,6 +54,7 @@ dispatch (Cond a b) 	= cond a b
 dispatch (Casejump i)	= casejump i
 dispatch Eval 			= evalx
 dispatch Sub 			= sub 
+dispatch Mul 			= mul
 dispatch Div 			= div2
 dispatch Eq 			= eq
 dispatch Add 			= add
@@ -241,6 +242,9 @@ add = arithmetic2 (+)
 
 sub :: GmState -> GmState
 sub = arithmetic2 (-)
+
+mul :: GmState -> GmState
+mul = arithmetic2 (*)
 
 div2 :: GmState -> GmState
 div2 = arithmetic2 (div)

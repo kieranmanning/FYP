@@ -12,12 +12,14 @@ import System.Console.GetOpt
 
 runProg x = gmState2JS (compile x) 
 
-run = last . eval . compile
+run = last . eval . compile 
 
 main = do
 	[i, o] <- getArgs
 	f <- readFile i
-	writeFile o (runProg (read f))
+	r <- readFile "runtime.js"
+	writeFile o $ r ++ (runProg (read f))
+
 {-
 data Flag = Version | OutFile String | InFile String
 	deriving (Show)

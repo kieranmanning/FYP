@@ -53,4 +53,13 @@ subTest =
 
 ifTest :: CoreProgram
 ifTest = 
-	[("main", [], EAp(EAp( EAp(EVar "if")(EAp(EAp(EVar "==")(ENum 1))(ENum 0)) )(ENum 1))(ENum 2))]
+	[("main", [], EAp(EAp( EAp(EVar "if")(EAp(EAp(EVar "==")(ENum 1))(ENum 0)) )(ENum 1))(ENum 2))] 
+
+facTest :: CoreProgram
+facTest = [ ("xeq0", ["x"], EAp(EAp(EVar"==")(ENum 0))(EVar "x")),
+            ("fac", ["n"], EAp(EAp(EAp(EVar "if")cond)(ENum 1))e2),
+	    ("main", [], EAp(EVar "fac")(ENum 3))]
+        where 
+	 	cond = (EAp(EVar "xeq0")(EVar "n"))
+                e2 = EAp (EAp (EVar "*") (EVar "n"))  e3 
+	 	e3 = EAp (EVar "fac") (EAp (EAp (EVar "-") (EVar "n")) (ENum 1) )
