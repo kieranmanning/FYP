@@ -936,21 +936,6 @@ function facTest(NN){
 	return result;
 }
 
-function facJS(n){
-	function fac(n) {
-		var start = new Date().getTime();
-    	if(n == 0) {
-  	      	return 1
-  	  	} else {
- 	    	return n * fac(n - 1);
- 	    }
-    }
-    var start = new Date().getTime();
-    var result = fac(n);
-    var end = new Date().getTime();
-    var time = end - start;
-    return result + " | time taken: " + (parseInt(time)/1000) + " seconds";
-}
 
 function arithTest(x,opname,y){
 	var x = parseInt(x);
@@ -1039,4 +1024,21 @@ function kTest(xory){
 
 	return evalProg(GmState);
 
+}
+
+
+function facJS(n){
+	function fac(n) {
+		var start = new Date().getTime();
+    	if(n == 0) {
+  	      	return 1
+  	  	} else {
+ 	    	return n * fac(n - 1);
+ 	    }
+    }
+    var start = new Date().getTime();
+    var result = fac(n);
+    var end = new Date().getTime();
+    var time = end - start;
+    return result + " | time taken: " + (parseInt(time)/1000) + " seconds";
 }
