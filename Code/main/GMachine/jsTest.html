@@ -1,7 +1,48 @@
 <html>
 	<head>
-		<script src="out.js" type="text/javascript"></script>
+		<script src="demoRuntime.js" type="text/javascript"></script>
 	</head>
 
 	<body onload="test()"> </body>
+
+	<p> 
+		<h3> Factorial </h3>
+		<form> 
+			<input type="text" id="facInput" value="n"/>
+			<input type="button" value="submit" 
+				   onclick="alert(facTest(form.facInput.value))"
+			/>
+		</form>
+	</p>
+
+
+	<p> 
+		<h3> Arithmetic </h3>
+		<form> 
+			<input type="text" id="x" value="x"/>
+			<input type="text" id="op" value="op"/>
+			<input type="text" id="y" value="y"/>
+			<input type="button" value="submit" 
+				   onclick="alert(arithTest(form.x.value, form.op.value, form.y.value))"
+			/>
+		</form>
+	</p>
+
+	<p> 
+		<h3>kTest</h3> 
+
+		<p>
+		<b> K: </b> ("main", [], EAp (EAp (EVar "K") (ENum 1)) divbyzero) 
+		</p>
+
+		<form> 
+			<input type="text" id="kInput" value="x or y?"/>
+			<input type="button" value="submit" 
+				   onclick="alert(kTest(form.kInput.value))"
+			/>
+		</form>
+	</p>
+
+
+
 </html>

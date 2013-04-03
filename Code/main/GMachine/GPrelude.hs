@@ -22,6 +22,7 @@ preludeDefs =
 kTest :: CoreProgram
 kTest =
 	[("K", ["x", "y"], EVar "x"),
+	 ("K1", ["x", "y"], EVar "y"),
 	 ("main", [], EAp (EAp (EVar "K") (ENum 1)) divbyzero)]
 	where
 		divbyzero = EAp (EAp (EVar "/") (ENum 1)) (ENum 0)
