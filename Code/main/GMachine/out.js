@@ -938,8 +938,8 @@ function facTest(NN){
 
 
 function arithTest(x,opname,y){
-	var x = parseInt(x);
-	var y = parseInt(y);
+	var x = parseInt(y);
+	var y = parseInt(x);
 	var op = new Add();
 	if(opname=="+"){
 		op = new Add();
