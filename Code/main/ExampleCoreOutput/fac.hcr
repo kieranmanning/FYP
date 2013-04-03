@@ -1,0 +1,21 @@
+%module main:MIdent
+  %rec
+  {main:MIdent.fac :: ghczmprim:GHCziTypes.Int ->
+                      ghczmprim:GHCziTypes.Int =
+     \ (dsdl0::ghczmprim:GHCziTypes.Int) ->
+         %case ghczmprim:GHCziTypes.Int dsdl0
+         %of (wildX4::ghczmprim:GHCziTypes.Int)
+           {ghczmprim:GHCziTypes.Izh (ds1dl1::ghczmprim:GHCziPrim.Intzh) ->
+              %case ghczmprim:GHCziTypes.Int ds1dl1
+              %of (ds2Xl6::ghczmprim:GHCziPrim.Intzh)
+                {%_ ->
+                   base:GHCziNum.zt @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
+                   wildX4
+                   (base:GHCziNum.zm @ ghczmprim:GHCziTypes.Int
+                    base:GHCziNum.zdfNumInt (main:MIdent.fac wildX4)
+                    (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh)));
+                 (0::ghczmprim:GHCziPrim.Intzh) ->
+                   ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh)}}};
+  main:MIdent.main :: ghczmprim:GHCziTypes.Int =
+    main:MIdent.fac
+    (ghczmprim:GHCziTypes.Izh (4::ghczmprim:GHCziPrim.Intzh));

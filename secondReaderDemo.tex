@@ -6,7 +6,7 @@
 
 \title{Browser-side Functional Programming}
 \subtitle{Second reader demo}
-\date{April 3rd 2013}
+\date{April 4th 2013}
 \author{Kieran Manning \\ 09676121}
 
 \begin{document}
@@ -46,6 +46,46 @@
 \end{frame}
 
 \begin{frame}
+	\frametitle{Existing Approaches}
+	\begin{itemize}
+		\item Fay
+		\begin{itemize}
+			\item Subset of Haskell
+			\item Lazy, pure, static typing
+			\item Compiles to JavaScript
+			\item Runtime operates at thunk level
+		\end{itemize}
+		\item iTasks
+		\begin{itemize}
+			\item Toolkit for workflow support applications
+			\item Written in Clean
+			\item Compiles SAPL into JS workflow apps
+			
+		\end{itemize}
+		\item ClojureScript - Compiles clojure into readable JS
+		\item CoffeeScript - JavaScript wrapper language
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{A Plan Forms!}
+	\begin{itemize}
+		\item Accept Core-level language a la iTasks, take advtange of GHC.
+		\item As with both iTasks and Fay, we will be working in a language
+			  which already provides type safety and laziness.
+		\item Aim to provide features from which we can build. Primitive
+			  values, function definitions, conditionals, data constructors.
+			  Ignore I/O etc. for purity and simplicity.
+		\item G-Machine compiler implementation
+			  to compile our parsed Core representation into an instruction
+			  level language.
+		\item Lastly, as with Fay, we will build a runtime in our target
+			  language to evaluate these instructions while preserving the
+			  lazy, type-safe semantics of our input.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
 	\frametitle{Core}
 	Name given to a number of intermediate functional language
 	representations descended from System F lambda calculus,
@@ -60,6 +100,24 @@
 	GHC is capable of outputting a core-like language (see
 	GHC external core) which is lazy and type-checked by GHC
 	itself.
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{What does GHC ext-core look like?...}
+	fac 0 = 1; fac n = ( n * fac (n - 1 ) ) becomes...
+\begin{verbatim}
+{fac :: Int -> Int =
+  \ (d0::Int) -> %case Int d0 %of (wildX4::Int)
+  {Types.Izh (d1::Int) -> %case Types.Int d1 %of (d6::Int)
+  {%_ ->
+  * @ Int NumInt wildX4 (
+    - @ Types.Int Int (fac wildX4) 
+      (Types.Izh (1::Int)
+    );
+  (0::Int) -> Types.Izh (1::Int)}}};
+  main :: Types.Int = fac (Types.Izh (4::Int));
+\end{verbatim}
+
 \end{frame}
 
 \begin{frame}
@@ -100,10 +158,10 @@
 \begin{frame}
 	\frametitle{Implementation, an overview}
 	\begin{enumerate}
-	\item Taking GHC's external core, we parse** that into a
+	\item We take GHC's external core, which we parse into a
 	Haskell ADT representing the language. 
 	\item We then use the G-Machine compilation schemes to 
-	parse this ADT into 
+	compile this ADT into 
 		\begin{itemize}
 			\item A heap representing a graph and a stack
 			to index this heap
@@ -138,7 +196,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{Runtime implementation}
+	\frametitle{Runtime Implementation}
 	Initial considerations
 	\begin{itemize}
 		\item Data representations? \\
@@ -160,7 +218,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{Runtime evaluation 1}
+	\frametitle{Runtime Evaluation: Initial State}
 	Initially, we have
 	\begin{itemize}
 		\item A heap, containing compiled supercombinators
@@ -179,33 +237,47 @@
 		\item A dump to handle arithmetic operations when not in
 		WHNF
 	\end{itemize}
+	Shall show such an example at some point...
 \end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{Runtime evaluation 2}
-	An overview of our instructions
-	\begin{itemize}
-		\item Slide, Push, Pop etc. effect
-		the stack directly, (de)allocating pointers to the
-		heap as necessary. Update of interest.
-		\item Mkap creates an application node between two
-		heap items. 
-		\item Push\{Int\textbar Global\} index new or existing
-		values in the stack
-		\item Unwind crawls the graph, rearranging as necessary 
-		(directing indirections, applying applications etc.)
-		\item Eval handles non-WHNF operations, deferring to the
-		dump until we can return a WHNF item to the top of the
-		stack.
-	\end{itemize}
-	Nodes
-	\begin{itemize}
-		\item Indirections, @s, Ints, Globals, Constructors
-	\end{itemize}
+	\frametitle{Runtime Evaluation: Instructions Overview}
+	The expected instructions for a G-Machine runtime.
+	Slide, Push etc. to manipulate stack. Mkap, Eval, Unwind
+	etc. to evaluate expressions. All executing on a passed
+	state and returning a new state...
+\begin{verbatim}
+function push(N, xState){
+    var State 		= xState;	// <- JS state issues
+    var stack 		= getStack(State);
+    var newStack	= [stack[N]].concat(stack);
+    var newState 	= putStack(newStack, State);
+    return newState; 
+}
+\end{verbatim}		
 \end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{Runtime evaluation 3}
+	\frametitle{Runtime Evaluation: Nodes Overview}
+	Our runtime must accept and evaluate the usual G-Machine
+	graph nodes: indirections, applications, ints, globals,
+	constructors. We represent these in the abstract as functions
+	which we can instantiate as function objects representing
+	graphs nodes, values.
+
+\begin{verbatim}
+function NConstr(t, a){
+    this.t = t;
+    this.a = a;
+}
+
+[newHeap, addr] = hAlloc(heap, new NConstr(t, addrs));
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Runtime Evaluation: Evaluation Strategy}
 	Our Evaluation Strategy
 	\begin{itemize}
 		\item Encounter Pushglobal "main", push addr to stack
@@ -219,6 +291,20 @@
 		value
 		\item Rinse and repeat until code sequence empty. 
 	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Features}
+	\begin{itemize}
+		\item Laziness \\
+		Our runtime supports laziness, including redex updates
+		and call-by-need evaluation. 
+		\item Function defintions and calls
+		\item Arithmetic 
+		\item Conditionals
+		\item Data Constructors (...kinda)
+	\end{itemize}
+		
 \end{frame}
 
 \section{Conclusions}
