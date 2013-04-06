@@ -731,7 +731,6 @@ function unwind(xState){
 		var code 		= node.instructions;
 		if((stack.length-1) < numargs){
 			console.error("unwinding undersaturated. see 3.7.2");
-			throw("unwind failing");
 		} else {
 			var newState = 
 				putCode(code, 
@@ -805,8 +804,7 @@ function step(xState){
 	}
 	if(i instanceof Pack){
 		var n = i.n;
-		var t = i.t
-		return pack(t,n, newState);
+		return pack(n);
 	}
 	if(i instanceof Unwind){
 		return unwind(newState);
@@ -895,36 +893,150 @@ function evalProg(State){
  *	Output Dump...
 *****************************************************************************/
 
-var GmOutput = [];
  
-var GmCode = [new PushGlobal("main"),new Eval()];
- 
-var GmStack = [];
- 
-var GmDump = [];
- 
-var GmHeap = {
-objCount:12,
-freeAddrs:[13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100],
-addrObjMap:{
-12:new NGlobal(3,[new Push(0),new Eval(),new Cond([new Push(1)],[new Push(2)]),new Update(3),new Pop(3),new Unwind()]),
-11:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Neq(),new Update(2),new Pop(2),new Unwind()]),
-10:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Eq(),new Update(2),new Pop(2),new Unwind()]),
-9:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Update(1),new Pop(1),new Unwind()]),
-8:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Div(),new Update(2),new Pop(2),new Unwind()]),
-7:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Mul(),new Update(2),new Pop(2),new Unwind()]),
-6:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Sub(),new Update(2),new Pop(2),new Unwind()]),
-5:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Add(),new Update(2),new Pop(2),new Unwind()]),
-4:new NGlobal(1,[new Push(0),new Eval(),new Update(1),new Pop(1),new Unwind()]),
-3:new NGlobal(0,[new PushGlobal("nil"),new PushInt(1),new PushGlobal("cons"),new Mkap(),new Mkap(),new Update(0),new Pop(0),new Unwind()]),
-2:new NGlobal(2,[new Push(1),new Push(1),new Pack(2,2),new Eval(),new Update(2),new Pop(2),new Unwind()]),
-1:new NGlobal(0,[new Pack(1,0),new Update(0),new Pop(0),new Unwind()])}
-};
- 
-var GmGlobals = {"nil":1,"cons":2,"main":3,"Id":4,"+":5,"-":6,"*":7,"/":8,"neg":9,"==":10,"!=":11,"if":12};
- 
-var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
- 
-function main(){
+function facTest(NN){
+	var start = new Date().getTime();
+
+	var GmOutput = [];
+	 
+	var GmCode = [new PushGlobal("main"),new Eval()];
+	 
+	var GmStack = [];
+	 
+	var GmDump = [];
+	 
+	var GmHeap = {
+	objCount:12,
+	freeAddrs:[13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100],
+	addrObjMap:{
+	12:new NGlobal(3,[new Push(0),new Eval(),new Cond([new Push(1)],[new Push(2)]),new Update(3),new Pop(3),new Unwind()]),
+	11:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Neq(),new Update(2),new Pop(2),new Unwind()]),
+	10:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Eq(),new Update(2),new Pop(2),new Unwind()]),
+	9:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Update(1),new Pop(1),new Unwind()]),
+	8:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Div(),new Update(2),new Pop(2),new Unwind()]),
+	7:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Mul(),new Update(2),new Pop(2),new Unwind()]),
+	6:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Sub(),new Update(2),new Pop(2),new Unwind()]),
+	5:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Add(),new Update(2),new Pop(2),new Unwind()]),
+	4:new NGlobal(1,[new Push(0),new Eval(),new Update(1),new Pop(1),new Unwind()]),
+	3:new NGlobal(0,[new PushInt(NN),new PushGlobal("fac"),new Mkap(),new Eval(),new Update(0),new Pop(0),new Unwind()]),
+	2:new NGlobal(1,[new Push(0),new PushGlobal("xeq0"),new Mkap(),new Eval(),new Cond([new PushInt(1)],[new PushInt(1),new Push(1),new PushGlobal("-"),new Mkap(),new Mkap(),new PushGlobal("fac"),new Mkap(),new Eval(),new Push(1),new Eval(),new Mul()]),new Update(1),new Pop(1),new Unwind()]),
+	1:new NGlobal(1,[new Push(0),new Eval(),new PushInt(0),new Eq(),new Update(1),new Pop(1),new Unwind()])}
+	};
+	 
+	var GmGlobals = {"xeq0":1,"fac":2,"main":3,"Id":4,"+":5,"-":6,"*":7,"/":8,"neg":9,"==":10,"!=":11,"if":12};
+	 
+	var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 	
+	
+	var result = evalProg(GmState);
+
+	var end = new Date().getTime();
+	var time = end - start;
+
+	//return result + " | time taken: " + (parseInt(time)/1000) + " seconds";
+	return result;
+}
+
+function facJS(n){
+	function fac(n) {
+		var start = new Date().getTime();
+    	if(n == 0) {
+  	      	return 1
+  	  	} else {
+ 	    	return n * fac(n - 1);
+ 	    }
+    }
+    var start = new Date().getTime();
+    var result = fac(n);
+    var end = new Date().getTime();
+    var time = end - start;
+    return result + " | time taken: " + (parseInt(time)/1000) + " seconds";
+}
+
+function arithTest(x,opname,y){
+	var x = parseInt(x);
+	var y = parseInt(y);
+	var op = new Add();
+	if(opname=="+"){
+		op = new Add();
+	}
+	if(opname=="-"){
+		op = new Sub();
+	}
+	if(opname=="*"){
+		op = new Mul()
+	}
+	if(opname=="=="){
+		op = new Eq();
+	}
+	var GmOutput = [];
+	 
+	var GmCode = [new PushGlobal("main"),new Eval()];
+	 
+	var GmStack = [];
+	 
+	var GmDump = [];
+	 
+	var GmHeap = {
+	objCount:10,
+	freeAddrs:[11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100],
+	addrObjMap:{
+	10:new NGlobal(3,[new Push(0),new Eval(),new Cond([new Push(1)],[new Push(2)]),new Update(3),new Pop(3),new Unwind()]),
+	9:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Neq(),new Update(2),new Pop(2),new Unwind()]),
+	8:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Eq(),new Update(2),new Pop(2),new Unwind()]),
+	7:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Update(1),new Pop(1),new Unwind()]),
+	6:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Div(),new Update(2),new Pop(2),new Unwind()]),
+	5:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Mul(),new Update(2),new Pop(2),new Unwind()]),
+	4:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Sub(),new Update(2),new Pop(2),new Unwind()]),
+	3:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Add(),new Update(2),new Pop(2),new Unwind()]),
+	2:new NGlobal(1,[new Push(0),new Eval(),new Update(1),new Pop(1),new Unwind()]),
+	1:new NGlobal(0,[new PushInt(x),new PushInt(y),op,new Update(0),new Pop(0),new Unwind()])}
+	};
+	 
+	var GmGlobals = {"main":1,"Id":2,"+":3,"-":4,"*":5,"/":6,"neg":7,"==":8,"!=":9,"if":10};
+	 
+	var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
+
+	return evalProg(GmState);	 
+}
+
+function kTest(xory){
+	var func;
+
+	if(xory == "x"){
+		func = "K";	// selects left arg
+	} else {
+		func = "K1"; // selects right arg
+	}
+	var GmOutput = [];
+	 
+	var GmCode = [new PushGlobal("main"),new Eval()];
+	 
+	var GmStack = [];
+	 
+	var GmDump = [];
+	 
+	var GmHeap = {
+	objCount:12,
+	freeAddrs:[13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100],
+	addrObjMap:{
+	12:new NGlobal(3,[new Push(0),new Eval(),new Cond([new Push(1)],[new Push(2)]),new Update(3),new Pop(3),new Unwind()]),
+	11:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Neq(),new Update(2),new Pop(2),new Unwind()]),
+	10:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Eq(),new Update(2),new Pop(2),new Unwind()]),
+	9:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Update(1),new Pop(1),new Unwind()]),
+	8:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Div(),new Update(2),new Pop(2),new Unwind()]),
+	7:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Mul(),new Update(2),new Pop(2),new Unwind()]),
+	6:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Sub(),new Update(2),new Pop(2),new Unwind()]),
+	5:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Add(),new Update(2),new Pop(2),new Unwind()]),
+	4:new NGlobal(1,[new Push(0),new Eval(),new Update(1),new Pop(1),new Unwind()]),
+	3:new NGlobal(0,[new PushInt(0),new PushInt(1),new PushGlobal("/"),new Mkap(),new Mkap(),new PushInt(1),new PushGlobal(func),new Mkap(),new Mkap(),new Update(0),new Pop(0),new Unwind()]),
+	2:new NGlobal(2,[new Push(1),new Eval(),new Update(2),new Pop(2),new Unwind()]),
+	1:new NGlobal(2,[new Push(0),new Eval(),new Update(2),new Pop(2),new Unwind()])}
+	};
+	 
+	var GmGlobals = {"K":1,"K1":2,"main":3,"Id":4,"+":5,"-":6,"*":7,"/":8,"neg":9,"==":10,"!=":11,"if":12};
+	 
+	var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
+
 	return evalProg(GmState);
+
 }
