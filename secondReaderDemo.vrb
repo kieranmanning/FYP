@@ -1,0 +1,14 @@
+\frametitle{Runtime evaluation 3}
+Our Evaluation Strategy
+\begin{itemize}
+\item Encounter Pushglobal "main", push addr to stack
+\item Eval and Unwind stack, place main instructions in
+code sequence
+\item Push arguments of first function in main to stack,
+followed by behaviour of first function and sufficient
+Mkap instructions as to form an application tree.
+\item Defer state to dump if necessary.
+\item Reduce this expression and update root node with
+value
+\item Rinse and repeat until code sequence empty.
+\end{itemize}

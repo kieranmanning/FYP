@@ -19,21 +19,6 @@ preludeDefs :: CoreProgram
 preludeDefs = 
 	[("Id", ["x"], EVar "x")]	-- Identity, here we come...
 
-consTest :: CoreProgram
-consTest = 
-	[("main", [], EAp (EAp (EAp (EConstr 2 3) (ENum 2)) (ENum 3)) (ENum 4))]
-
-listTest :: CoreProgram
-listTest = 
-	[("nil", [], EConstr 1 0),
-	 ("cons", ["x", "y"], EAp(EAp(EConstr 2 2)(EVar "x"))(EVar "y")),
-	 ("main", [], (EAp(EAp(EVar "cons")(ENum 1))(EVar "nil")))]
-
-{-
-	 ("empty", ["x"], ECase (EVar "x") 
-	 	[(1, [], (EConstr 1 0)), (2, [], (EConstr 2 0))]),
--}
-
 kTest :: CoreProgram
 kTest =
 	[("K", ["x", "y"], EVar "x"),
@@ -41,6 +26,10 @@ kTest =
 	 ("main", [], EAp (EAp (EVar "K") (ENum 1)) divbyzero)]
 	where
 		divbyzero = EAp (EAp (EVar "/") (ENum 1)) (ENum 0)
+
+caseTest :: CoreProgram
+caseTest = 
+	[("main", [], ECase (EConstrAp 1 0 []) [(1, [], ENum 1), (2, [], ENum 2)])]
 
 arithTest :: CoreProgram
 arithTest = 

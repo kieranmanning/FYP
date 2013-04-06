@@ -731,7 +731,6 @@ function unwind(xState){
 		var code 		= node.instructions;
 		if((stack.length-1) < numargs){
 			console.error("unwinding undersaturated. see 3.7.2");
-			throw("unwind failing");
 		} else {
 			var newState = 
 				putCode(code, 
@@ -805,8 +804,7 @@ function step(xState){
 	}
 	if(i instanceof Pack){
 		var n = i.n;
-		var t = i.t
-		return pack(t,n, newState);
+		return pack(n);
 	}
 	if(i instanceof Unwind){
 		return unwind(newState);
@@ -860,17 +858,17 @@ function gmFinal(xState){
 } //	working fine 13:37 22/03
 
 var accStates = [];
+var iterations = 0;
 
 /* eval :: GmState -> [GmState] */
 function evalProg(State){
-	var iterations = 0;
 	var currentState = State;
 	while(!gmFinal(currentState)){
 		//accStates.push(currentState);
 		accStates = [currentState].concat(accStates);
 		nextState = step(currentState);
 		currentState = nextState;
-		if(iterations > 1000){
+		if(iterations > 300){
 			console.log("eval to infinity. killing");
 			iterations = 0;
 			return currentState;
@@ -880,15 +878,8 @@ function evalProg(State){
 		console.log("Iteration " + iterations + " - code: " + JSON.stringify(code));
 	}
 	var topAddr = head(getStack(currentState));
-	var topNode = hLookup(getHeap(currentState), topAddr);
-	if(topNode instanceof NNum){
-		var returnVal = topNode.n;
-	}
-	if(topNode instanceof NConstr){
-		var returnVal = "NConstr - tag: " + topNode.t + " | args: " + topNode.a;
-	}
 	console.log( hLookup(getHeap(currentState), topAddr) );
-	return returnVal;
+	return currentState;
 }
 
 /*****************************************************************************
@@ -916,12 +907,12 @@ addrObjMap:{
 6:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Sub(),new Update(2),new Pop(2),new Unwind()]),
 5:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),new Add(),new Update(2),new Pop(2),new Unwind()]),
 4:new NGlobal(1,[new Push(0),new Eval(),new Update(1),new Pop(1),new Unwind()]),
-3:new NGlobal(0,[new PushGlobal("nil"),new PushInt(1),new PushGlobal("cons"),new Mkap(),new Mkap(),new Update(0),new Pop(0),new Unwind()]),
-2:new NGlobal(2,[new Push(1),new Push(1),new Pack(2,2),new Eval(),new Update(2),new Pop(2),new Unwind()]),
-1:new NGlobal(0,[new Pack(1,0),new Update(0),new Pop(0),new Unwind()])}
+3:new NGlobal(0,[new PushInt(3),new PushGlobal("fac"),new Mkap(),new Eval(),new Update(0),new Pop(0),new Unwind()]),
+2:new NGlobal(1,[new Push(0),new PushGlobal("xeq0"),new Mkap(),new Eval(),new Cond([new PushInt(1)],[new PushInt(1),new Push(1),new PushGlobal("-"),new Mkap(),new Mkap(),new PushGlobal("fac"),new Mkap(),new Eval(),new Push(1),new Eval(),new Mul()]),new Update(1),new Pop(1),new Unwind()]),
+1:new NGlobal(1,[new Push(0),new Eval(),new PushInt(0),new Eq(),new Update(1),new Pop(1),new Unwind()])}
 };
  
-var GmGlobals = {"nil":1,"cons":2,"main":3,"Id":4,"+":5,"-":6,"*":7,"/":8,"neg":9,"==":10,"!=":11,"if":12};
+var GmGlobals = {"xeq0":1,"fac":2,"main":3,"Id":4,"+":5,"-":6,"*":7,"/":8,"neg":9,"==":10,"!=":11,"if":12};
  
 var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
  
