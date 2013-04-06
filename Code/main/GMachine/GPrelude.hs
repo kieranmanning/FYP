@@ -27,9 +27,12 @@ listTest :: CoreProgram
 listTest = 
 	[("nil", [], EConstr 1 0),
 	 ("cons", ["x", "y"], EAp(EAp(EConstr 2 2)(EVar "x"))(EVar "y")),
+	 ("main", [], (EAp(EAp(EVar "cons")(ENum 1))(EVar "nil")))]
+
+{-
 	 ("empty", ["x"], ECase (EVar "x") 
 	 	[(1, [], (EConstr 1 0)), (2, [], (EConstr 2 0))]),
-	 ("main", [], EAp(EVar "empty") (EAp(EAp(EVar "cons")(ENum 1))(EVar "nil")))]
+-}
 
 kTest :: CoreProgram
 kTest =
