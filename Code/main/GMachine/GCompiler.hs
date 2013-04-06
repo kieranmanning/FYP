@@ -197,16 +197,12 @@ compileE (EAp(EAp(EVar op)e1)e2) env =
 			  ++ compileE e1 (argOffset 1 env) 
 			  ++ [getOpInst op]
 		False -> compileC (EAp(EAp(EVar op)e1)e2) env
---compileE (EAp(EAp(EVar op)e1)e2) env = compileE e2 env 
---							       ++ compileE e1 (argOffset 1 env) 
---							       ++ [getOpInst op]
 compileE (EAp(EAp(EAp(EVar "if")cond)et)ef) env =
 	compileE cond env ++ [Cond (compileE et env) (compileE ef env)]
 compileE (EAp(EVar "neg")e) env 	= compileE e env ++ [Neg]
 compileE (ECase expr alts) env = 
 	compileE expr env ++ [Casejump $ compileD alts env]
-compileE (EConstrAp tag arity args) env =
-	compilePack (reverse args) env ++ [Pack tag arity]
+compileE (EConstr t n) env = [Pack t n]
 compileE e env = compileC e env ++ [Eval]
 
 
@@ -216,20 +212,25 @@ compileC (EVar v) env
 	| otherwise						= [PushGlobal v]
 	where n = aLookup env v (error "shit the bed")
 compileC (ENum n) env 				= [PushInt n]
-compileC (EAp e1 e2) env 			= compileC e2 env ++ 
-									  compileC e1 (argOffset 1 env) ++
-									  [Mkap]
-compileC (EConstrAp tag arity args) env =
-	compilePack (reverse args) env ++ [Pack tag arity]
-compileC x env =  error $ "no compilation scheme found. this shouldn't happen"
+compileC (EConstr t n) env = [Pack t n]
+compileC (EAp e1 e2) env = 
+	case isConstrExpr (EAp e1 e2) of 
+		True -> 		compileC e2 env ++ 
+						compileC e1 (argOffset 1 env)
+		False -> 		compileC e2 env ++ 
+						compileC e1 (argOffset 1 env)
+						++ [Mkap]
+compileC x env =  error $ "no compilation scheme found for: " ++ (show x)
+
+isConstrExpr :: CoreExpr -> Bool
+isConstrExpr e = 
+	case e of 
+		(EConstr _ _) 	-> True
+		(EAp x y) 		-> isConstrExpr x || isConstrExpr y
+		_		  		-> False
 
 compileD :: [CoreAlt] -> GmEnvironment -> [(Int, GmCode)]
 compileD alts env = compileAlts compileE' alts env
-
-compilePack :: [CoreExpr] -> GmEnvironment -> [Instruction]
-compilePack [] env = []
-compilePack (a:as) env =
-	compileC a env ++ compilePack as (argOffset 1 env)
 
 compileAlts :: (Int -> GmCompiler) 
 			-> [CoreAlt]
