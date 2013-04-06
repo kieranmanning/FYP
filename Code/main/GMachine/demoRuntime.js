@@ -953,7 +953,7 @@ function facJS(n){
 }
 
 function arithTest(x,opname,y){
-	var x = parseInt(x);
+	var x = parseInt(x .);
 	var y = parseInt(y);
 	var op = new Add();
 	if(opname=="+"){

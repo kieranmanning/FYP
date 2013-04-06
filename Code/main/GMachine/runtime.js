@@ -858,17 +858,17 @@ function gmFinal(xState){
 } //	working fine 13:37 22/03
 
 var accStates = [];
-var iterations = 0;
 
 /* eval :: GmState -> [GmState] */
 function evalProg(State){
+	var iterations = 0;
 	var currentState = State;
 	while(!gmFinal(currentState)){
 		//accStates.push(currentState);
 		accStates = [currentState].concat(accStates);
 		nextState = step(currentState);
 		currentState = nextState;
-		if(iterations > 300){
+		if(iterations > 1000){
 			console.log("eval to infinity. killing");
 			iterations = 0;
 			return currentState;
@@ -878,11 +878,17 @@ function evalProg(State){
 		console.log("Iteration " + iterations + " - code: " + JSON.stringify(code));
 	}
 	var topAddr = head(getStack(currentState));
+	var topNode = hLookup(getHeap(currentState), topAddr);
+	if(topNode instanceof NNum){
+		var returnVal = topNode.n;
+	}
+	if(topNode instanceof NConstr){
+		var returnVal = "NConstr - tag: " + topNode.t + " | args: " + topNode.a;
+	}
 	console.log( hLookup(getHeap(currentState), topAddr) );
-	return currentState;
+	return returnVal;
 }
 
 /*****************************************************************************
  *	Output Dump...
 *****************************************************************************/
-
