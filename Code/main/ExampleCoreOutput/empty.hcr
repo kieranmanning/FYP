@@ -1,9 +1,0 @@
-%module main:Test
-  main:Test.main :: ghczmprim:GHCziTypes.IO
-                    ghczmprim:GHCziTuple.Z0T =
-    base:SystemziIO.print
-    @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
-    (base:GHCziShow.zdfShowZMZN @ ghczmprim:GHCziTypes.Char
-     base:GHCziShow.zdfShowChar)
-    (ghczmprim:GHCziCString.unpackCStringzh
-     ("ignore"::ghczmprim:GHCziPrim.Addrzh));
