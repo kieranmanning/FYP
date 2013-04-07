@@ -8,8 +8,8 @@ cabal-dev
 
 *.swp
 
-fay
-ghc
-iTasks
-ghcjs
+.fay
+.ghc
+.iTasks
+.ghcjs
 

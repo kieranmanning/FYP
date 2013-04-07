@@ -1,0 +1,28 @@
+%module main:Main
+  main:Main.lambdaFunc :: type.Integer ->
+                          type.Integer ->
+                          type.Integer ->
+                          type.Integer =
+    
+    
+    \ (x::type.Integer) (y::type.Integer) (zzaeK::type.Integer) 
+        -> op.zp @ type.Integer op.zdfNumInteger (op.zp @ type.Integer op.zdfNumInteger x y) z;
+
+
+main:Main.main :: ghczmprim:GHCziTypes.IO
+                    ghczmprim:GHCziTuple.Z0T =
+    base:GHCziBase.zd @ type.Integer
+    @ (ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T)
+    (base:SystemziIO.print @ type.Integer
+     base:GHCziShow.zdfShowInteger)
+    (op.zp @ type.Integer
+     op.zdfNumInteger
+     (op.zp @ type.Integer
+      op.zdfNumInteger
+      (1::type.Integer)
+      (2::type.Integer))
+     (3::type.Integer));
+  main:ZCMain.main :: ghczmprim:GHCziTypes.IO
+                      ghczmprim:GHCziTuple.Z0T =
+    base:GHCziTopHandler.runMainIO @ ghczmprim:GHCziTuple.Z0T
+    main:Main.main;

@@ -1,0 +1,21 @@
+%module main:Main
+  main:Main.function :: ghczmprim:GHCziTypes.Int ->
+                        ghczmprim:GHCziTypes.Int -> ghczmprim:GHCziTypes.Int =
+
+    \ (xaeI::ghczmprim:GHCziTypes.Int)
+      (yaeJ::ghczmprim:GHCziTypes.Int) ->
+        base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
+        xaeI yaeJ;
+
+    main:Main.main :: ghczmprim:GHCziTypes.IO
+                    ghczmprim:GHCziTuple.Z0T =
+    base:SystemziIO.print @ ghczmprim:GHCziTypes.Int
+    base:GHCziShow.zdfShowInt
+    (base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int
+     base:GHCziNum.zdfNumInt
+     (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))
+     (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh)));
+  main:ZCMain.main :: ghczmprim:GHCziTypes.IO
+                      ghczmprim:GHCziTuple.Z0T =
+    base:GHCziTopHandler.runMainIO @ ghczmprim:GHCziTuple.Z0T
+    main:Main.main;
