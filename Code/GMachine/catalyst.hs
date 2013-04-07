@@ -42,9 +42,9 @@ data Options = Options  {
 
 defaultOptions :: Options
 defaultOptions = Options {
-    optInput  = error $ "File name expected. run with -h for help",
+    optInput  = error $ "no file specified. run with -h for help",
     optOutput = writeFile "a.out.js",
-    optRuntime = (False, error $ "Runtime file name expected. run with -h for help"),
+    optRuntime = (False, error $ "no file specified"),
     optCompileOnly = False  
   }
 
