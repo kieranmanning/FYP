@@ -13,49 +13,76 @@ import System.IO
 import System.Environment
 import System.Console.GetOpt
 
-runProg x = gmState2JS (compile x) 
+runProg = gmState2JS . compile 
 
 run = last . eval . compile 
 
 main = do
-    args <- getArgs
-    let (actions, nonOpts, msgs ) = getOpt RequireOrder options args
-    opts <- foldl (>>=) (return defaultOptions) actions
-    let Options { optInput = input,
-                  optOutput = output } = opts
-    input >>= output
+  args <- getArgs
+  let ( actions, nonOpts, msgs ) = getOpt RequireOrder options args
+  opts <- foldl (>>=) (return defaultOptions) actions
+  let Options { optInput = input,
+                optOutput = output,
+                optRuntime = runtime,
+                optCompileOnly = compileOnly } = opts
+  src <- input
+  case compileOnly of 
+	True  -> 	output $ show $ compile  (read src::CoreProgram)
+  	False ->  	case runtime of
+	  	(True, x)  -> 	output $ runProg (read src::CoreProgram)
+	  	(False, _) -> 	output $ runProg (read src::CoreProgram)
 
-header = "Usage: main [OPTION...]"
 
-
-data Options = Options {
-    optInput :: IO String,
-    optOutput :: String -> IO ()
-}
+data Options = Options  {
+    optInput  :: IO String,
+    optOutput :: String -> IO (),
+    optRuntime :: (Bool, IO String),
+    optCompileOnly :: Bool
+  }
 
 defaultOptions :: Options
 defaultOptions = Options {
-    optInput = getContents,
-    optOutput = putStr
-}
+    optInput  = error $ "no file specified. run with -h for help",
+    optOutput = writeFile "a.out.js",
+    optRuntime = (False, error $ "no file specified"),
+    optCompileOnly = False  
+  }
 
-options = [Option ['v'] ["version"]         (NoArg showVersion)         "show version number",
-           Option ['h'] ["help"]            (NoArg showHelp)            "show help info",
-           Option ['i'] ["input"]           (ReqArg readInput "FILE")   "input filename",
-           Option ['o'] ["output"]          (ReqArg writeOutput "FILE")   "output filename"]
+options :: [OptDescr (Options -> IO Options)]
+options = [
+    Option ['v'] ["version"]      (NoArg showVersion)         		"show version number",
+    Option ['r'] ["runtime"]      (ReqArg includeRuntime "FILE")    "include runtime in ouput",
+    Option ['c'] ["compile-only"] (NoArg compileOnly)         		"compile but don't serialize to JS",
+    Option ['h'] ["help"] 		  (NoArg showHelp)         			"Display helpful information",
+    Option []	 ["magpie"]		  (NoArg magpie)					"",
+    Option ['i'] ["input"]        (ReqArg readInput "FILE")   		"input file to read",
+    Option ['o'] ["output"]       (ReqArg writeOutput "FILE") 		"output file to write"
+  ]
 
-showVersion :: Options -> IO Options
 showVersion _ = do
-    putStrLn "Spaskell Catalyst version 0.0"
-    exitWith ExitSuccess
+  putStrLn $ intercalate "\n" cowsay
+  exitWith ExitSuccess
 
-showHelp :: Options -> IO Options
+cowsay =   [" ________________________________",
+ 			"< Version 0.0 and holding steady >",
+ 			" --------------------------------",
+ 			"       \\   ^__^                     ",
+ 			"        \\  (oo)\\_______         ",
+ 			"           (__)\\       )\\/\\     ",
+ 			"               ||----w |        ",
+ 			"               ||     ||        "]
+
 showHelp _ = do
-    putStrLn "Useful help output, coming soon!"
-    exitWith ExitSuccess
+  txt <- readFile "help.txt"
+  putStrLn txt
+  exitWith ExitSuccess
 
-readInput :: Options -> IO Options
-readInput arg opt = return opt { optInput = readFile arg }
+magpie _ = do
+	putStrLn "magpie"
+	exitWith ExitSuccess
 
-writeOutput :: Options -> IO Options
-writeOutput arg opt = return opt { optOutput = writeFile arg }
+readInput arg opt 		= return opt { optInput 	  	= readFile arg }
+compileOnly opt 		= return opt { optCompileOnly 	= True }
+includeRuntime arg opt 	= return opt { optRuntime 		= (True, readFile arg) }
+writeOutput arg opt 	= return opt { optOutput 		= writeFile arg }
+
