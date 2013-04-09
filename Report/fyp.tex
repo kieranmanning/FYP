@@ -134,7 +134,7 @@ evaluation we only need to evaluate as much of the list as we actually need.
 The result being that our take function will only evaluate and return the 
 first item, ignoring the remainder of the list. What's more, it can do this
 as quickly with an infinite list as with any other length list. This is where the
-efficiency bonus comes in!
+efficiency bonus comes in! **Is that right?**. 
 
 Of course, in order to represent lazy evaluation, we need more than just 
 primitive types. A 'thunk' is a delayed computation, formally a \emph{
@@ -303,6 +303,10 @@ from the server to the client/browser, slowing page load times.
 \subsection{CoffeeScript}
 Worth mentioning from point of view of non-functional take on the js problem
 
+\subsection{ClojureScript}
+
+
+
 \section{Propose solution involving Haskell}
 \begin{itemize}
 \item Discuss type safety, laziness, ease of haskell/JS interoperability.
@@ -316,6 +320,213 @@ Worth mentioning from point of view of non-functional take on the js problem
 \subsection{Intermediate language}
 
 \pagebreak
+
+\section{Implementation}
+\subsection{Overview}
+Having looked at the problems we wish to solve and some existing solutions, we now turn our attention to the implementation of our own solution. First,
+need to form an image of the overall architecture of our solution. At a
+very abstract, high level we can say our project will require the following:
+
+\begin{enumerate}
+	\item An input language rich enough to allow us to write programs
+		  that capture our intended semantics and features.
+	\item A compiler to transform this language into the actions we 
+	 	  wish to be executed.
+\end{enumerate}
+
+\subsection{Core}
+
+\noindent We will start by examining the first requirement. We will need a
+language that is capable of conveying at the very least the generic basics of a programming language, namely the notions of primitive value and function
+declarations and function applications. After this, our language will need
+some means of flow control, namely conditionally executed statements and 
+loops. The last of these basic required features is some manner of stuctured
+data type, allowing for the creation of more complex types as composites of
+primitive types. 
+
+Our resultant compiled language will need to type-safe and support lazy
+evaluation. The former will require some variety of type-checking to be 
+performed on our input language at some stage during compilation, and any
+type errors found to be dealt with and report. The latter is more of a 
+compilation concern than one one of language choice, although a pure input
+language which we can guarantee side-effect free would be of great help.
+
+At this point, we can start to see certain parallels with our ideal input
+language and currently existing programming languages. What we have described
+looks a lot like the generic template for functional languages such as Miranda
+or Haskell, with a very simple feature set. It could also be compared to 
+classic LISP with the addition of structured data types. 
+
+On a more interesting note is the similarity of our required language to
+certain subsets of Lambda Calculus. Before examing these subsets, we'll
+take a quick look at some simpler dialects. The basic
+features of simple untyped lambda calculus are lambda terms, denoting well formed expressions in the lambda calculus which can consist of:
+
+\begin{itemize}
+\item Variables
+\item Lambda abstractions
+\item Lambda applications
+\end{itemize}
+
+\noindent where the latter two correspond with function abstractions (or
+definitions) and applications in more familar terminology. The lambda term
+representing a function that takes two parameters and returns their sum 
+would be 
+
+\begin{center} 
+	\( \lambda x y \rightarrow x + y \)
+\end{center}
+
+\noindent The typed varieties of lambda calculus add the concepts of types and type
+notations, updating the syntax with a new construct \(x:\Gamma \) indicating
+a variable \(x\) of type \(\Gamma\). This would be the only significant 
+difference in the simply typed dialect. 
+
+Let us now look at a variant of the language known as System F. This dialect
+adds the notion of type polymorphism or universal type quantification to 
+the simply typed lambda calculus. The effect of this is to allow for the
+use of variables which range over types as well as functions, in comparison
+to the symply typed lambda calculus where variables only range over functions.
+In practice this allows us to reason about the types of functions, which also
+provides us with the ability to write functions which range over universally
+quantified types. As an example, we can express the identity function as
+
+\begin{center}
+ \( \Lambda \alpha . \lambda x^\alpha . x : \forall \alpha . \alpha \rightarrow \alpha  \)
+\end{center}
+
+\noindent which we read as \emph{the type level function which takes 
+the type \(\alpha\) and returns the id function \( \lambda x^\alpha . x \)
+(which is of type \emph{ function that takes a paramater of type \( \alpha \) 
+and forall type \(\alpha\) returns a value of type \( \alpha \)})}, where 
+the id function can be read as \emph{the function that takes an x of 
+type \( \alpha \) and returns same}. Those interested will find further information
+on System F here LINKLINK
+
+The reason System F is so interesting to us is its similarity to Haskell, or rather
+a form Haskell can be easily expressed in. In particular, a slight variant of System F
+called System FC is the formal name for an intermediate language which GHC is capable
+of emitting some ways through the compilation stages of Haskell. From this point on, 
+we will refer to this language as Core and languages in the same subset of lambda
+calculus as Core-like languages. Core is a lambda calculus dialect (System F with
+added type coercions to be specific) which can be obtained from GHC with the compiler
+argument -fext-core. Other languages besides Haskell have similar intermediate, of
+particular note being SAPL, the intermediate Core-like language for the functional
+programming language Clean. 
+
+\noindent The semantics of Core look like this..
+
+\begin{verbatim}
+type CoreExpr = Expr Var
+
+data Expr b 
+  = Var	  Id
+  | Lit   Literal
+  | App   (Expr b) (Arg b)
+  | Lam   b (Expr b)
+  | Let   (Bind b) (Expr b)
+  | Case  (Expr b) b Type [Alt b]
+  | Cast  (Expr b) Coercion
+  | Note  Note (Expr b)
+  | Type  Type
+\end{verbatim}
+
+\noindent ...when expressed in terms of a Haskell algebraic data type (which 
+coincidentally is a nice way to express most things in life). Lam in this
+case stands for Lambda and the liberally added 'b's for the types of the binders
+in the expression, the rest is mostly self explanatory. 
+
+By the time a source program reaches the stage of GHC where it can be emitted
+as Core, it has already undergone type checking. It has also been substantially 
+minimized to the simplest representation
+possible still perserving all of the original program's semantics. This makes
+Core an excellent candidate as an input language, as its minimalism makes it
+easy to parse and allows us to make assumptions about its type safety.
+
+DISCUSS SAPL HERE
+
+To give an idea of what a Core program looks like, we'll examine a small 
+example. A factorial program is the canonical functional Hello World and will
+demonstrate a few important concepts, so lets go with that. Our source program
+will be 
+
+\begin{verbatim}
+module MIdent where
+
+fac :: Int -> Int
+fac 0 = 1
+fac x = x * (fac x - 1)
+
+main = fac 4
+\end{verbatim}
+
+\noindent Compiling this with ghc -fext-core produces the following output...
+
+\pagebreak 
+
+\begin{verbatim}
+%module main:MIdent
+  %rec
+  {main:MIdent.fac :: ghczmprim:GHCziTypes.Int ->
+                      ghczmprim:GHCziTypes.Int =
+     \ (dsdl0::ghczmprim:GHCziTypes.Int) ->
+      %case ghczmprim:GHCziTypes.Int dsdl0
+      %of (wildX4::ghczmprim:GHCziTypes.Int)
+        {ghczmprim:GHCziTypes.Izh (ds1dl1::ghczmprim:GHCziPrim.Intzh) ->
+           %case ghczmprim:GHCziTypes.Int ds1dl1
+           %of (ds2Xl6::ghczmprim:GHCziPrim.Intzh)
+             {%_ ->
+                base:GHCziNum.zt @ ghczmprim:GHCziTypes.Int 
+                base:GHCziNum.zdfNumInt wildX4
+                (base:GHCziNum.zm @ ghczmprim:GHCziTypes.Int
+                 base:GHCziNum.zdfNumInt (main:MIdent.fac wildX4)
+                (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh)));
+                (0::ghczmprim:GHCziPrim.Intzh) ->
+                 ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh)}}};
+  main:MIdent.main :: ghczmprim:GHCziTypes.Int =
+    main:MIdent.fac
+    (ghczmprim:GHCziTypes.Izh (4::ghczmprim:GHCziPrim.Intzh));
+\end{verbatim}
+
+\noindent Which is intended to be partially human readable, but mostly
+just parseable. Lets tidy this up a bit...
+
+\begin{verbatim}
+%module main:MIdent
+%rec
+{fac :: Int -> Int =
+\ (d0::Int) -> %case Int d0 %of (wildX4::Int)
+
+{Types.Izh (d1::Int) -> %case Types.Int d1 %of (d6::Int)
+
+{%_      ->
+    * @ wildX4 (- @ (fac wildX4) 1::Int);
+
+(0::Int) ->
+    (1::Int)}}};
+
+main :: Types.Int = fac (Types.Izh (4::Int));
+\end{verbatim}
+
+\noindent That looks nicer. Here, I have shortened the type names in the
+primitive value type notations, removed the function return type notations
+and replaced the longwinded arithmetic operator names with their traditional
+symbols. We can see that the guards (Haskell pattern matching syntax, denoted
+with '|' symbols) have been removed and replaced with a case statement, in
+keeping with Core's minimal mindset. We can also see a lambda calculus esque
+structure, with our computations being represented in the form of \( \backslash
+ [params] \rightarrow function body\). The influence System F can be seen in
+ the type signatures prefixing the fac function. Of note also is the '@' symbol, used
+ to denote function application. More on this later, for the moment it's enough
+ to know that x + y can be represented as + @ x y, that is \emph{plus applied to
+ x and y}.
+ 
+Having seen its various features, I was quite content to choose Core as my
+input language. Doing so would later allow me to focus less on the solved
+problem of functiona language compilation and more on the interesting problem of
+the runtime, but we shall come back to that. For now, Core is an easily parsed
+and represented functional language, with all the features we desire and inherent
+type safety. 
 
 \section{Description of implementation and choices}
 
