@@ -2,6 +2,7 @@
 %Gummi|062|=)
 
 \usepackage{fancyhdr}
+\usepackage{verbatim}
 
 \title{\textbf{FYP(!)}}
 \author{Kieran Manning \\ 09676121}
@@ -84,7 +85,7 @@ we will be examining might go beyond the scope of casual javascript programming.
 For brevity's sake, I will explain some of the more specific concepts which 
 I will be commonly referring to throughout this report.
 
-\subsection{Javascript Typing}
+\subsection{Types in Javascript}
 There are seven data types in javascript, five of which concern us for the purposes
 of this project; three primary data types which are Number, String and Boolean, 
 and two 'composite' data types, Objects and Arrays. When writing in straight
@@ -99,10 +100,125 @@ if used incorrectly. The composite Object type will be most interest to us later
 when dealing with the javascript 'runtime' used both in our own implementation
 and in that of the Fay language, which we will be looking at.
 
-An important point to remember, is that we can represent primitive objects as
+An important point to remember is that we can represent primitive objects as
 composite objects, albeit it with a performance penalty. This idea will prove
 significant later when dealing with lazy evaluation, where simple primitive
 types will be insufficient to represent lazy evaluation.
+
+\subsection{Functional Languages}
+
+\subsection{Functional Compilation}
+I will be referring frequently to some of the more common ideas and practices
+invovled in compiling a functional language thoughout this report. Unsurprisingly,
+the field of functional compiler design is not easily summarized in a paragraph,
+let alone a paper; the implementation explained here only scratches the surface.
+However, it will be easier to understand some of the points I make if we start
+with a quick overview.
+
+Most compiler implementations for simple functional languages start with an 
+input language which consists of a list of function definitions and some entry
+or "main" function, which serves as the entry point for the runtime or evaluator.
+We wish to avoid writing programs with side effects and as such the syntax of
+our input program will reflect that. There is no concept of global state nor
+stateful computations and when we need to represent some concept of changing
+state we do so by passing state as paramaters between functions. 
+
+The input language is parsed into a simplified expression-based representation.
+One such representation, the one used later in this report, is defined as:
+
+\begin{verbatim}
+Program ::= [EVar, [a], Expr a]
+
+Expr a
+  ::= EVar Name
+    | ENum Int
+    | EConstr Int Int
+    | EAp (Expr a) (Expr a)
+    | ELet 
+        IsRec
+        [(a, Expr a)]
+        (Expr a)
+    | ECase
+        (Expr a)
+        [Alter a]
+    | ELam [a] (Expr a)
+\end{verbatim}
+
+\noindent We say that a program in this representation consists of a list of
+super combinator definitions. A super combinator, for our purposes, is an 
+expression body along with an identifying variable name and a list of arguments
+to the expressions. Expressions can consist of
+
+\begin{enumerate}
+	\item EVars. Variable names corresponding to a defined value.
+	\item ENums. Primitive integers
+	\item EConstrs. Data constructors, along with the number of elements in the
+		  fully saturated constructor as well as the constructors tag, used to
+		  differentiate constructors in a given context.
+	\item EAp. Binary function applications which we use to apply exprs in order
+		  to construct larger exprs.
+	\item ELet. Let expressions, allowins us to define a list of arguments local
+		  to a specific expression.
+	\item ECase. Case expressions, containing first a condition expression which
+		  will evaluate to a tag identifying a data constructor in the context
+		  of the case expressions and secondly, a list of constructor tags and 
+		  the code to be executed when a particular tag is found.
+	\item ELam. Lambdas, or anonymous expressions. Note the similarity to a 
+		  super combinator, without the identifying variable name.
+\end{enumerate}
+
+\noindent By way of example, a sample program taking two paramaeters and returning
+their sum, written in such a language, would resemble
+
+\begin{center} \( ["sum"], ["x", "y"], EAp (EAp (EVar "+") (EVar "x")) (EVar "y") \) \end{center}
+
+Note in particular that we address a supercombinator named "+" 
+representing our integer addition primitive and that we use two EAp 
+binary expression applications in order to call it on two parameters x and y.
+
+Our compiler will take a program in such a simplified representation
+and convert it into an initial state, along with an initial sequence of
+instructions required to evaluate the initial state. An interesting 
+distinction between these compilation schemes and those of imperative languages, 
+is that we can view our initial (and continuing) program states as graphs built
+from a small set of nodes, namely
+
+\begin{enumerate}
+	\item Integer nodes, representing literal integer values
+	\item Function nodes consisting of the arity of the function and the
+		  its behaviour along with the instructions needed to evaluate it.
+	\item Application functions, the only nodes capable of forming 
+		  node connections from a graph point of view and used to represent
+		  expression applications in terms of our simplified expr language.
+	\item Data Constructor nodes, consisting of the arity of the data
+		  constructor and a list of addresses to the nodes containing its
+		  elements.
+\end{enumerate}
+
+Our initial program state will consist of a heap containing a list of these
+nodes and their attributes addressable by their index in the heap. We will
+also have a stack, used to contain a working set of heap addresses which 
+will be required in the evaluation of immediately pending expressions. A 
+'globals' dictionary will associate global function identifiers with the
+addresses of their function nodes in the heap. **GIVE EXAMPLE OF GRAPH**
+
+**EXAMPLE OF REDEX REDUCTION IN RELATION TO GRAPH REDUCTION**
+
+An evaulator or runtime evaluates our state by iterating through the 
+sequence of instructions provided, updating the state as necessary until
+some final state is reached (or something breaks). This evaulator will 
+understand the actions to inact on our state upon finding a given instruction
+in the instruction sequence. We can break down our instructions into two
+types; those which perform janitorial work on our state and those which
+progress the evaluation of our input program towards some final state. 
+Upon encountering an instruction of the latter type, our evaluator will 
+in general push the heap addresses for the parameters requested (if any) 
+to the stack, execute the actions required by instruction to the parameters
+pointed to by the top x addresses on the stack and the result value in 
+the heap and its heap address to the top of the stack. **EXAMPLE**. We
+continue evaluating until we have reached the end of the code sequence
+or until something breaks. 
+
 
 \subsection{Lazy Evaluation}
 Lazy evaluation, also known as call-by-need evaluation, is an evaluation method
@@ -134,16 +250,22 @@ evaluation we only need to evaluate as much of the list as we actually need.
 The result being that our take function will only evaluate and return the 
 first item, ignoring the remainder of the list. What's more, it can do this
 as quickly with an infinite list as with any other length list. This is where the
-efficiency bonus comes in! **Is that right?**. 
+efficiency bonus comes in! **Is that right?**. \\
 
-Of course, in order to represent lazy evaluation, we need more than just 
-primitive types. A 'thunk' is a delayed computation, formally a \emph{
-parameterless closure} which represents a computation that is not evaluated
-until required or 'forced'. We can view all our expressions as thunks, or
-series of thunks, which have yet to be forced or evaluated. 
 
-TODO: Quick overview of general lazy compilation. Alpha substiuitititition,
-ASTs, graph reduction
+**EXPLAIN IMPLEMENTATION RE: OUR GRAPH REDUCTION**  \\
+
+
+A second characteristic often associated with lazy evaluation is that of 
+updating. When an expression is evaluated in a lazy context, and we know
+that the contents of the expression will not change, we can overwrite the
+expression with its final value. Implementation wise, this generally involves
+replacing the pointer we previously associated with the expression in the
+heap with a pointer to an indirection node pointing to the result of 
+evaluating the expression. From then on, if our program attempts to 
+access the expression, it will be redirected to a value in the heap 
+representing the evaluated expression. This means we need only evaluate
+the expression once. 
 
 \subsection{Weak Head / Normal Form}
 \emph{Normal form}, and \emph{weak head normal form} or WHNF, are terms used
@@ -156,7 +278,7 @@ for example...
 (1, 2)
 \end{verbatim}
 are an integer, lambda expression and tuple respectively in normal form. "1 + 1"
-by comparison would not be in normal form as their is an addition operation to
+by comparison would not be in normal form as there is an addition operation to
 be performed.
 Expressions in weak head normal form are expressions that have been evaluated
 to the outermost data constructor. This is easier explained using an example
@@ -164,7 +286,12 @@ to the outermost data constructor. This is easier explained using an example
 (1 + 1, 2 + 2)
 'h' : ("e" ++ "ello")
 \end{verbatim}
-In the first line, 
+
+In the first line, we have a tuple of addition expressions. We would need to
+evaluate this to (2,4) for this to be in WHNF. The second line contains a
+concatanation and append function. This would need to be evaluated to "hello".
+
+**REDEX EXAMPLE**
 
 \section{Problem Space}
 
@@ -305,36 +432,58 @@ Worth mentioning from point of view of non-functional take on the js problem
 
 \subsection{ClojureScript}
 
-
-
-\section{Propose solution involving Haskell}
-\begin{itemize}
-\item Discuss type safety, laziness, ease of haskell/JS interoperability.
-\item Compare our core-level output ideas with existing solutions. Include quick chats
-	  core/STG in general. Link to SPJ paper(s). Actually, maybe keep chats for later.
-\item Worth comparing to ClojureScript 
-\end{itemize}
-
-\subsection{FFI Method}
-
-\subsection{Intermediate language}
-
 \pagebreak
 
-\section{Implementation}
+\section{A High Level Design}
 \subsection{Overview}
 Having looked at the problems we wish to solve and some existing solutions, we now turn our attention to the implementation of our own solution. First,
-need to form an image of the overall architecture of our solution. At a
+we form an image of the overall architecture of our solution. At a
 very abstract, high level we can say our project will require the following:
 
 \begin{enumerate}
 	\item An input language rich enough to allow us to write programs
 		  that capture our intended semantics and features.
-	\item A compiler to transform this language into the actions we 
-	 	  wish to be executed.
+	\item A transformation from this language into the actions we 
+	 	  wish to be executed by a browser.
 \end{enumerate}
 
-\subsection{Core}
+\noindent The latter requirement can be decomposed into a number of sub-requirements.
+We will need to split our transformation firstly into compilation and runtime phases.
+A source program written in our input language will first be compiled into some runnable
+representation thereof by a compilation stage. This representation of our program will
+then be executed by our runtime until a value is returned. We can be somewhat vague
+for the moment about the exact details of the input language and compilation phase, 
+but we do know that our runtime must be capable of executing programs in a web browser.
+We could say trivially that we only need to compile our programs in advance to simple
+end values which could be interpreted by a browser, but this would leave us with a 
+glorified static expression evaluator. Thus, our runtime must be executable from a
+web browser. With this in mind, we can say that it is the job of our compiler to
+take our input language and transform it into a representation which our runtime can
+then execute when called from a browser. 
+
+Seperating our compiler and runtime poses a small problem. We now have two disparate
+stages which will need to communicate in some sense. We could write both our compiler
+and runtime in a language which can be executed by a browser, but this would be 
+unnecessary and an inefficient use of any such language. Instead, we should write our
+compiler in a more general purpose language and find a means of converting our compiled
+representation into one which can be understood by our runtime. Let us now re-examine
+our project requirements.
+
+\begin{enumerate}
+	\item An input language rich enough to allow us to write programs
+		  that capture our intended semantics and features.
+	\item A compiler capable of transforming our input language into
+		  a program representation executable by our runtime.
+	\item A means of converting our compiled representation into one
+		  which can be executed by our runtime.
+	\item A runtime to execute our program in a browser. 
+\end{enumerate}
+
+\subsection{Input Language}
+
+**Note we haven't commented on the format of core programs beyond **\\
+**recognizing them at a glance. Need to go into detail on [ScDefn]**\\
+**and others, although we could probably leave that until impl	  **\\
 
 \noindent We will start by examining the first requirement. We will need a
 language that is capable of conveying at the very least the generic basics of a programming language, namely the notions of primitive value and function
@@ -403,16 +552,19 @@ the id function can be read as \emph{the function that takes an x of
 type \( \alpha \) and returns same}. Those interested will find further information
 on System F here LINKLINK
 
-The reason System F is so interesting to us is its similarity to Haskell, or rather
-a form Haskell can be easily expressed in. In particular, a slight variant of System F
-called System FC is the formal name for an intermediate language which GHC is capable
-of emitting some ways through the compilation stages of Haskell. From this point on, 
-we will refer to this language as Core and languages in the same subset of lambda
-calculus as Core-like languages. Core is a lambda calculus dialect (System F with
-added type coercions to be specific) which can be obtained from GHC with the compiler
-argument -fext-core. Other languages besides Haskell have similar intermediate, of
-particular note being SAPL, the intermediate Core-like language for the functional
-programming language Clean. 
+The reason System F is so intereesting to us is its similarity to a number of functional
+language representations currently in use. Many high-level functional programming languages
+can be expressed in terms of System F while still preserving their full semantics. Of
+particular note however are the languages of Core and SAPL. These are intermediate languages
+used as minimal representations for Haskell and Clean respectively which can be emitted by
+specific compilers for each language midway through compilation. The term 'Core' is often
+used to refer to any such intermediate functional language based on typed lambda calculus,
+but from here on we shall refer to the GHC (Glasgow Haskell Compiler) specific intermediate
+language as Core or 'External Core' and similar languages as 'Core-like'. Core is a lambda
+calculus dialect (System F with added type coercions to be specific) which can be obtained
+from GHC with the compiler argument -fext-core. SAPL can be similarly obtained from the 
+Clean compiler. 
+
 
 \noindent The semantics of Core look like this..
 
@@ -434,7 +586,9 @@ data Expr b
 \noindent ...when expressed in terms of a Haskell algebraic data type (which 
 coincidentally is a nice way to express most things in life). Lam in this
 case stands for Lambda and the liberally added 'b's for the types of the binders
-in the expression, the rest is mostly self explanatory. 
+in the expression, the rest is mostly self explanatory. Note that data constructors
+are not represented here although are included in the language seperate to the
+Core expr type, along with a \%data denotation.
 
 By the time a source program reaches the stage of GHC where it can be emitted
 as Core, it has already undergone type checking. It has also been substantially 
@@ -442,8 +596,6 @@ minimized to the simplest representation
 possible still perserving all of the original program's semantics. This makes
 Core an excellent candidate as an input language, as its minimalism makes it
 easy to parse and allows us to make assumptions about its type safety.
-
-DISCUSS SAPL HERE
 
 To give an idea of what a Core program looks like, we'll examine a small 
 example. A factorial program is the canonical functional Hello World and will
@@ -461,8 +613,6 @@ main = fac 4
 \end{verbatim}
 
 \noindent Compiling this with ghc -fext-core produces the following output...
-
-\pagebreak 
 
 \begin{verbatim}
 %module main:MIdent
@@ -512,7 +662,7 @@ main :: Types.Int = fac (Types.Izh (4::Int));
 primitive value type notations, removed the function return type notations
 and replaced the longwinded arithmetic operator names with their traditional
 symbols. We can see that the guards (Haskell pattern matching syntax, denoted
-with '|' symbols) have been removed and replaced with a case statement, in
+with '\textbar' symbols) have been removed and replaced with a case statement, in
 keeping with Core's minimal mindset. We can also see a lambda calculus esque
 structure, with our computations being represented in the form of \( \backslash
  [params] \rightarrow function body\). The influence System F can be seen in
@@ -521,12 +671,48 @@ structure, with our computations being represented in the form of \( \backslash
  to know that x + y can be represented as + @ x y, that is \emph{plus applied to
  x and y}.
  
-Having seen its various features, I was quite content to choose Core as my
-input language. Doing so would later allow me to focus less on the solved
-problem of functiona language compilation and more on the interesting problem of
-the runtime, but we shall come back to that. For now, Core is an easily parsed
-and represented functional language, with all the features we desire and inherent
-type safety. 
+SAPL is similar to core, with a few differences. SAPL uses a \emph{select} 
+expression in place of Core's case expressions although this is a difference in name
+only, the semantics of both being equivalent. SAPL also has a built in \emph{if}
+expression which in Core would be expressed using case expressions instead. SAPL
+contains no type annotations, all such information having been removed after the
+Clean compilation type-checking stage.
+
+Choosing a language such as Core or SAPL as our input language would provide
+a number of benefits for this project. Firstly, it would allow us to write
+programs in Haskell or Clean and make use of existing tools to translate these
+into their Core-like representations.. This would mean that we can write our browser
+programs in languages with pleasant high level syntax. We could leave the 
+parsing of these programs to existing Haskell or Clean compilers and focus 
+instead on the more interesting problems of compilation and runtime. We would
+also get type-checking for free, as the type checking for both Core and SAPL 
+would have already been performed by the time they are emitted by their respective
+compilers. It would also reduce the learning curve for users who wish to use
+this project who already have experience with writing programs in languages
+with syntax similar to Haskell or Clean.
+ 
+Having seen the various features of System F languages such as SAPL and Core, I
+was quite content to choose such a language as the input for my own project. 
+From our research into the iTasks system, we have seen that such a language 
+can provide a good starting point for a project such as this. Between SAPL and
+Core I was more inclined towards using the latter. I have far more experience
+using Haskell than Clean. Also, though we do not need them currently, it is
+worth noting that having Core's type annotations may prove useful for future
+improvements to our project. Such information would be of great help when 
+diagnosing runtime errors, for example. It was decided that Core would be the
+input language.
+
+\subsection{Compilation Strategy}
+Now that we have decided on our input language, we need to plan our compilation
+strategy. Thankfully for us, there is a wealth of literature and previous work
+on writing a compiler for System F resemblant languages and a number of approaches
+already exist from which we can take inspiration. 
+
+The general method for compiling a simple functional language begins with
+the idea of representing our program state as a graph. 
+
+
+\begin{comment}
 
 \section{Description of implementation and choices}
 
@@ -589,20 +775,7 @@ case statement continuations, link to paper
 
 \subsection{Higher order functions}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\end{comment}
 
 
 \end{document}

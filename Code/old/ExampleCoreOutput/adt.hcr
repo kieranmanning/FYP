@@ -1,0 +1,43 @@
+%module main:MNAME
+  %data main:MNAME.BTree =
+    {main:MNAME.Leaf ghczmprim:GHCziTypes.Int;
+     main:MNAME.Branch main:MNAME.BTree main:MNAME.BTree};
+  arpO :: integerzmgmp:GHCziIntegerziType.Integer =
+    (1::integerzmgmp:GHCziIntegerziType.Integer);
+  a1rpP :: integerzmgmp:GHCziIntegerziType.Integer =
+    (2::integerzmgmp:GHCziIntegerziType.Integer);
+  a2rpQ :: integerzmgmp:GHCziIntegerziType.Integer =
+    (3::integerzmgmp:GHCziIntegerziType.Integer);
+  a3rpR :: ghczmprim:GHCziTypes.ZMZN
+           integerzmgmp:GHCziIntegerziType.Integer =
+    ghczmprim:GHCziTypes.ZC @ integerzmgmp:GHCziIntegerziType.Integer
+    a2rpQ
+    (ghczmprim:GHCziTypes.ZMZN
+     @ integerzmgmp:GHCziIntegerziType.Integer);
+  a4rpS :: ghczmprim:GHCziTypes.ZMZN
+           integerzmgmp:GHCziIntegerziType.Integer =
+    ghczmprim:GHCziTypes.ZC @ integerzmgmp:GHCziIntegerziType.Integer
+    a1rpP a3rpR;
+  main:MNAME.y :: ghczmprim:GHCziTypes.ZMZN
+                  integerzmgmp:GHCziIntegerziType.Integer =
+    ghczmprim:GHCziTypes.ZC @ integerzmgmp:GHCziIntegerziType.Integer
+    arpO a4rpS;
+  main:MNAME.main :: ghczmprim:GHCziTypes.IO
+                     ghczmprim:GHCziTuple.Z0T =
+    base:SystemziIO.print
+    @ (ghczmprim:GHCziTypes.ZMZN
+       integerzmgmp:GHCziIntegerziType.Integer)
+    (base:GHCziShow.zdfShowZMZN
+     @ integerzmgmp:GHCziIntegerziType.Integer
+     base:GHCziShow.zdfShowInteger)
+    main:MNAME.y;
+  %rec
+  {main:MNAME.f :: main:MNAME.BTree -> ghczmprim:GHCziTypes.Int =
+     \ (dsdpu::main:MNAME.BTree) ->
+         %case ghczmprim:GHCziTypes.Int dsdpu %of (wildXc::main:MNAME.BTree)
+           {main:MNAME.Leaf (a5aeM::ghczmprim:GHCziTypes.Int) ->
+              a5aeM;
+            main:MNAME.Branch
+            (xaeN::main:MNAME.BTree) (y1aeO::main:MNAME.BTree) ->
+              base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
+              (main:MNAME.f xaeN) (main:MNAME.f y1aeO)}};
