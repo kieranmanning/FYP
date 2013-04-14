@@ -219,10 +219,9 @@ the heap and its heap address to the top of the stack. **EXAMPLE**. We
 continue evaluating until we have reached the end of the code sequence
 or until something breaks. 
 
-
 \subsection{Lazy Evaluation}
 Lazy evaluation, also known as call-by-need evaluation, is an evaluation method
-that delays function evaluations until such time as their end values are directly
+that delays evaluations until such time as their end values are directly
 required. The result of this is that a computation we write will only be 
 evaluated when it is required by some other aspect of the program, or possibly never
 if its value is never required. 
@@ -267,11 +266,27 @@ access the expression, it will be redirected to a value in the heap
 representing the evaluated expression. This means we need only evaluate
 the expression once. 
 
+This chractecteristic, known as sharing, is closely related to the idea
+of \emph{referential transparency}. Referential transparency is the name
+given to a property of certain expressions which states that the expression
+can be replaced with its value without altering the semantics of the overall
+program. This property exists in programs which are \emph{pure}, that is to
+say programs consisting of expressions or functions whose evaluation is 
+dependant only on the body of the expression and it's parameters, and which
+cause no side effects which may effect other expressions upon execution. 
+We cannot update an expression with its value if there is a danger that
+some aspect of the expression may change during the course of program 
+execution. This creates certain challenges when dealing with non-deterministic
+concepts such as IO in functional languages. Such problems however are 
+beyond the scope of this project and implementation. Those interested can
+find more information here **LINK**
+
 \subsection{Weak Head / Normal Form}
 \emph{Normal form}, and \emph{weak head normal form} or WHNF, are terms used
-in this context to denote the level of possible evaluation in an expression
-or thunk. An expression is in normal form when it can be evaluated no further,
-for example...
+in this context to denote the level of possible evaluation in an expression.
+We say an expression is in head normal form when it has been fully evaluated
+or reduced, and can neither be further evaluated nor contains any sub
+expressions which can be further evaluated. For example...
 \begin{verbatim}
 1
 \x -> x
@@ -280,16 +295,22 @@ for example...
 are an integer, lambda expression and tuple respectively in normal form. "1 + 1"
 by comparison would not be in normal form as there is an addition operation to
 be performed.
+
 Expressions in weak head normal form are expressions that have been evaluated
-to the outermost data constructor. This is easier explained using an example
+to the outermost data constructor. These can be data constructors, undersaturated
+primitive operations or lambda abstractions. For example...
 \begin{verbatim}
-(1 + 1, 2 + 2)
+Just (1 + 1)
+\x -> 2 + 2
 'h' : ("e" ++ "ello")
 \end{verbatim}
+The first example contains two sub expressions which could be further evaluated,
+but as the outermost component (the Just data constructor) has been evaluated 
+fully, it is still in WHNF. The same is true of the 3rd example, where the "++"
+sub expression could be further evaluated, however the outermost element
+':' is a data constructor, specifically the list cons constructor. The second
+example is in WHNF by virtue of being a lambda abstraction.
 
-In the first line, we have a tuple of addition expressions. We would need to
-evaluate this to (2,4) for this to be in WHNF. The second line contains a
-concatanation and append function. This would need to be evaluated to "hello".
 
 **REDEX EXAMPLE**
 
@@ -706,10 +727,200 @@ input language.
 Now that we have decided on our input language, we need to plan our compilation
 strategy. Thankfully for us, there is a wealth of literature and previous work
 on writing a compiler for System F resemblant languages and a number of approaches
-already exist from which we can take inspiration. 
+already exist from which we can take inspiration. An overview of general 
+functional language compilation is provided in the background chapter of this
+report so that this section and following sections discussing compilation can 
+focus on the aspects of immediate interest to us.
 
-The general method for compiling a simple functional language begins with
-the idea of representing our program state as a graph. 
+*ADD GRAPH REDUCTION TO BACKGROUND*
+
+First, we need some way to compile programs written in our input language into
+some form from which we can derive an initial state. The traditional way to
+do this is to view our program as a graph as described above and convert this
+graph into a programmatic representation. There are many existing functional
+compilation language strategies which achieve this, so it was decided to 
+examine those before deciding on an implementation. In particular, there were
+two strategies which I investigated in-depth
+
+\begin{enumerate}
+	\item The template instantation machine
+	\item The G-Machine
+\end{enumerate}
+
+\subsubsection{The template instantiation machine} 
+The template instantiation machine is a simplistic approach to
+functional graph reduction and compilation but conveys many of 
+the ideas used in more complicated approaches. When the project
+started moving towards implemenation of a solution, this is the
+approach I started with. It proved very useful in understanding
+some of the key ideas in writing a functional compiler and gave
+me an idea of the scope of such an implementation. 
+
+The machine is built upon a state consisting of
+\begin{itemize}
+	\item A stack
+	\item A dump
+	\item A heap
+	\item A globals array
+\end{itemize}
+
+\noindent The stack is a stack of addresses which correspond
+to nodes in the heap. These nodes form the spine of the 
+expression being evaluated. The dump is used to record the
+state of the expression being evaluated. When we **EXPLAIN**.
+The heap is a list of nodes and their associated heap addresses.
+The nodes contained in the heap correspond to the examples
+given in the overview in the background section.
+The globals array associates the names of our declared
+supercombinators with their addresses in the heap, allowing
+supercombinators to be looked up by name. 
+
+The operation of the template instiation machine is described
+by a number of state transitions which are called if the state
+of the machine represents that of the transition. When no
+transition rule matches, we assume execution to be complete. 
+At most one state transition rule will apply at any point;
+more than one would imply non-determinism which is not
+permissible. In general, the state transition rules are
+concerned with the type of node pointed to by the top of the
+stack and will react accordingly. For example, in the case
+where an application node is found, the appropriate rule
+is triggered which will pop the application and unwind its
+two arguments onto the stack. The rule for dealing with 
+supercombinators is also of interest to us. When a 
+supercombinator node pointer is found on top of the stack
+we instantiate it by binding the argument names of its
+body to the argument addresses found on top of the stack.
+We then discard the arguments from the stack, reduce the
+resulting redex and either push the root of the result 
+to the stack or overwrite the root of the redex with the
+result, depending on whether the implementation in question
+is performing lazy updates. 
+
+The implemenation of the template instantiation machine is
+split into compilation and evaluation stages. The compiler
+in the first stage takes our input program, along with
+any built-in prelude definitions, and builds an initial
+state of the form described above. The evaluator in the 
+second stage takes this initial state and runs our machine
+on it one step at a time, applying the necessary state
+transition rules, until we reach a final state. The stepping
+function takes as input a state and returns a resultant
+state. The machine is considered to have finished when 
+the stack consists of a single pointer to an item which
+can be evaluated no further, for example and integer or
+a fully saturated data constructor. 
+
+This is about the extent to which I implemented my initial
+template instantiation machine. There were further 
+improvements which could be made, such as adding primitive
+operations, let expressions etc. etc. My implementation was
+capable of taking a program representing an identity 
+function, compiling it and evaluating it. This was 
+sufficient for my purposes of understanding some of the
+basic concepts of functional compiler implementation. At
+this point, I was looking to move towards a different
+implementation which would better suit some of my 
+requirements.
+
+**PROVIDE EXAMPLE COMPILATION**
+
+The template instantiation machine suffers from one notable
+problem which made it particularly unsuitable for our
+purposes. The general operation of the template instantiation
+machine constructs an instance of a supercombinator body.
+Each time we attempt to instantiate a supercombinator we
+recurseivly traverse the template. This action is executed
+in the evaluation stage. We know that our end goal is the
+ability to execute programs in a browser and as such it would
+be of great benefit to us if we could minimize the amount of
+work needed at run time. Thankfully for us, there exist
+implemenations which are capable of doing this!
+
+\subsubsection{The G-machine}
+The G-machine differs from the template instantiation machine
+in a few ways but there is one significant difference in 
+their principles of operation. The G-machine translates each
+supercombinator body to a sequence of instructions which will
+construct an instance of the supercombinator body when run.
+In comparison to the template instantiation machine, this
+allows us to execute the actions of a supercombinator without
+the need to instantiate it at run time, this having been
+achieved in advance at compile time. 
+
+The G-machine decouples the compiler from evaluator to a
+greater extent than the template instantion machine. The
+G-machine's compiler not only produces an initial state from
+our input program but also a list of instructions which when
+combined with the initial state can be evaluated to a final
+state. The set of instructions drawn from is designed to be
+minimal. The instructions and state produced
+by the compiler can be said to represent an \emph{abstract
+machine} which can then be implemented on various different
+architectures and platforms. This makes it easier to write
+runtime evaluators for G-machine compiled programs, as the
+initial state can be expressed in an intermediate form 
+between that of a reducible graph state representation 
+and an easily executed program state.
+
+The general form of the G-machine is similar to that of
+the template instantiation machine. We take our input language
+and compile this into an initial state. This state is identical
+to the one listed previously, with the addition of a sequence
+of instructions to be called in order to evaluate our state.
+There still exists a heap and stack, the former still containing
+nodes of the same types as those previously encountered.
+This state is passed to the runtime which will execute until
+we reach a final state where we have no further instructions
+to evaluate and a single pointer to a node in the heap on top
+of the stack. Our runtime must now possess the means to 
+interpret these instructions and execute them upon the current
+state, producing a new state. This is in contrast to the 
+evaluation stage of the template instantiation machine which
+had a list of state transition rules which would fire when
+the state matched that of one of the rules. Here, only the
+initial state was necessary for evaluation.
+
+The following are instructions one would find in a
+basic G-machine implementation. 
+
+\begin{itemize}
+	\item Unwind: unwinds the spine in much the usual
+		  manner.
+	\item PushGlobal: finds a supercombinator by name 
+		  from the globals array and places its heap
+		  address on top of the stack.
+	\item PushInt: Places an integer node in the heap
+		  and its address on top of the stack.
+	\item Mkap: Forms an application node from the
+		  top two node pointers on the stack.
+	\item Slide: drops N pointers from the stack behind
+		  the current top pointer. Used to remove
+		  arguments pointers after evaluating a 
+		  supercombinator.
+	\item Update: updates the root of a redex with its
+		  reduced value. Used to implement laziness.
+\end{itemize}
+
+\noindent More in-depth information on these and other 
+instructions can be found in later implementation chapters. 
+
+The G-machine compiler consists of a number of schemes which
+determine what sequence of instructions to output when we
+encounter certain expressions in our input language. These
+together with an initial heap built from the supercombinators
+of our input program along with any prelude definitions are
+then passed to the runtime.
+
+\subsection{Runtime}
+
+
+\section{Implementation}
+
+
+
+
+
 
 
 \begin{comment}
