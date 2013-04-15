@@ -811,6 +811,8 @@ the stack consists of a single pointer to an item which
 can be evaluated no further, for example and integer or
 a fully saturated data constructor. 
 
+**PROVIDE EXAMPLE COMPILATION**
+
 This is about the extent to which I implemented my initial
 template instantiation machine. There were further 
 improvements which could be made, such as adding primitive
@@ -821,9 +823,9 @@ sufficient for my purposes of understanding some of the
 basic concepts of functional compiler implementation. At
 this point, I was looking to move towards a different
 implementation which would better suit some of my 
-requirements.
-
-**PROVIDE EXAMPLE COMPILATION**
+requirements. Those interested will find a more complete
+implementation of a template instantiation compiler 
+described in greather depth in **SJP BOOK AND TUTORIAL**.
 
 The template instantiation machine suffers from one notable
 problem which made it particularly unsuitable for our
@@ -861,7 +863,9 @@ architectures and platforms. This makes it easier to write
 runtime evaluators for G-machine compiled programs, as the
 initial state can be expressed in an intermediate form 
 between that of a reducible graph state representation 
-and an easily executed program state.
+and an easily executed program state. This fact will prove
+useful when it comes to writing the runtime to evaluate
+our compiled programs.
 
 The general form of the G-machine is similar to that of
 the template instantiation machine. We take our input language
@@ -912,8 +916,85 @@ together with an initial heap built from the supercombinators
 of our input program along with any prelude definitions are
 then passed to the runtime.
 
-\subsection{Runtime}
+The improved efficiency of the G-machine over the template
+instantion machine, along with the intended ease of writing
+an abstract machine to evaluate programs at runtime, makes
+it the better choice of the two explored implementations.
 
+
+\subsection{Runtime}
+Now that we have decided on the G-machine as the general
+form of our compilation strategy, we need to consider how
+we will evaluate G-machine compiled programs in a manner
+that is useful in web programming. As anticipated from
+early on in this project, JavaScript is the only realistic
+way to achieve this. JavaScript is far and away the most
+commonly used browser-side programming language. If we
+want the results of this project to be usable in any
+general sense, JavaScript is the only sensible option.
+
+It is worth re-examining Fay at this point. We are
+taking some inspiration from its implementation in
+that we are using a runtime written in javascript to 
+evaluator a low level representation of our compiled
+program. However, it's worth noting the differences.
+As we have decided to use the G-machine as our overall
+compilation strategy, we 
+will not need to concern ourselves with the
+concept of thunks. Our smallest indivisible unit of
+computation will instead be singular graph nodes. 
+In a sense, these are comparable to the thunks
+represented in Fay placed into the context of a graph
+reduction machine. Our primitive operation instructions
+will be implemented as operations on graph states
+returning new graph states, as opposed to thunks. We
+do not concern ourselves with forcing thunks, so to
+speak, but we will have to deal with evaluating 
+computations to weak head normal form, albeit in a 
+graph reduction context.
+
+Our runtime will receive the graph state representation
+of our input program after compilation, along with the
+instruction sequence associated with this state. It will
+have to iterate through the instruction sequence, enacting
+the actions specified by the instructions upon our state.
+We can see that our runtime will need to understand how
+to interpret these instructions into concrete javascript
+actions which we can then call from our browser. Our 
+runtime must also be capable of representing our compiled
+initial state and instructions in a javascript format 
+for our actions to be enacted upon. We will 
+need some abstract representations of the components of
+our state, our instructions and their attributes. The
+compiled state will need to be serialized from the 
+language which we use to represent our program through
+the compilation stage (which as it turns out will be
+Haskell) into Javascript. This will be achieved by
+instantiating our abstract state javascript
+representations to represent the concrete components of
+our state and instructions.
+
+At this point, we will have a compiled G-machine state 
+in Javascript form and the means to evaluate it into
+subsequent states. 
+A javascript function will iterate through our states
+appling the changes necessary. On each iteration, this
+will check the state of the stack and
+the instruction at the front of the instruction list,
+apply the evaluation actions required by the instruction
+upon the state and return a new state. This will need 
+to be achieved for each state and instruction in our
+evaluation until we reach a final state (which we will
+also need a means of testing for). A call to this
+function will be included in our serialized compiled
+state which we can call to initiate execution.
+When we have finished executing, we will then need
+to extract the result of our evaluated program from
+our state and return it in a javascript format for 
+use in our browser, other javascript functions etc.
+
+\subsection{Summary}
+We now have a 
 
 \section{Implementation}
 
