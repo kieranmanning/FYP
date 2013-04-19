@@ -1,0 +1,30 @@
+\contentsline {section}{\numberline {1}Abstract}{i}
+\contentsline {section}{\numberline {2}Acknowledgements}{i}
+\contentsline {section}{\numberline {3}Goal}{ii}
+\contentsline {section}{\numberline {4}Introduction}{1}
+\contentsline {subsection}{\numberline {4.1}Types in Javascript}{1}
+\contentsline {subsection}{\numberline {4.2}Functional Languages}{1}
+\contentsline {subsection}{\numberline {4.3}Functional Compilation}{1}
+\contentsline {subsection}{\numberline {4.4}Lazy Evaluation}{4}
+\contentsline {subsection}{\numberline {4.5}Weak Head / Normal Form}{5}
+\contentsline {section}{\numberline {5}Problem Space}{7}
+\contentsline {subsection}{\numberline {5.1}Typing}{8}
+\contentsline {subsection}{\numberline {5.2}Syntax}{9}
+\contentsline {subsection}{\numberline {5.3}Lazy Evaluation}{10}
+\contentsline {section}{\numberline {6}Existing Solutions}{11}
+\contentsline {subsection}{\numberline {6.1}Fay}{11}
+\contentsline {subsubsection}{\numberline {6.1.1}A Haskell DSL}{11}
+\contentsline {subsubsection}{\numberline {6.1.2}Runtime}{12}
+\contentsline {subsection}{\numberline {6.2}iTasks? Relevant?}{14}
+\contentsline {subsection}{\numberline {6.3}GHCJS}{14}
+\contentsline {subsection}{\numberline {6.4}CoffeeScript}{14}
+\contentsline {subsection}{\numberline {6.5}ClojureScript}{14}
+\contentsline {section}{\numberline {7}A High Level Design}{15}
+\contentsline {subsection}{\numberline {7.1}Overview}{15}
+\contentsline {subsection}{\numberline {7.2}Input Language}{16}
+\contentsline {subsection}{\numberline {7.3}Compilation Strategy}{21}
+\contentsline {subsubsection}{\numberline {7.3.1}The template instantiation machine}{21}
+\contentsline {subsubsection}{\numberline {7.3.2}The G-machine}{23}
+\contentsline {subsection}{\numberline {7.4}Runtime}{25}
+\contentsline {subsection}{\numberline {7.5}Summary}{26}
+\contentsline {section}{\numberline {8}Implementation}{27}

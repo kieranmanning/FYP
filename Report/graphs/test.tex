@@ -1,0 +1,74 @@
+\documentclass{article}
+\usepackage[x11names, rgb]{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{snakes,arrows,shapes}
+\usepackage{amsmath}
+%
+%
+
+%
+
+%
+
+\begin{document}
+\pagestyle{empty}
+%
+%
+%
+
+\enlargethispage{100cm}
+% Start of code
+% \begin{tikzpicture}[anchor=mid,>=latex',line join=bevel,]
+\begin{tikzpicture}[>=latex',line join=bevel,]
+  \pgfsetlinewidth{1bp}
+%%
+\pgfsetcolor{black}
+  % Edge: NAp2 -- x
+  \draw [] (71.899bp,71.697bp) .. controls (77.479bp,60.846bp) and (84.643bp,46.917bp)  .. (90.203bp,36.104bp);
+  % Edge: NAp2 -- plus
+  \draw [] (54.101bp,71.697bp) .. controls (48.521bp,60.846bp) and (41.357bp,46.917bp)  .. (35.797bp,36.104bp);
+  % Edge: NAp1 -- y
+  \draw [] (107.9bp,143.7bp) .. controls (113.48bp,132.85bp) and (120.64bp,118.92bp)  .. (126.2bp,108.1bp);
+  % Edge: NAp1 -- NAp2
+  \draw [] (90.101bp,143.7bp) .. controls (84.521bp,132.85bp) and (77.357bp,118.92bp)  .. (71.797bp,108.1bp);
+  % Node: y
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (135bp,90bp) node {y};
+\end{scope}
+  % Node: x
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (99bp,18bp) node {x};
+\end{scope}
+  % Node: plus
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (27bp,18bp) node {+};
+\end{scope}
+  % Node: NAp2
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (63bp,90bp) node {@};
+\end{scope}
+  % Node: NAp1
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (99bp,162bp) node {@};
+\end{scope}
+%
+\end{tikzpicture}
+% End of code
+
+%
+\end{document}
+%
+
+
+

@@ -1,0 +1,154 @@
+\documentclass{article}
+\usepackage[x11names, rgb]{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{snakes,arrows,shapes}
+\usepackage{amsmath}
+%
+%
+
+%
+
+%
+
+\begin{document}
+\pagestyle{empty}
+%
+%
+%
+
+\enlargethispage{100cm}
+% Start of code
+% \begin{tikzpicture}[anchor=mid,>=latex',line join=bevel,]
+\begin{tikzpicture}[>=latex',line join=bevel,]
+  \pgfsetlinewidth{1bp}
+%%
+\begin{scope}
+  \pgfsetstrokecolor{black}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (94bp,199bp) -- (94bp,262bp) -- (190bp,262bp) -- (190bp,199bp) -- cycle;
+  \draw (142bp,244bp) node {stack};
+\end{scope}
+\begin{scope}
+  \pgfsetstrokecolor{black}
+  \definecolor{strokecol}{rgb}{1.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (132bp,8bp) -- (132bp,191bp) -- (237bp,191bp) -- (237bp,8bp) -- cycle;
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (185bp,173bp) node {f};
+\end{scope}
+\begin{scope}
+  \pgfsetstrokecolor{black}
+  \definecolor{strokecol}{rgb}{0.0,0.0,1.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (8bp,8bp) -- (8bp,191bp) -- (113bp,191bp) -- (113bp,8bp) -- cycle;
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (61bp,173bp) node {main};
+\end{scope}
+  \pgfsetcolor{black}
+  % Edge: nap2 -> nap3
+  \draw [] (79.178bp,136.36bp) .. controls (68.533bp,125.9bp) and (52.375bp,110.01bp)  .. (41.753bp,99.571bp);
+  % Edge: stack -> nap0
+  \draw [->] (132bp,206bp) .. controls (132bp,192.93bp) and (137.27bp,179.31bp)  .. (147.72bp,159.83bp);
+  % Edge: nap3 -> 2
+  \draw [] (41.271bp,76.362bp) .. controls (51.375bp,65.897bp) and (66.712bp,50.012bp)  .. (76.794bp,39.571bp);
+  % Edge: nap2 -> 1
+  \draw [] (90.55bp,136.36bp) .. controls (91.092bp,125.9bp) and (91.913bp,110.01bp)  .. (92.453bp,99.571bp);
+  % Edge: nap0 -> nap1
+  \draw [] (155bp,136.36bp) .. controls (155bp,125.9bp) and (155bp,110.01bp)  .. (155bp,99.571bp);
+  % Edge: nap0 -> y
+  \draw [] (166.37bp,136.36bp) .. controls (177.56bp,125.9bp) and (194.54bp,110.01bp)  .. (205.7bp,99.571bp);
+  % Edge: nap3 -> f
+  \draw [] (30.633bp,76.362bp) .. controls (30.272bp,65.897bp) and (29.725bp,50.012bp)  .. (29.365bp,39.571bp);
+  % Edge: nap1 -> plus
+  \draw [] (154.82bp,76.362bp) .. controls (154.64bp,65.897bp) and (154.36bp,50.012bp)  .. (154.18bp,39.571bp);
+  % Edge: nap1 -> x
+  \draw [] (165.82bp,76.362bp) .. controls (176.47bp,65.897bp) and (192.63bp,50.012bp)  .. (203.25bp,39.571bp);
+  % Edge: stack -> nap2
+  \draw [->] (112bp,206bp) .. controls (112bp,193.01bp) and (106.96bp,179.4bp)  .. (96.961bp,159.88bp);
+  % Node: nap3
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (31bp,88bp) node {@};
+\end{scope}
+  % Node: nap2
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (90bp,148bp) node {@};
+\end{scope}
+  % Node: nap1
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (155bp,88bp) node {@};
+\end{scope}
+  % Node: nap0
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (155bp,148bp) node {@};
+\end{scope}
+  % Node: f
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (29bp,28bp) node {f};
+\end{scope}
+  % Node: 1
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (93bp,88bp) node {1};
+\end{scope}
+  % Node: 2
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (87bp,28bp) node {2};
+\end{scope}
+  % Node: plus
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (154bp,28bp) node {+};
+\end{scope}
+  % Node: y
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (217bp,88bp) node {y};
+\end{scope}
+  % Node: x
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (214bp,28bp) node {x};
+\end{scope}
+  % Node: stack
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (102bp,208bp) -- (102bp,231bp) -- (182bp,231bp) -- (182bp,208bp) -- cycle;
+  \draw (122bp,208bp) -- (122bp,231bp);
+  \draw (142bp,208bp) -- (142bp,231bp);
+  \draw (162bp,208bp) -- (162bp,231bp);
+  \draw (112bp,213bp) node { };
+  \draw (132bp,213bp) node { };
+  \draw (152bp,213bp) node { };
+  \draw (172bp,213bp) node {};
+\end{scope}
+%
+\end{tikzpicture}
+% End of code
+
+%
+\end{document}
+%
+
+
+

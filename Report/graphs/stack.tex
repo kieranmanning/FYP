@@ -1,0 +1,70 @@
+\documentclass{article}
+\usepackage[x11names, rgb]{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{snakes,arrows,shapes}
+\usepackage{amsmath}
+%
+%
+
+%
+
+%
+
+\begin{document}
+\pagestyle{empty}
+%
+%
+%
+
+\enlargethispage{100cm}
+% Start of code
+% \begin{tikzpicture}[anchor=mid,>=latex',line join=bevel,]
+\begin{tikzpicture}[>=latex',line join=bevel,]
+  \pgfsetlinewidth{1bp}
+%%
+\pgfsetcolor{black}
+  % Edge: node0 -> node1
+  \draw [->] (20bp,173bp) .. controls (36.865bp,173bp) and (39.367bp,163.79bp)  .. (56bp,161bp) .. controls (94.137bp,154.61bp) and (141.99bp,123.94bp)  .. (152bp,160bp);
+  % Node: node1
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (56bp,162bp) -- (56bp,185bp) -- (164bp,185bp) -- (164bp,162bp) -- cycle;
+  \draw (97bp,162bp) -- (97bp,185bp);
+  \draw (139bp,162bp) -- (139bp,185bp);
+  \draw (77bp,167bp) node {n14};
+  \draw (118bp,167bp) node {719};
+  \draw (152bp,167bp) node {};
+\end{scope}
+  % Node: node0
+\begin{scope}
+  \definecolor{strokecol}{rgb}{0.0,0.0,0.0};
+  \pgfsetstrokecolor{strokecol}
+  \draw (0bp,0bp) -- (0bp,184bp) -- (20bp,184bp) -- (20bp,0bp) -- cycle;
+  \draw (0bp,161bp) -- (20bp,161bp);
+  \draw (0bp,138bp) -- (20bp,138bp);
+  \draw (0bp,115bp) -- (20bp,115bp);
+  \draw (0bp,92bp) -- (20bp,92bp);
+  \draw (0bp,69bp) -- (20bp,69bp);
+  \draw (0bp,46bp) -- (20bp,46bp);
+  \draw (0bp,23bp) -- (20bp,23bp);
+  \draw (10bp,166bp) node { };
+  \draw (10bp,143bp) node { };
+  \draw (10bp,120bp) node { };
+  \draw (10bp,97bp) node { };
+  \draw (10bp,74bp) node { };
+  \draw (10bp,51bp) node { };
+  \draw (10bp,28bp) node { };
+  \draw (10bp,5bp) node {};
+\end{scope}
+%
+\end{tikzpicture}
+% End of code
+
+%
+\end{document}
+%
+
+
+

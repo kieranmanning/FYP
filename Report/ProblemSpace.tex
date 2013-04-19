@@ -1,0 +1,179 @@
+
+\section{Problem Space}
+An important aspect of web development is the ability to write dynamic
+websites which will adapt to users requirements, input etc. This can be
+achieved by writing adaptive client-side or server-side web programs
+which serve dynamic content. Client-side browser executed programming 
+has become  increasingly important as it is more scalable and allows 
+for truly dynamic content without the need for page refreshing. The 
+ubiqitous standardized programming language for client-side is JavaScript.
+This is the only language which can be executed on all major browsers and 
+that seems unlikely to change in the forseeable future. 
+
+JavaScript was created in 1995 for Netscape by Brendan Eich. It is an
+object-orientated, imperative, interpreted language intended originally
+to be executed by a web browser (although server-side implementations
+also exist, notably Node.js in recent years). Despite the name, JavaScript
+is unrelated to Java. They both share a similar \verb!C++!-inspired
+curly-brace syntax and object orientation but that is about as deep as
+the simalirities go. JavaScript is weakly, dynamically typed. Its objects
+are not class based but prototyped based. It is interpreted, meaning
+that the human readable source code is executed by the browser without
+any pre-processing. 
+
+Some features have been added to JavaScript over the years but in 
+general the language has not greatly changed since its inception. This
+is understandably problematic. As of this moment of this writing the
+language is 18 years old. Few technologies can claim to have remained
+in use that long in this industry and fewer still without detractors.
+As web development and websites have become increasingly more complex
+problems inherent in JavaScript have started to become more obvious.
+JavaScript's syntax is unappealing and verbose. Its type system is 
+weak in more than name alone, leading to frequent problems with ill-
+written JavaScript programs breaking silently. Many such problems 
+would have been detected or prevented in languages with stronger
+type systems. JavaScript lacks any concept of a module system making
+inclusion difficult and naive. Programs are "included" in web pages
+by linking to their sources which are basically concatenated by the
+browser executing the page. Such issues existed from the first 
+release of the language. As the websites and the JavaScript
+programs on which they rely have grown larger, unimaginably so since
+1995, these issues have become increasingly problematic.
+
+Many people have attempted to
+write alternative languages which could replace JavaScript but 
+introducing new standards in the hopes of replacing old standards
+usually ends as predicted. As JavaScript began as the \emph{the
+standard}, so it seems it shall continue. There is some light to the
+situation, however. Much time and effort has been put into making 
+JavaScript run fast and it is capable of great efficiency. While 
+JavaScript may be our only client side programming language, at least
+it \emph{does} provide us with a standard upon which all major web 
+browser vendors will agree. There have been attempts
+to improve JavaScript by augmenting its feature set through the use
+of user created libraries. One notable example is JQuery, a JavaScript
+library which adds new features and alternative syntax to the language.
+These are still only addons though, relying on the underlying semantics
+and executing of the original language. 
+
+
+\subsection{Typing}
+JavaScript is weakly, dynamically typed. As it is an interpreted language,
+there is no notion of static, compile-time typing. The types of variables
+and objects are inferred at runtime based on their values, or attributes and
+methods in the case of objects. This typing style is referred to as\emph{
+duck typing} and similar is used in other languages such as Python. The
+consequences of this typing lead to some of JavaScripts notable characteristics.
+Firstly, programmers do not need to concern themselves with annotating the
+types of their objects, functions etc. when declaring them and the syntax
+relfects this. The statement...
+\begin{center}
+var x = 2;		
+\end{center}
+\noindent ...will, when evaluated at runtime, create a variable named x, infer
+it to be of type int based on the value assigned to it and assign it the
+value 2. Objects and functions are declared in a similar fashion, with their
+attributes and behaviour used to determine their types. This runtime inference
+exemplifies the dynamic nature of javascript typing. It also means that
+type errors can only be diagnosed at runtime, generally with unhelpful 
+error messages. A strongly typed language would be capable of finding such
+errors at compile time. This is a somewhat imperfect argument as JavaScript
+is an interpreted language, however strong typing would make it easier to
+diagnose errors at runtime and allow us to perform useful type checking
+ahead of time if we wished.
+
+We can see the effects of JavaScript's weak typing in its type coercions. 
+Implicit casting occurs frequently in JavaScript programs. It could be argued
+that this is a useful convenience feature, though in practice such coercions
+can be vague and unintuitive. One such example is arithmetic in the presence
+of strings. If we call an arithmetic operator on N values,
+one or more of which is a digit string, they will be cast to numerals and
+the operation applied, returning a numeral result. for example
+
+\begin{center}
+	\verb!"2" * "2" => 4! \\
+	\verb! 2  * "2" => 4!
+\end{center}
+
+\noindent Calling the same result on non digit strings will return a NaN and
+program execution will continue (probably breaking soon). The \verb!+! operator
+is even more interesting, as it is also overloaded as a string concatenation
+operator. Using \verb!+! on numeral values will return a numeral value. 
+Using it on some combination of numeral and string values however will break
+addition associativity:
+
+\begin{center}
+	\verb!("x" + 1) + 2 => x12! \\
+	\verb!"x" + (1 + 2) => x3! \\
+	\verb!7 + 7 + "7" => "147"! \\
+	\verb!"7" + 7 + 7 => "777"!
+\end{center}
+
+\noindent It is very common for bugs to arise in JavaScript programs where
+variables have been implicitly cast to unexpected types. The
+resulting program will probably break with a completely unrelated error
+when some function or operator chokes on an unexpected, unintended value.
+Worse yet, the program may break silently and end up in production with 
+an undiscovered bug.
+
+JavaScript is also overly forgiving of type errors when they do occur.
+One such example is shown above, in the addition of non digit strings
+resulting in a NaN return. Another more worrying example is the Infinity
+numeric value, which occurs when a value goes outside the bounds of
+a floating point number. Much like our NaN example, the program will
+continue to run until it chokes on this Infinity value. This permissive
+behaviour along with javascript's weak typing and implicit (often unintuitive)
+casting makes it unfortunately easy to write programs which exhibit
+unintended behaviour with non-existant or silent errors.
+ 
+
+
+\subsection{Syntax}
+When javascript was created, its syntax was intended to resemble that 
+of C and Java. At the time, these were two predominant languages and
+reusing ideas from their syntax design was intended to lessen the 
+learning curve for programmers coming from C and Java backgrounds.
+Since 1995 many new ideas for syntax design have appeared in more
+recent languages. 
+
+JavaScript's syntax is awkward and verbose in places. Nested 
+anonymous functions for example can quickly become ugly, requiring
+careful curly brace placement and indentation to remain vaguely
+readable. The use of curly braces, parenthesis and semicolons to
+seperate and sequence statements allows for horribly ugly, executable
+code. Languages such as Python and Haskell have found ways
+to overcome these problems through the use of whitespace and significant
+statement placement. Their forced coding styles produce cleaner, more
+standardized code which is more readable with less fluctuation from
+programmer from programmer. 
+
+A more significant problem with JavaScript can be its handling of
+operators. The \verb!+! operator described above is a good
+example. By default, the same symbol is used for string concatenation
+as for arithmetic addition. Operator overloading is a matter of opinion,
+though overloading operators as common as \verb!+! by default is probably
+not the wisest or most intuitive choice. 
+
+\subsection{Lazy Evaluation}
+Javascript is a strictly evaluated language. This isn't a problem per
+se and and there is no "better" choice between lazy or strict evaluation.
+However, the option of lazy evaluation in browser side programming would
+be nice. 
+
+Lazy evaluation has shown itself to be useful in languages such as
+Haskell. Firstly, it allows us to make use of concepts such as infinite
+data structures. We could for example, create an infinite list of items
+forming a recurring pattern and take as many items as we wish from this
+list. Such operations in JavaScript are not possible. The syntax does
+not exist to allow ease of creation of such data structures and even if
+it were possible, we'd hit the obvious problem of trying to represent
+such structures in a strictly evaluated language. Lazy evaluation also
+provides for improved efficiency under certain circumstances. Lazily
+evaluated expressions are not universally faster than their strict
+counterparts but in many lazy languages the option exists to perform
+operations in a strict or lazy context, allowing the programmer to choose
+the better evaluation strategy for a given task. It would be great if
+we could bring similar flexibility to browser-side programming.
+
+
+

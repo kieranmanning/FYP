@@ -1,0 +1,42 @@
+digraph G{
+    nodesep = .5;
+    fixedsize=true;
+    node[width=0.05,height=0.05];
+    subgraph cluster_stack{
+        stack [shape=record, 
+               label = "<f0> | <f1> | <f2> | <f3> ",
+               height=.1,
+               width=.5];
+        label="stack";
+    }
+
+    subgraph cluster_f{
+        edge [dir=none];
+        node [shape=plaintext];
+        color=red;
+        nap0[label="@"];
+        nap1[label="@"];
+        plus[label="+"];
+        nap0 -> nap1;
+        nap0 -> y;
+        nap1 -> plus;
+        nap1 -> x;
+        label="f";
+    }
+
+    subgraph cluster_main{
+        edge [dir=none];
+        node [shape=plaintext];
+        color=blue;
+        nap2[label="@"];
+        nap3[label="@"];
+        nap2 -> nap3;
+        nap2 -> 1;
+        nap3 -> f;
+        nap3 -> 2;
+        label="main";
+    }
+
+    stack:f0 -> nap2;
+    stack:f1 -> nap0;
+}

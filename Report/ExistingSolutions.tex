@@ -1,0 +1,156 @@
+
+\section{Existing Solutions}
+We are not the first to identify these problems, nor to attempt
+to rectify them. Much research and work has gone directly into studying
+issues in JavaScript. Many of the problems of JavaScript also exist
+in the general programming domain where solutions and alternatives
+likewise exist. Having looked at some of the problems in JavaScript 
+and its place in browser side web programming, we will now examine
+some of these existing solutions.
+
+
+\subsection{Fay}
+The Fay language, which lives at https://github.com/faylang/fay/wiki, is
+another language which has attempted to solve some of the problems we
+are interested in. It provides a Haskell DSL with primitives corresponding
+to those of JavaScript as well as various built-in methods to aid in browser
+side programming. Programs are written in this DSL then compiled using the
+Fay compiler into a javascript representation thereof. The choice of Haskell
+as the platform language gives Fay a number of useful properties. Programs 
+compiled with Fay are:
+
+\begin{itemize}
+	\item Type-safe
+	\item Pure
+	\item Lazy
+\end{itemize}
+
+\noindent The choice of JavaScript as the target language means that programs
+compiled with Fay are also compatible with all major web browsers. In order
+to evaluate compiled Fay programs, a number of primitive operations
+are needed. These are provided in a seperate runtime written in JavaScript.
+
+\subsubsection{A Haskell DSL}
+Fay source programs are written in Haskell, making use of a number of
+primitives defined in a haskell embedded domain specific language.
+In general, there are a number of advantages to using domain specific languages
+to accomplish tasks. Such languages can take advantage of the tools and 
+features of their platform language. This greatly reduces the time taken to
+design and implement the language itself, as the great bulk of the necessary
+compilation tools probably already exist for the platform language. 
+The domain specific language (DSL) will typically use constructs in the
+platform language to represent the data which we wish to work it. Methods
+will be provided to execute common actions on these representations allowing
+us to process the data our DSL represents. 
+
+The Fay domain specific language provides a number of important 
+constructs. Most significantly, it provides access to the Fay () monad
+which represents Fay computations. Functions which are intended to interact
+with the browser make use of this monad to execute Fay operations. For
+example, the hello world function in Fay might look like this:
+
+\begin{verbatim}
+main :: Fay ()
+main = alert "Hello, World!"
+
+alert :: String -> Fay ()
+alert = ffi "window.alert(%1)"
+\end{verbatim}
+
+The type signature of the function \emph{alert} shows this in action.
+We that the alert function takes a String and returns a Fay () action.
+In this case, the Fay action is a foreign function interface call to
+JavaScripts window.alert() method.  Fay also contains a list of type 
+definitions corresponding to the JavaScript types into which our Haskell
+and Fay types will be compiled. In this way, primitive Haskell types and 
+Fay types can be mixed in Fay source programs. 
+
+This approach allows the programmer to take advantage of many of Haskell's
+existing features when writing Fay programs. The syntax remains the same,
+with the addition of a few keywords and constructs added by Fay. Someone
+coming from a Haskell background with seperate web developmente experience
+would have little difficult getting up to speed with Fay, once they figure
+out the Fay specific additions in the DSL. As Fay is created within Haskell,
+it is able to take full advantage of its type system. This means that Fay
+programs are type-safe. It also means that error messages and warnings from 
+Haskell compilers can be used when debugging Fay programs. This is a significant
+improvement over writing JavaScript where debugging errors in such a weakly
+typed language tends to be tedious and vague. 
+
+\subsubsection{Runtime}
+
+Fay's javascript 'runtime' uses functions to represent objects. In this manner,
+the idea of \emph{first class functions} can be preserved from Haskell in the
+translation to Javascript. A 'thunk' for example looks like this...
+\begin{verbatim}
+// Thunk object.
+function $(value){
+  this.forced = false;
+  this.value = value;
+}
+\end{verbatim}
+We can see Fay making use of javascript's concept of all-encompassing objects to
+make representing functional code easier. 
+
+\begin{verbatim}
+function Fay$$mult(x){
+  return function(y){
+    return new $(function(){
+      return _(x) * _(y);
+    });
+  };
+}
+
+function Fay$$mult$36$uncurried(x,y){
+    return new $(function(){
+      return _(x) * _(y);
+    });
+}
+\end{verbatim}
+
+
+
+There are seven data types in javascript, five of which concern us for the purposes
+of this project; three primary data types which are Number, String and Boolean, 
+and two 'composite' data types, Objects and Arrays. When writing in straight
+forward javascript, types are more or less invisible to the programmer. To declare
+a variable, of any type, the usual format is...
+\begin{verbatim}
+var varname = value;
+\end{verbatim}
+The type of varname is inferred from the type of the value. Types can be mixed
+in operators and functions with some type coercion, which can be very dangerous
+if used incorrectly but that's a discussion for a different part of this report.
+When discussing Fay, we really only care about the composite Object data type. 
+This is an object in the usual sense, with attributes and associated methods. 
+
+Representing data in this manner allows for the concepts of Laziness and currying
+to be carried over from Haskell and represented in javascript. Of course this could
+be written manually in javascript without the need for Haskell or a translator, but
+such programming would be tedious and error-prone. A disadvantage to this method is a 
+loss of efficiency. This would not be the intended manner of programming in
+javascript and the language is not necessarily optimized to deal with it. It
+also produces a larger output of code than programming in a more traditional 
+imperative javascript manner. This is of more signficance in web languages
+such as javascript where a larger body of code will take longer to transfer
+from the server to the client/browser, slowing page load times. 
+
+
+
+* A proper syntactic and semantic subset of Haskell
+* Statically typed
+* Lazy
+* Pure by default
+* Compiles to JavaScript
+* Has fundamental data types (Double, String, etc.) based upon what JS can support
+* Outputs minifier-aware code for small compressed size
+* Has a trivial foreign function interface to JavaScript
+
+\subsection{iTasks? Relevant?}
+
+\subsection{GHCJS}
+
+\subsection{CoffeeScript}
+Worth mentioning from point of view of non-functional take on the js problem
+
+\subsection{ClojureScript}

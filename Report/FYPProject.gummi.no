@@ -1,0 +1,12 @@
+version=0.6.0
+typesetter=pdflatex
+steps=texpdf
+root=/home/spoon/CS/FYP/Report/fyp.tex
+
+file=/home/spoon/CS/FYP/Report/coverletter.tex
+file=/home/spoon/CS/FYP/Report/Contents.tex
+file=/home/spoon/CS/FYP/Report/ExistingSolutions.tex
+file=/home/spoon/CS/FYP/Report/HighLevelDesign.tex
+file=/home/spoon/CS/FYP/Report/Introduction.tex
+file=/home/spoon/CS/FYP/Report/Preample.tex
+file=/home/spoon/CS/FYP/Report/ProblemSpace.tex

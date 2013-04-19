@@ -1,0 +1,11 @@
+graph graphname {
+    plus [shape=plaintext] [label="+"];
+    NAp1 [shape=plaintext] [label="@"];
+    NAp2 [shape=plaintext] [label="@"];
+    x [shape=plaintext];
+    y [shape=plaintext];
+    NAp1 -- NAp2;
+    NAp1 -- y;
+    NAp2 -- plus;
+    NAp2 -- x;
+}
