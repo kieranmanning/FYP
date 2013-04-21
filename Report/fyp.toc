@@ -15,16 +15,26 @@
 \contentsline {subsection}{\numberline {6.1}Fay}{11}
 \contentsline {subsubsection}{\numberline {6.1.1}A Haskell DSL}{11}
 \contentsline {subsubsection}{\numberline {6.1.2}Runtime}{12}
-\contentsline {subsection}{\numberline {6.2}iTasks? Relevant?}{14}
-\contentsline {subsection}{\numberline {6.3}GHCJS}{14}
-\contentsline {subsection}{\numberline {6.4}CoffeeScript}{14}
-\contentsline {subsection}{\numberline {6.5}ClojureScript}{14}
-\contentsline {section}{\numberline {7}A High Level Design}{15}
-\contentsline {subsection}{\numberline {7.1}Overview}{15}
-\contentsline {subsection}{\numberline {7.2}Input Language}{16}
-\contentsline {subsection}{\numberline {7.3}Compilation Strategy}{21}
-\contentsline {subsubsection}{\numberline {7.3.1}The template instantiation machine}{21}
-\contentsline {subsubsection}{\numberline {7.3.2}The G-machine}{23}
-\contentsline {subsection}{\numberline {7.4}Runtime}{25}
-\contentsline {subsection}{\numberline {7.5}Summary}{26}
-\contentsline {section}{\numberline {8}Implementation}{27}
+\contentsline {subsubsection}{\numberline {6.1.3}Analysis}{15}
+\contentsline {subsection}{\numberline {6.2}iTasks}{15}
+\contentsline {subsubsection}{\numberline {6.2.1}Implementation}{15}
+\contentsline {subsection}{\numberline {6.3}Core/SAPL paper}{16}
+\contentsline {subsection}{\numberline {6.4}Others}{16}
+\contentsline {section}{\numberline {7}A High Level Design}{18}
+\contentsline {subsection}{\numberline {7.1}Overview}{18}
+\contentsline {subsection}{\numberline {7.2}Input Language}{19}
+\contentsline {subsection}{\numberline {7.3}Compilation Strategy}{24}
+\contentsline {subsubsection}{\numberline {7.3.1}The template instantiation machine}{24}
+\contentsline {subsubsection}{\numberline {7.3.2}The G-machine}{26}
+\contentsline {subsection}{\numberline {7.4}Runtime}{28}
+\contentsline {subsection}{\numberline {7.5}Summary}{29}
+\contentsline {section}{\numberline {8}Implentation}{30}
+\contentsline {subsection}{\numberline {8.1}Core Language Representation}{30}
+\contentsline {subsection}{\numberline {8.2}Compiler}{32}
+\contentsline {subsubsection}{\numberline {8.2.1}Program State}{32}
+\contentsline {subsubsection}{\numberline {8.2.2}Compilation Procedure}{35}
+\contentsline {subsection}{\numberline {8.3}Serialization To JavaScript}{36}
+\contentsline {section}{\numberline {9}Runtime}{39}
+\contentsline {section}{\numberline {10}Others}{39}
+\contentsline {section}{\numberline {11}Evaluation}{40}
+\contentsline {section}{\numberline {12}Conclusions}{41}

@@ -35,9 +35,9 @@ Fay source programs are written in Haskell, making use of a number of
 primitives defined in a haskell embedded domain specific language.
 In general, there are a number of advantages to using domain specific languages
 to accomplish tasks. Such languages can take advantage of the tools and 
-features of their platform language. This greatly reduces the time taken to
+features of their platform language. This reduces the time taken to
 design and implement the language itself, as the great bulk of the necessary
-compilation tools probably already exist for the platform language. 
+compilation tools probably already exist for the platform language~\cite{DSLs}. 
 The domain specific language (DSL) will typically use constructs in the
 platform language to represent the data which we wish to work it. Methods
 will be provided to execute common actions on these representations allowing
@@ -58,7 +58,7 @@ alert = ffi "window.alert(%1)"
 \end{verbatim}
 
 The type signature of the function \emph{alert} shows this in action.
-We that the alert function takes a String and returns a Fay () action.
+We say that the alert function takes a String and returns a Fay () action.
 In this case, the Fay action is a foreign function interface call to
 JavaScripts window.alert() method.  Fay also contains a list of type 
 definitions corresponding to the JavaScript types into which our Haskell
@@ -70,18 +70,32 @@ existing features when writing Fay programs. The syntax remains the same,
 with the addition of a few keywords and constructs added by Fay. Someone
 coming from a Haskell background with seperate web developmente experience
 would have little difficult getting up to speed with Fay, once they figure
-out the Fay specific additions in the DSL. As Fay is created within Haskell,
+out the Fay specific additions in the DSL. As Fay is embedded within Haskell,
 it is able to take full advantage of its type system. This means that Fay
 programs are type-safe. It also means that error messages and warnings from 
 Haskell compilers can be used when debugging Fay programs. This is a significant
 improvement over writing JavaScript where debugging errors in such a weakly
-typed language tends to be tedious and vague. 
+typed language tend to be tedious and vague. 
 
 \subsubsection{Runtime}
+Fay programs are compiled into a low level JavaScript representation. The
+compiled program is built from primitive thunk objects and operations
+which process these thunks. The abstract representation for these thunks 
+exists in a seperate runtime written in JavaScript. This runtime also contains
+various operations to handle thunks in compiled programs along with thunk-level 
+functions in JavaScript which represent Fay's primitive operations. When a
+Fay program is compiled the output is bundled with the runtime which is 
+capable of evaluating the compiled program. 
 
-Fay's javascript 'runtime' uses functions to represent objects. In this manner,
-the idea of \emph{first class functions} can be preserved from Haskell in the
-translation to Javascript. A 'thunk' for example looks like this...
+The thunk objects used to represent Fay programs are not dissimilar from the
+nodes found in the graphs described in the background information section.
+Singular expressions are built of thunks and complex expressions are built
+from series of thunk, much like our reducible graphs. Thunks are by default
+unevalated, or unreduced, and must be \emph{forced} in order to reduce to
+weak head normal form. This again should sound familiar after examining the
+idea of reducible graph expressions. A thunk is represented in the abstract
+by a function as follows:
+
 \begin{verbatim}
 // Thunk object.
 function $(value){
@@ -89,10 +103,49 @@ function $(value){
   this.value = value;
 }
 \end{verbatim}
-We can see Fay making use of javascript's concept of all-encompassing objects to
-make representing functional code easier. 
+
+Instances of thunks are represented as instantiated function objects.
+We also need functions to handle primitive thunk operations. Two important
+examples are: 
 
 \begin{verbatim}
+// Force a thunk (if it is a thunk) until WHNF.
+function _(thunkish,nocache){
+  while (thunkish instanceof $) {
+    thunkish = thunkish.force(nocache);
+  }
+  return thunkish;
+}
+
+// Apply a function to arguments (see method2 in Fay.hs).
+function __(){
+  var f = arguments[0];
+  for (var i = 1, len = arguments.length; i < len; i++) {
+    f = (f instanceof $? _(f) : f)(arguments[i]);
+  }
+  return f;
+}
+\end{verbatim}
+
+The first forces a thunk to weak head normal form (using a JavaScript
+prototype "force" method tied to the thunk object). This is used to 
+evaluate expressions represented in thunks to weak head normal form,
+much in the manner explained in the introduction section on graph
+reduction. The second example here applies a function to two arguments.
+We can see this function as being similar to the appliation nodes
+we'd find in reducible graph expressions. 
+
+Primitive operations in the runtime are also represented as JavaScript
+functions. For example, the two functions needed for primitive
+multiplication look like this:
+
+\begin{verbatim}
+function Fay$$mult$36$uncurried(x,y){
+    return new $(function(){
+      return _(x) * _(y);
+    });
+}
+
 function Fay$$mult(x){
   return function(y){
     return new $(function(){
@@ -100,57 +153,135 @@ function Fay$$mult(x){
     });
   };
 }
-
-function Fay$$mult$36$uncurried(x,y){
-    return new $(function(){
-      return _(x) * _(y);
-    });
-}
 \end{verbatim}
 
+The first represents a fully saturated multiplication operation ie. one
+in which we have both necessary arguments. We \emph{return a function
+which when called} will force both operands into weak head normal form
+and multiply them together. As such, the return of the multiplication
+operation is not itself in weak normal form and will remain unevaluated
+until it is forced. Such behaviour allows for laziness in the language.
 
+The second function represents an undersaturated multiplication operation.
+In this case, we have only one of the two necessary arguments. We take
+our provided operand and place it into wrapper function which takes a second
+operand. This function contains the means to return an unevaluated
+saturated multiplication operation. We then return the wrapper function, 
+which when applied to the as of yet unprovided second operand, will return
+an unevaluated multiplication expression, just as in the full saturated example.
+Such behaviour is allows for curried operations in Fay.
 
-There are seven data types in javascript, five of which concern us for the purposes
-of this project; three primary data types which are Number, String and Boolean, 
-and two 'composite' data types, Objects and Arrays. When writing in straight
-forward javascript, types are more or less invisible to the programmer. To declare
-a variable, of any type, the usual format is...
+There are many other functions in the runtime although these examples
+are sufficient to get a feel for how it works. A large part of the runtime
+is just implementations of primitives such as arithmetic and list operations
+etc. There are also two other somewhat significant functions which handle
+the serialization and unserialization of objects from Fay to JS. However
+these are mostly utility functions and are not particularly interesting
+to us, once we have seen the principles of the implemenation.
+
+\subsubsection{Analysis}
+Fay's take on the problem of improving browser side functional programming
+presents some interesting ideas. In terms of accomplishments, it manages
+to bring the ideas of laziness, static typing and purity to the problem
+space while also remaining compatible with all current browsers. Its
+implementation also provides some interesting concepts. Of note in particular
+is its runtime, which provides a means to evaluate a compiled program in a
+browser. This is an idea which will be important when it comes time to write
+our own implementation. Its use of a Haskell embedded domain specific 
+language, and the benefits this brings, is also interesting to us.
+
+\subsection{iTasks}
+iTasks is a project built with the Clean programming language. Its aim
+is different from ours but its implementation manages to achieve some of
+our goals. iTasks is a workflow management system specification language,
+embedded in Clean, which generates workflow applications. As it is written
+as a DSL inside a functional language, much like Fay, it benefits from a
+number of the advantages of the host language. In particular, iTasks inherits
+Clean's concepts of generic programming and its type system.
+
+\subsubsection{Implementation}
+The domain specific language of iTasks makes available to the programmer a
+number of constructs and functions needed to express a series of workflow
+tasks when specifying a workflow system. Tasks are represented by a 
+parameterized \verb!Task a!
+type and functions can be constructed in the domain specific language which
+take these tasks and perform operations on them. A set of basic functions
+provides functionality such as task composition, splitting etc. The following
+is an example of a basic iTasks specification
+
 \begin{verbatim}
-var varname = value;
+:: Person = { firstName   :: String, 
+              SurName     :: String,
+              dateOfBirth :: HtmlDate,
+              gender      :: Gender }
+:: Gender = Male | Female
+
+enterPerson :: Task Person
+enterPerson = enterInformation "Enter Information"
 \end{verbatim}
-The type of varname is inferred from the type of the value. Types can be mixed
-in operators and functions with some type coercion, which can be very dangerous
-if used incorrectly but that's a discussion for a different part of this report.
-When discussing Fay, we really only care about the composite Object data type. 
-This is an object in the usual sense, with attributes and associated methods. 
 
-Representing data in this manner allows for the concepts of Laziness and currying
-to be carried over from Haskell and represented in javascript. Of course this could
-be written manually in javascript without the need for Haskell or a translator, but
-such programming would be tedious and error-prone. A disadvantage to this method is a 
-loss of efficiency. This would not be the intended manner of programming in
-javascript and the language is not necessarily optimized to deal with it. It
-also produces a larger output of code than programming in a more traditional 
-imperative javascript manner. This is of more signficance in web languages
-such as javascript where a larger body of code will take longer to transfer
-from the server to the client/browser, slowing page load times. 
+From this, iTasks will produce a standard form with fields for firstName, 
+surName, dateOfBirth and gender. There are a number of interesting points
+in this example. Clean's concept of records is used to define a "Person",
+consisting of a number of fields of types String, HtmlDate and Gender. 
+Gender is also a user defined type. The function enterPerson takes no
+parameters and returns a value of type Task Person, which is a Task
+carrying data of type Person. This is making use of Clean's concept 
+of parameterized data types to carry aditional information about the 
+task in particular. As well as iTasks specific functions, the programmer
+can write general Clean code to assist in their work with iTasks.
+
+\subsection{Core/SAPL paper} 
 
 
+\subsection{Others}
+We have discussed some existing projects which provide solutions to 
+some of our problems at length. It is worth mentioning a few other 
+projects in passing which are related to our work. As previously stated,
+this is far from the first project to identify problems with the state
+of browser-side programming and reliance on JavaScript. Many projects
+have been created to address these problems and many take similar 
+approaches to the ones discussed above; using JavaScript as a target
+language, adding to its semantics and/or avoiding certain unwanted 
+aspects.
 
-* A proper syntactic and semantic subset of Haskell
-* Statically typed
-* Lazy
-* Pure by default
-* Compiles to JavaScript
-* Has fundamental data types (Double, String, etc.) based upon what JS can support
-* Outputs minifier-aware code for small compressed size
-* Has a trivial foreign function interface to JavaScript
+Coffeescript is an example of such a project which has gained a lot
+of interest in the last few years. First released in late 2009, 
+CoffeeScript provides a sort of wrapper language which compiles into
+equivalent JavaScript. The underlying semantics of JavaScript are
+unchanged. The aim of the project was to bring a more pythonic 
+syntax to the language. It achieves this, making it possible to 
+write what would normally be verbose code in JavaScript as 
+smaller, equivalent code in CoffeeScript. Declaring a function for
+example, which would look like this in JavaScript:
 
-\subsection{iTasks? Relevant?}
+\begin{verbatim}
+race = function() {
+  var runners, winner;
 
-\subsection{GHCJS}
+  winner = arguments[0], 
+           runners = 2 <= arguments.length ? 
+          __slice.call(arguments, 1) : [];
+  return print(winner, runners);
+};
+\end{verbatim}
 
-\subsection{CoffeeScript}
-Worth mentioning from point of view of non-functional take on the js problem
+\noindent Could be expressed as this in CoffeeScript: 
 
-\subsection{ClojureScript}
+\begin{verbatim}
+race = (winner, runners...) ->
+  print winner, runners
+\end{verbatim}
+
+\noindent Coffeescript is not of great interest to us however as it has no
+effect on the underlying semantics of JavaScript much less bringing
+functional concepts to the language.
+
+Another language worth mentioning is ClojureScript. It provides a compiler
+which compiles Clojure into JavaScript. This allows the use of Clojure concepts
+such as hashmaps, let bindings etc. in browser executed programs by 
+representing them in compiled JavaScript. Clojure's syntax is also preserved,
+still showing the nested parenthesized expression syntax inherited from and
+associated with Lisp. However, my hope was to achieve similar goals with 
+Haskell and as literature on ClojureScript is somewhat sparse, it was not
+of great use.

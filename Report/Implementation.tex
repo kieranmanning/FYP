@@ -1,0 +1,463 @@
+\section{Implentation}
+Now that we have a plan for the design of our project, it is time
+to begin implementing it. There are still many considerations to
+be made. Our strategy still leaves many of the finer details 
+undecided. We'll now examine some of these details in more depth.
+The following section will explain the design choices made when
+implementing my project. It will also explain the implementation
+itself, providing select examples of the code used as well as the
+progress of a program as it passes through our compiler.
+
+\subsection{Core Language Representation}
+We'll start with a description of the Haskell representation for
+our input language, GHC's external Core. This is implemented in
+haskell using algebraic data types (or ADTs) and our own defined
+types.
+
+\begin{verbatim}
+data Expr a 
+	= EVar Name
+	| ENum Int
+	| EConstr Int Int
+	| EAp (Expr a) (Expr a)
+	| ELet 
+		IsRec
+		[(a, Expr a)]
+		(Expr a)
+	| ECase
+		(Expr a)
+		[Alter a]
+	| ELam [a] (Expr a)
+	deriving(Show, Read)
+
+type ScDefn a = (Name, [a], Expr a)
+type CoreScDefn = ScDefn Name
+
+type Program a = [ScDefn a]
+\end{verbatim}
+
+\noindent This is the ADT representing a Core expression. We can
+see many of the ideas we discussed earlier when discussing Core
+and its components. The 'a's represent the type of the expression.
+'Names' are just renamed strings. The EAp expression is the Core
+equivalent of the function applicators we already discussed. ECase
+exprs are case statements. ELam and ELet are lambda abstractions
+and let expressions respectively, although in practice neither 
+were implemented in our compiler. These were not deemed critical
+to the evaluation of our language as their behaviour can be 
+expressed in terms of other expressions. The "deriving(Show, Read)"
+at the bottom of our data type definition will crop up frequently.
+This tells Haskell to automatically derive instances of Show and
+Read for our data type, allowing it to represented as and
+interpreted from String types respectively. Supercombinators
+are defined as tuples of their identifier,
+the expression forming the body of the supercombinator and the 
+list of parameters to pass to the expression. A program is
+built from a series of these super combinator defintions,
+named ScDefn in the code. 
+
+We will provide an example of a simple program written in this
+representation. We'll use this same program as an example 
+throughout this section, allowing us to see the exact steps it
+takes as it moves through the stages of our compiler. The 
+example we will use is the representation of a program that 
+defines a supercombinator named 'K' that takes two arguments 
+and returns the former applies this supercombinator to two 
+integers. When written in terms of our ADT, this would look
+like:
+
+\begin{verbatim}
+[
+	("K", ["x", "y"], EVar "x"), 
+ 	("main", [], EAp (EAp (EVar "K")(ENum 1))(Enum 2)))
+]
+
+K x y  = x
+main = K 1 2
+\end{verbatim}
+
+A more readable version is also provided above. Note that our
+program consists of two supercombinator definitions. The first
+of these is our K function. The second is a function called
+"main" which applies our function K to integers 1 and 2. Our
+language requires an entry point for our runtime to begin
+evaluation from. In our implemention, as in many, the standard
+will be to name that entry point main. It is otherwise a 
+regular supercombinator defintion. This project is capable of
+taking more complicated programs however these quickly become
+unwieldy to discuss. Those interested will find some subjectively
+cooler examples in GPrelude.hs in the supplied code repository.
+
+\subsection{Compiler}
+Our compiler will accept such representions of the core language
+as input and compile them to an initial state. We have
+decided to use the Gmachine as the template for our compiler
+implementation. This will make the problem of writing the compiler
+substantially easier as implemenations of the Gmachine already
+exist. Rather than re-implement the wheel we will re-use an 
+existing implementation, specifically the one described in 
+\emph{Implementing Functional Languages: A Tutorial} by Simon
+Peyton Jones and David Lester. This will allow us to focus on
+the more interesting aspects of the project, most specifically
+the runtime. Those familiar with the implementation in the 
+above mentioned text can easily skip this subsection. If not, 
+I'd recommend reading the text over this as Jones and Lester 
+describe it better than I could ever hope to.
+
+\subsubsection{Program State}
+We have mentioned our \emph{initial state} countless times
+so far in this report. Lets see what that state looks like
+when represented in Haskell.
+
+\begin{verbatim}
+type GmState 
+	= (	GmOutput,
+		GmCode,
+		GmStack,
+		GmDump,
+		GmHeap,
+		GmGlobals,
+		GmStats)
+
+type GmCode = [Instruction]
+
+type GmOutput = [Char]
+
+type GmDump = [GmDumpItem]
+
+type GmDumpItem = (GmCode, GmStack)		
+
+type GmStack = [Addr]
+
+type GmHeap = Heap Node
+
+type Heap a = (Int, [Int], [(Int, a)])
+
+type GmGlobals = [(Name, Addr)]
+
+data Instruction 
+	= Slide Int 
+	| Unwind
+	| PushGlobal Name 
+	| PushInt Int 
+	| Push Int 
+	| Mkap
+	| Pop Int
+	| Alloc Int 
+	| Update Int
+	| Eval
+	| Add | Sub | Mul | Div | Neg
+	| Eq  | Neq | Lt  | Le | Gt | Ge
+	| Cond GmCode GmCode
+	| Pack Int Int
+	| Casejump [(Int, GmCode)]
+	| Split Int
+	deriving(Eq, Show)
+\end{verbatim}
+
+The state of our program at any point throughout its evaluation
+is reprseneted by GmState. The definition of GmState and its
+constituent components is described above. We can ignore GmOutput
+and GmStats, they're not of particular interest to us. 
+
+GmHeap is defined as Heap Node, where Heap is a parameterized type
+definition and Node is the type of items contained in the heap in 
+question. The Heap type itself is a three item tuple. The first item, 
+an integer, represents the number of objects in the heap. The second
+item, a list of integers, represents unused addresses in the heap. 
+The third item is the list of Nodes contained in the heap. It is 
+defined as a list of tuples of integers and 'a's. In our heap, the
+'a's are nodes, as defined in GmHeap. This list of tuples is the
+representation of the reducible graph described in the background
+section. Nodes are defined as follows:
+
+\begin{verbatim}
+data Node 
+	= NNum Int 
+	| NAp Addr Addr  		
+	| NGlobal Int GmCode 	-- NGlobal Arity Code
+	| NInd Addr 			-- Indirection
+	| NConstr Int [Addr]
+	deriving(Eq, Show)
+\end{verbatim}
+
+These correspond with the nodes described in the background section
+with a couple of additions. NInd nodes are indirection nodes 
+containing the address of another node in the stack. These are
+used to **EXPLAIN**. NConstr nodes are used to represent data
+constructors. They consist of an Int representing the arity
+of the data constructor and a list of addresses corresponding to
+the locations in the heap of the elements of the data constructor.
+NNum, NAp and NGlobal nodes correspond to integer primitives, 
+applicators and function identifier nodes respectively. NGlobals
+consist of an Int representing the arity of the supercombinator
+they represent and a list of instructions describe the behaviour
+of the supercombinator.
+
+GmStack represents our stack. It consists of a list of addrs 
+which are user defined type synonyms for integers. These 
+correspond to locations in the heap. GmStack is used in the same
+manner as the stack described in the background section. When we
+compile our input program, the stack in the initial state will.
+contain a single address, that of the main supercombinator. This
+is why we need an entry point such as main. In general, addrs
+of heap items needed in immediately pending expression evaluations
+are pushed to the stack and removed when no longer needed.
+
+GmGlobals is a list of tuples of names and addresses. The name
+corresponds to a supercombinator definition identifier and the
+address associated with it corresponds to the location in the
+heap of the NGlobal node representing the supercombinator. When
+we wish to find a supercombinator by name, we look up its name
+in the GmGlobals array to find the address associated with it.
+
+GmCode represents the list of instructions immediately pending
+execution. An instruction describes the actions to be next
+executed upon the program state. When we encounter a super-
+combinator in our input language, we compile it into a list
+of instructions representing its behaviour. We then place an
+NGlobal node containg these instructions in our heap. When
+we wish to apply our supercombinator, we lookup its node by
+name firstly in GmGlobals, then by address in the heap. We
+then place its instructions into GmCode and execute them.
+
+GmDump represents the dump described in the background section.
+It consists of a list of GmDumpItems which contain a tuple of
+GmCode and GmStack. When we encounter an expression that 
+requires a sub expression to be in weak head normal form, we
+defer the current state of GmCode and GmStack to the dump.
+We then evaluate the sub expression until it is in WHNF and restore
+program flow, where upon we will be able to use the value of the
+sub expression in a strictly evaluated context. This is 
+comparable to the steps taken to save program state when
+calling a subroutine in assembly languages. 
+
+\subsubsection{Compilation Procedure}
+Compilation is started with the \emph{compile} function in 
+GCompiler.hs. This function takes a Core program and 
+returns an intial GmState. The initial values for GmStack..
+and GmDump are empty lists. The initial value for GmCode
+is [PushGlobal "main", Eval], which will tell the runtime
+to start by executing the main supercombinator. We construct 
+an initial heap using the buildInitialHeap
+function. This calls compileSc on the supercombinator definitions 
+present in the input program and in the compiler prelude and combines 
+their compiled supercombinators with existing pre-compiled
+primitive operations. 
+
+Two compilation schemes exist within the compiler for handling
+expressions. The first, represented by the function compileE,
+compiles expressions in a strict context. There are cases 
+where we know that an expression will need to be evaluated
+strictly. An example would be primitive addition. Strictly
+compiled expressions generally produce smaller graphs and can
+be evaluated quicker. Hence when given the choice, we would
+like to evaluate strictly where possible. Expressions which
+can be evaluated in this manner are found through pattern
+matching in compileE. Those that can't fall through to
+compileC, a function representing our lazily compilation
+scheme. 
+
+Each super combinator in the program is thus compiled into
+a list of instructions by which to instantiate it when it
+is called at runtime. These instructions are attached to
+NGlobal node data types and added to the heap. Our primitive
+operations will also exist in the heap in the same manner.
+The sequence of code generated from compiling our program
+is now placed in the initial GmCode. GmGlobals is generated
+while building the initial heap and will associate the names
+of our compiled supercombinators with their addresses in the
+heap. We Now have a compiled initial state representing our
+program. 
+
+Let's look at our 'K' program after compilation.
+
+\begin{verbatim}
+GmCode: [PushGlobal "main", Eval]
+GmStack: []
+GmDump: []
+GmHeap:	(2, 
+		[3..],  
+		[	(2,NGlobal 0 [PushInt 2,PushInt 1,PushGlobal "K",
+			 Mkap,Mkap,Update 0,Pop 0,Unwind]),
+			(1,NGlobal 2 [Push 0,Eval,Update 2,Pop 2,Unwind])
+		])
+GmGlobals: [("K",1),("main",2))]
+
+\end{verbatim}
+
+\noindent We can see that the first code to be evaluated at 
+runtime will be 
+\verb!PushGlobal! \verb!"main"!, \verb!Eval!. 
+This will tell our runtime
+to instaniate the main supercombinator and provides the entry
+point previously mentioned. The stack is empty as expected,
+as is the dump. GmHeap contains firstly an integer 2. This 
+is the number of objects in the heap; Secondly, a list of
+empty addresses (slightly edited for our purposes, the heap 
+is represented by an infinite lazy list in Haskell which we
+cannot show in its original form for obvious reasons). Lastly,
+we have the representation of our compiled graph containing two
+NGlobal nodes representing the supercombinators 'K' and 'main'.
+The compilation environment has been greatly simplified for
+ease of demonstration. Normally all primitive operations 
+defined in the compiler as well as any prelude functions would
+also be contained in the heap, in a similar fashion to the
+two supercombinators above. Lastly, GmGlobals contains the
+names and heap addresses of our two supercombinators.
+
+Our initial state is now ready to be evaluated. However, as
+it is currently represented in haskell, we need a way to make
+it compatible with JavaScript. 
+
+\subsection{Serialization To JavaScript}
+Our serialization code lives in Haskell2JS.hs. It isn't 
+particularly exciting but is pretty crucial to the operation
+of our compiler. It consists of a number of functions which
+translate the components of our state into an equivalent
+JavaScript representation. Before showing the operation
+of this code, we'll look at the JavaScript implemenation
+representing the components of our state.
+
+\begin{enumerate}
+	\item Lists\\
+		  We use lists in Haskell to represent globals, the
+		  heap etc. Haskell equivalent lists do not exist
+		  in JavaScript, but there is an array type. When 
+		  we wish to represent a list such as GmGlobals, we
+		  create a JavaScript array object. GmStack becomes
+		  \verb!var GmStack = [];!
+		  GmDump is represented as a list of two-item lists 
+		  of GmCode and GmStack.
+	\item Associative Lists\\
+		  These are used to represent GmHeap and GmGlobals.
+		  They consist of a list of tuples. In the case of
+		  GmHeap for example, we have a list of tuples of
+		  supercombinator names and heap addresses ([Name,
+		  Addr]). Primitive JavaScript arrays wont help
+		  us here, so we use JavaScript objects. The 
+		  GmGlobals from our compiled state now becomes 
+
+		  \begin{verbatim}
+		  	var GmGlobals = {
+		  		"K" : 1,
+		  		"main" : 2
+		  	}
+		  \end{verbatim}
+
+	\item Data Types \\
+		  We use Data Types to represent many aspects of 
+		  our state in Haskell, such as nodes, instructions
+		  etc. As there is no such concept in JavaScript, 
+		  we again need to find a new way to represent these
+		  values. In JavaScript, it is possible to instantiate
+		  functions as function objects. Function objects are
+		  similar to regular objects in a number of ways. They
+		  can be defined in the abstract and instantiated. They
+		  can take parameters and maintain values as attributes.
+		  For example, if we wanted to express an NNum node as
+		  one of these function objects, we could do so like
+		  this:
+
+		  \begin{verbatim}
+		  	function NNum(n){
+		  		this.n = n;
+		  	}
+		  \end{verbatim}
+
+		  We could instantiate this as:
+
+		  \begin{verbatim}
+		  	var node = new NNum(n);
+		  \end{verbatim}
+
+		  where n is the value we wish our node to contain, 
+		  must like the Int parameter passed to the NNum data
+		  constructor in our Haskell equivalent. 
+
+		  We will use this concept of instantiated function
+		  objects to represent nodes and instructions. In the
+		  case of data constructors of arity 0, our function
+		  will take no arguments and appear empty. They are
+		  still sufficient in this state to represent the
+		  equivalent data constructors.
+
+	\item Functions \\ 
+		  Functions in Haskell will be represented as same in
+		  JavaScript. 
+\end{enumerate}
+
+
+Our serialization code will take an initial state from our
+compiler and produce an equivelent representation in Javascript.
+This representation will consist of the components described
+above. The function GmState2JS in Haskell2JS.hs takes our 
+state and calls the relevant functions on its constituent 
+parts. Globals, stack and dump are trivial as we know those
+will be empty. The heap will require slightly more thought.
+GmHeap2JS iterates through each item in the heap, converting
+nodes to JavaScript representations. Each node is represented
+by an instance of the appropriate function, taking as parameters
+the parameters of the node. Converting node parameters is 
+trivial in all cases except NGlobal nodes. These will contain
+instructions required to instantiate a supercombinator. We
+call gmInstruction2JS on these instructions, converting them
+also to instantiated function object representations, which
+we then include as parameters to the NGlobal node. GmCode
+is serialized in a similar manner although in practice that's
+trivial as we always know what its contents will be.
+
+The output of this serialization step is a string parseable
+by JavaScript representing our compiled state. For our example
+'K' program, that output looks like this:
+
+\begin{verbatim}
+
+var GmOutput = [];
+ 
+var GmCode = [new PushGlobal("main"),new Eval()];
+ 
+var GmStack = [];
+ 
+var GmDump = [];
+ 
+var GmHeap = {
+objCount:3,
+freeAddrs:[4,5,6,7,8,9,10],
+addrObjMap:{
+3:new NGlobal(1,[new Push(0),new Eval(),new Update(1),new Pop(1),new Unwind()]),
+2:new NGlobal(0,[new PushInt(2),new PushInt(1),new PushGlobal("K"),new Mkap(),new Mkap(),new Update(0),new Pop(0),new Unwind()]),
+1:new NGlobal(2,[new Push(0),new Eval(),new Update(2),new Pop(2),new Unwind()])}
+};
+ 
+var GmGlobals = {"K":1,"main":2,"Id":3};
+ 
+var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
+ 
+function main(){
+	return evalProg(GmState);
+}
+
+\end{verbatim}
+
+\emph{
+I'll mention at this point that the free addresses in GmHeap
+are represented rather naively as a finite list of integers.
+This decision was originally intended to be temporary. I'll
+provide a solution outline in conclusions. It is relatively
+trivial to write correctly. For now it is sufficient to
+know that this method is far from ideal but works.
+}
+
+We now have a JavaScript representation of our compiled program
+state. The next step is to evaluate this state to a final 
+result. This will be accomplish in our runtime, which we will
+now describe.
+
+\section{Runtime}
+We will now examine the implementation of the runtime. As described
+in the design choices section, this will be a JavaScript
+representation of an abstract machine capable of evaluating 
+a Gmachine compiled state. 
+
+\section{Others}

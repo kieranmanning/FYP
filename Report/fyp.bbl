@@ -1,0 +1,15 @@
+\begin{thebibliography}{1}
+
+\bibitem{DSLs}
+Paul Hudak.
+\newblock Modular domain specific languages and tools.
+
+\bibitem{SystemF}
+Simon Peyon Jones Kevin~Donnelly Martin~Sulzmann, Manual M. T.~Chakravarty.
+\newblock System f with type equality coercions, 2011.
+
+\bibitem{Ext-Core}
+Andrew Tolmach.
+\newblock An external representation for the ghc core language, 2001.
+
+\end{thebibliography}

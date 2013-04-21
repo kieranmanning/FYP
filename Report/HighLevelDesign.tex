@@ -1,7 +1,8 @@
 
 \section{A High Level Design}
 \subsection{Overview}
-Having looked at the problems we wish to solve and some existing solutions, we now turn our attention to the implementation of our own solution. First,
+Having looked at the problems we wish to solve and some existing solutions, we 
+now turn our attention to the implementation of our own solution. First,
 we form an image of the overall architecture of our solution. At a
 very abstract, high level we can say our project will require the following:
 
@@ -51,7 +52,8 @@ our project requirements.
 **and others, although we could probably leave that until impl	  **\\
 
 \noindent We will start by examining the first requirement. We will need a
-language that is capable of conveying at the very least the generic basics of a programming language, namely the notions of primitive value and function
+language that is capable of conveying at the very least the generic basics 
+of a programming language, namely the notions of primitive value and function
 declarations and function applications. After this, our language will need
 some means of flow control, namely conditionally executed statements and 
 loops. The last of these basic required features is some manner of stuctured
@@ -74,7 +76,8 @@ classic LISP with the addition of structured data types.
 On a more interesting note is the similarity of our required language to
 certain subsets of Lambda Calculus. Before examing these subsets, we'll
 take a quick look at some simpler dialects. The basic
-features of simple untyped lambda calculus are lambda terms, denoting well formed expressions in the lambda calculus which can consist of:
+features of simple untyped lambda calculus are lambda terms, denoting well 
+formed expressions in the lambda calculus which can consist of:
 
 \begin{itemize}
 \item Variables
@@ -126,12 +129,12 @@ specific compilers for each language midway through compilation. The term 'Core'
 used to refer to any such intermediate functional language based on typed lambda calculus,
 but from here on we shall refer to the GHC (Glasgow Haskell Compiler) specific intermediate
 language as Core or 'External Core' and similar languages as 'Core-like'. Core is a lambda
-calculus dialect (System F with added type coercions to be specific) which can be obtained
-from GHC with the compiler argument -fext-core. SAPL can be similarly obtained from the 
-Clean compiler. 
+calculus dialect (System F with added type coercions to be specific~\cite{SystemF}) which
+can be obtained from GHC with the compiler argument -fext-core. SAPL can be similarly 
+obtained from the Clean compiler. 
 
 
-\noindent The semantics of Core look like this..
+\noindent The semantics of Core look like this~\cite{Ext-Core}..
 
 \begin{verbatim}
 type CoreExpr = Expr Var
@@ -246,7 +249,7 @@ Clean compilation type-checking stage.
 Choosing a language such as Core or SAPL as our input language would provide
 a number of benefits for this project. Firstly, it would allow us to write
 programs in Haskell or Clean and make use of existing tools to translate these
-into their Core-like representations.. This would mean that we can write our browser
+into their Core-like representations. This would mean that we can write our browser
 programs in languages with pleasant high level syntax. We could leave the 
 parsing of these programs to existing Haskell or Clean compilers and focus 
 instead on the more interesting problems of compilation and runtime. We would
@@ -538,4 +541,11 @@ our state and return it in a javascript format for
 use in our browser, other javascript functions etc.
 
 \subsection{Summary}
-We now have a 
+We have decided that our project will consist of a Gmachine
+based compiler that accepts GHC's external Core. This 
+will be compiled into a graph based representation of the
+initial state of our program. This initial state will be
+serialized to a JavaScript representation thereof. A 
+Gmachine graph evaluator implemented in JavaScript will
+then evaluate this initial state to a final state and
+resultant value
