@@ -3,49 +3,44 @@ Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: fyp.aux
 The style file: plain.bst
 Database file #1: bibliography.bib
-Too many commas in name 1 of "Martin Sulzmann, Manual M. T. Chakravarty, Simon Peyon Jones, Kevin Donnelly" for entry SystemF
-while executing---line 1049 of file plain.bst
-Too many commas in name 1 of "Martin Sulzmann, Manual M. T. Chakravarty, Simon Peyon Jones, Kevin Donnelly" for entry SystemF
-while executing---line 1090 of file plain.bst
-You've used 3 entries,
+You've used 11 entries,
             2118 wiz_defined-function locations,
-            511 strings with 4269 characters,
-and the built_in function-call counts, 609 in all, are:
-= -- 50
-> -- 21
+            548 strings with 5007 characters,
+and the built_in function-call counts, 2414 in all, are:
+= -- 207
+> -- 111
 < -- 0
-+ -- 10
-- -- 6
-* -- 19
-:= -- 104
-add.period$ -- 6
-call.type$ -- 3
-change.case$ -- 12
++ -- 48
+- -- 34
+* -- 88
+:= -- 403
+add.period$ -- 25
+call.type$ -- 11
+change.case$ -- 50
 chr.to.int$ -- 0
-cite$ -- 3
-duplicate$ -- 21
-empty$ -- 67
-format.name$ -- 6
-if$ -- 129
+cite$ -- 11
+duplicate$ -- 77
+empty$ -- 243
+format.name$ -- 34
+if$ -- 516
 int.to.chr$ -- 0
-int.to.str$ -- 3
+int.to.str$ -- 11
 missing$ -- 0
-newline$ -- 15
-num.names$ -- 6
-pop$ -- 26
+newline$ -- 50
+num.names$ -- 22
+pop$ -- 100
 preamble$ -- 1
-purify$ -- 9
+purify$ -- 39
 quote$ -- 0
-skip$ -- 26
+skip$ -- 94
 stack$ -- 0
-substring$ -- 16
-swap$ -- 3
+substring$ -- 58
+swap$ -- 11
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 12
+type$ -- 44
 warning$ -- 0
-while$ -- 6
-width$ -- 4
-write$ -- 25
-(There were 2 error messages)
+while$ -- 22
+width$ -- 13
+write$ -- 91

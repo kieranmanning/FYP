@@ -1,11 +1,50 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{10}
+
+\bibitem{SAPL2JS}
+Eddy Burel and Jan~Martin Jansen.
+\newblock Implementing a non-strict purely functional language in javascript,
+  2010.
+
+\bibitem{Coffee}
+CoffeeScript.
+\newblock Coffeescript.
+\newblock http://coffeescript.org/.
+
+\bibitem{JSGoodParts}
+Doug Crockford.
+\newblock Javascript: The good parts.
+
+\bibitem{Fay}
+Fay.
+\newblock Fay wiki and repository.
+\newblock \url{https://github.com/faylang/fay/wiki}.
+
+\bibitem{GHCCoreSyntax}
+GHC.
+\newblock Ghc core definition.
+\newblock
+  \url{http://www.haskell.org/ghc/docs/7.6.2/html/libraries/ghc-7.6.2/CoreSyn.html}.
 
 \bibitem{DSLs}
 Paul Hudak.
 \newblock Modular domain specific languages and tools.
 
+\bibitem{SPJ}
+Simon~Peyton Jones.
+\newblock The implementation of functional programming languages, 1987.
+
+\bibitem{Tutorial}
+Simon~Peyton Jones and David Lester.
+\newblock The implementation of functional programming languages: A tutorial,
+  1991.
+
+\bibitem{Inliner}
+Simon~Peyton Jones and Simon Marlow.
+\newblock Secrets of the glashow haskell compiler inliner, 1999.
+
 \bibitem{SystemF}
-Simon Peyon Jones Kevin~Donnelly Martin~Sulzmann, Manual M. T.~Chakravarty.
+Martin Sulzmann, Manual M.~T. Chakravarty, Simon~Peyton Jones, and Kevin
+  Donnelly.
 \newblock System f with type equality coercions, 2011.
 
 \bibitem{Ext-Core}

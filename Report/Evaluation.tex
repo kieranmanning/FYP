@@ -32,16 +32,16 @@ the representation we do accept is general enough to represent
 the majority of basic functional language concepts. We originally
 intended for this project to use Haskell as its base but it would
 not be a massive step to adapt our project to languages such as
-Miranda, ML and Lisp. These languages can all be traced back to
-polymorphic lambda calculus~\cite[pp.10]{LC} and as such can all be expressed, 
-albeit in somewhat minimal forms, in representations very similar
-to that of our input language.
+Miranda, ML and Lisp. Such languages can easily be traced back to
+polymorphic lambda calculus dialects~\cite[pp.10]{SystemF} and as such 
+can all be expressed, albeit in somewhat minimal forms, in 
+representations very similar to that of our input language.
 
 The initial state we compile this representation into is that of
 the Gmachine compilation scheme. This gives us a heap representing
 our program from which our evaluator can build a reducible expression
 graph. It also provides a stack and state dump which will be 
-required by the runtime evaluator. Our compiler than then serialize
+required by the runtime evaluator. Our compiler can then serialize
 this state into an equivalent JavaScript represention which we can
 evaluate in a browser, given the right set of abstract definitions
 and methods.

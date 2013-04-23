@@ -1,15 +1,24 @@
 
 \section*{Goal}
-The goal of this project is to try and improve on some of the problems currently 
-inherent in writing browser executed programs using some of the common features
-of functional languages as inspiration. The ubiquitous standard programming 
-language for writign browser side web programs is javascript. Javascript can produce 
-perfectly acceptable client-side browser-executed
-web programs. In practice however, it is difficult to write Javascript which produces 
-such perfect results. Javascript suffers from a number of problems. Javascript is an
+The goal of this project is to provide alternative solutions to a number of problems
+identified in browser-side web programming. We will look to existing concepts in 
+functional programming for inspiration when designing these solutions. The ubiquitous 
+standard programming language for writing browser side web programs is javascript. 
+Javascript can produce 
+perfectly acceptable client-side browser-executed web programs. In practice however, 
+it is difficult to write Javascript which produces such perfect results. Javascript 
+suffers from a number of problems. Javascript is an
 interpreted language with weak/dynamic typing. Its syntax is inconsistent and verbose.
-It provides no support for lazy evaluation.
-
+It provides no support for lazy evaluation. As we are unable to change the semantics
+of JavaScript, we shall instead use it as a target language. Our project will 
+provide a means of executing a minimal strongly-typed functional language in a web
+browser. Our implemenation will consist of a compiler to 
+compile this functional language into an executable state and a runtime capable of 
+evaluating this state to a result. The runtime will executable from within a browser.
+Programs written in this language will be type-safe and our runtime will be capable
+of evaluating them lazily. Our runtime will be written in JavaScript so as to be 
+compatible with all major browsers and allow for the lazy evaluation of programs
+written in our input language.
 
 Javascript supports weak, dynamic typing. Types are inferred when the program is
 executed. The term 'duck typing' is used to describe such typing, where the types
@@ -27,9 +36,11 @@ more experienced users, in the difficulty inherent in trying to find bugs or err
 failing javascript or attempting to become familiar with an existing javascript codebase.
 A number of other languages have been created in an attempt to solve this problem.
 
-Javascript is strictly evaluated with no provisions nor means for writing lazily evaluated
-programs. Lazy evaluation is an evaluation strategy consisting of call-by-need evaluation
-as well as \emph{sharing}. Call-by-need evaluation allows for the evaluation of
+Programs written in JavaScript are strictly evaluated by default. It is possible to write
+lazily evaluated programs in JavaScript however doing so requires us write the underlying
+lazy representations and methods ourselves. By default, JavaScript provides no means to 
+write natively lazy programs. Lazy evaluation is an evaluation strategy consisting of 
+call-by-need evaluation as well as \emph{sharing}. Call-by-need evaluation allows for the evaluation of
 computations to be delayed until such time as their values are needed (if ever). Sharing
 is a technique where expressions are overwritten with their evaluated value after their
 first evaluation meaning that the expression need not be evaluated in future when its
@@ -38,9 +49,9 @@ such as Haskell, Miranda etc. and allow for improved efficiency compared to equi
 strictly evaluated expressions in certain circumstances. They also allow us to make use
 of interesting concepts like infinite lists, better explained later.
 
-These are problems which have long been identified in Javascript. Languages such
+These are problems which have long been identified in Javascript~\cite{JSGoodParts}. Languages such
 as Haskell, have shown that they can be solved albeit in a different programming domain.
-Other languages such as CoffeeScript and Fay have attempted to fix some of these 
+Other languages such as CoffeeScript~\cite{Coffee} and Fay~\cite{Fay} have attempted to fix some of these 
 problems in the domain of web programming. We shall examine such existing solutions
 to this problems with the hope of using them as inspiration for functional solutions
 to some of the problems of browser side programming.

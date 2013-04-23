@@ -52,7 +52,7 @@ evaluating aspects of an expression as they are required. A secondary characteri
 in lazy evaluation is that of \emph{updating}. Updating puts referential
 transparity to practice by rewriting expressions with their evaluated results after
 their first evaluation. Many functional langauges can be seen as abstractions built
-on top of (polymorphically typed) lambda calculus~\cite[pp.10]{LC}, examples including 
+on top of (polymorphically typed) lambda calculus~\cite[pp.37]{SPJ}, examples including 
 Haskell, Miranda, ML and Lisp. This is particularly noticeable in Lisp where the 
 influence of lambda calculus is still visible in its syntax. This is an extremely high-level
 overview of functional programm. I will attempt to explain any of the above mentioned
@@ -121,7 +121,10 @@ to the expressions~\cite[pp.12]{Tutorial}. Expressions can consist of
 \noindent By way of example, a sample program taking two paramaeters and returning
 their sum, written in such a language, would resemble
 
-\begin{center} \( ["sum"], ["x", "y"], EAp (EAp (EVar "+") (EVar "x")) (EVar "y") \) \end{center}
+\begin{verbatim}
+ ["sum"], ["x", "y"], EAp (EAp (EVar "+") (EVar "x")) (EVar "y")
+\end{verbatim}
+
 
 \noindent Note in particular that we address a supercombinator named "+" 
 representing our integer addition primitive and that we use two EAp 
@@ -178,28 +181,34 @@ if its value is never required.
 
 This is useful both from an efficiency point of view and when trying to 
 represent concepts which might not fit into stricter, more finite ideas of
-programming. 
+programming. Let's take two examples:
 
-For the former, it is easiest to demonstrate with an example...
-\begin{verbatim}
-take 1 ['a'..'e']
-\end{verbatim}
-Here, \emph{['a'..'z']} represents a list of characters beginning with 'a' and 
-ending with 'e'. The function \emph{take} evaluates and returns the number of
+\begin{center}
+	\verb!take 1 ['a'..'e']!
+\end{center}
+
+\noindent Here, \verb!['a'..'z']! represents a list of characters beginning with 'a' and 
+ending with 'e'. The function \verb!take! evaluates and returns the number of
 elements of the second parameter specified by the first parameter, starting at the
-head of the list. In this example we're 'taking' one element from "abcde" which
-of course gives us the character 'a'. But what if we were to say...
-\begin{verbatim}
-take 1 [1..]
-\end{verbatim}
-As you may have guessed, \emph{[1..]} is the list of integers beginning with 1
-and continuing to infinite. Strange concept? In strict evaluation, attempting
-to make use of this would be difficult, to say the least. However, with lazy 
-evaluation we only need to evaluate as much of the list as we actually need.
-The result being that our take function will only evaluate and return the 
-first item, ignoring the remainder of the list. What's more, it can do this
-as quickly with an infinite list as with any other length list. This is where the
-efficiency bonus comes in! **Is that right?**. \\
+head of the list. In this example we're \emph{taking} one element from "abcde" which
+of gives us the character 'a'. 
+
+\begin{center}
+	\verb!take 1 [1..]!
+\end{center}
+
+\noindent Here, \verb![1..]! is the list of integers beginning with 1 and continuing 
+to infinity. In both examples, the process for evaluating  \verb!take! is the same. 
+The square bracket
+syntax is used to construct lists containing the items within the brackets as usual.
+The \verb!..! syntax identifies a pattern between the items mentioned within the
+bracket and will construct a list as defined by that pattern. However, the list is
+not constructed in advance. In the context of functional programming languages such
+as Haskell, we view lists as concatenation functions on elements. When we call
+\verb!take! on a list, we evaluate this function as many times as
+necessary to produce the number of elements required. In this manner, we do not
+need to know what items lay beyond the first element in the list when applying the
+\verb!take 1! function as we do not attempt to evaluate them.
 
 
 **EXPLAIN IMPLEMENTATION RE: OUR GRAPH REDUCTION**  \\
@@ -214,10 +223,9 @@ heap with a pointer to an indirection node pointing to the result of
 evaluating the expression. From then on, if our program attempts to 
 access the expression, it will be redirected to a value in the heap 
 representing the evaluated expression. This means we need only evaluate
-the expression once. 
-
-This chractecteristic, known as sharing~\cite[pp.208]{SPJ}, is closely related to the idea
-of \emph{referential transparency}. Referential transparency is the name
+the expression once. This is only possible in cases where
+we can say that the expression in question is \emph{referential transparency}. 
+Referential transparency is the name
 given to a property of certain expressions which states that the expression
 can be replaced with its value without altering the semantics of the overall
 program. This property exists in programs which are \emph{pure}, that is to
@@ -236,11 +244,13 @@ in this context to denote the level of possible evaluation in an expression.
 We say an expression is in head normal form when it has been fully evaluated
 or reduced, and can neither be further evaluated nor contains any sub
 expressions which can be further evaluated. For example...
-\begin{verbatim}
-1
-\x -> x
-(1, 2)
-\end{verbatim}
+
+\begin{itemize}
+ \item 1
+ \item \verb!\x -> x!
+ \item \verb!(1, 2)!
+\end{itemize}
+
 are an integer, lambda expression and tuple respectively in normal form. "1 + 1"
 by comparison would not be in normal form as there is an addition operation to
 be performed.
