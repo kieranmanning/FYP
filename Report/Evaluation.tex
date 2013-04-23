@@ -1,1 +1,101 @@
 \section{Evaluation}
+We have examined the design and implementation of our solution.
+We will now evaluate its usefulness and the degree to which it
+solves the problems we identified earlier. We have already seen
+an example compilation and evaluation of a simple program containing
+our "K" function. This program demonstrated a number of the solutions
+we wished to implement.
+
+\subsection{Completeness}
+Firstly, we were capable of taking a representation of a functional
+language derived from Haskell and compiling it into an initial state.
+\emph{ Note that I say "representation" as the compiler is not 
+currently able to take Core in its unparsed form. This point will be
+further explored below.} This representation is capable of expressing
+a number of features, of which we support the following:
+
+\begin{itemize}
+	\item Primitive integer values
+	\item Conditionals
+	\item Data constructors
+	\item Case statements
+	\item Expressions built from the above
+\end{itemize}
+
+\noindent The input language also supports let expressions, lambda
+abstractions, characters and strings however our compiler is not
+currently able to handle these. It would not be particularly 
+difficult to add support for these however there simply wasn't
+enough time. Information on possible solutions will be provided
+in the further work section. We may not have a Core parser but
+the representation we do accept is general enough to represent
+the majority of basic functional language concepts. We originally
+intended for this project to use Haskell as its base but it would
+not be a massive step to adapt our project to languages such as
+Miranda, ML and Lisp. These languages can all be traced back to
+polymorphic lambda calculus~\cite[pp.10]{LC} and as such can all be expressed, 
+albeit in somewhat minimal forms, in representations very similar
+to that of our input language.
+
+The initial state we compile this representation into is that of
+the Gmachine compilation scheme. This gives us a heap representing
+our program from which our evaluator can build a reducible expression
+graph. It also provides a stack and state dump which will be 
+required by the runtime evaluator. Our compiler than then serialize
+this state into an equivalent JavaScript represention which we can
+evaluate in a browser, given the right set of abstract definitions
+and methods.
+
+These definitions and methods exist in our runtime, also written
+in JavaScript. This runtime takes our serialized initial state
+and, as demonstrated, evaluates it through a number of subsequent
+states until a final state is reached. This final state represents
+our fully evaluated program and from this we can extract the result
+of evaluation. The features described above can now be written
+in a functional language representation and, after compilation
+and serialization, be executed in a browser. 
+
+In order for our project to be a viable option when writing 
+real-world programs, we would need to add a number of basic browser
+interation components. We can currently evaluate expressions but
+not effect the state of the browser. Possible solutions to this
+will be outlined in the further work section.
+
+\subsection{A Core Parser}
+There is currently no functionality in my project to parse GHC's
+external core into the representation provided in GADT.hs.As 
+deadlines approached, features yet to be implemented had to be
+prioritized. Writing a parser for Core was deemed to be of less
+importance and interest than other features. Core is designed to
+be easily parsed. Its specification has changed subtley but frequently
+over the last decade through various updates to GHC. Completed
+parsers exist for previous versions of Core however sometime between
+version 5 and the current version of GHC, maintenance of the core
+language becamse less of a priority for the development team. As
+a result, tools such as the parser stagnated. Writing a core parser
+would not be a difficult task and will be explored in the further
+work section below. However, it was a task deemed uninteresting 
+when there existed other outstanding work to be completed which was
+more directly related to the goal of this project. 
+
+
+\subsection{Efficiency}
+Efficiency was not the main aim of this project. As such, there
+exists a lot of scope for optimization and improvement. The simple
+examples provided will execute in acceptable time in a browser. 
+However, the execution time of more complex programs will certainbly 
+become noticeably and problematically slower than programs with 
+equivalent semantics written in optimized JavaScript. It would 
+not be possible to achieve what we wanted and compete directly with
+the efficiency of native JavaScript code. This is an inherent flaw
+of trying to represent alternative semantics in a target language.
+This aside, there is still much unexplored potential in make our
+solution more efficient. The compilation scheme we chose is not
+in-efficient, but more modern schemes have been developed since
+which are more efficient. The JavaScript code used in the runtime
+could also stand to be more efficient. When implementing the 
+runtime i was most concerned with producing a clean, understandable
+proof-of-concept. There is currently no garbage collection in my
+implemenation. Possible solutions to these will be examined in
+the further work section.
+

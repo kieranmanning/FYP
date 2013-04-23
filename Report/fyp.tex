@@ -4,7 +4,9 @@
 \usepackage{cite}
 \usepackage{fancyhdr}
 \usepackage{verbatim}
+\usepackage{tikz} 
 \usepackage{graphicx}
+ \usepackage{url}
 
 \title{\textbf{FYP(!)}}
 \author{Kieran Manning \\ 09676121}
@@ -13,54 +15,54 @@
 \begin{document}
 
 \input{coverletter.tex}
-
+\pagenumbering{roman}
 \pagebreak
 
-%	i, ii etc. page numbering for contents, intro etc. etc.
+\setcounter{page}{1}
 
-\pagenumbering{roman}
+\input{Abstract.tex} 
+\pagebreak
 
-\thispagestyle{empty}
-
-\tableofcontents 
-
-\newpage
-
-\input{Preamble.tex} 
-
-\newpage
+\input{Declaration.tex}
+\pagebreak
 
 \input{Goal.tex}
+\newpage
 
+\input{Acknowledgements.tex}
+\newpage
+
+\thispagestyle{empty}
+\tableofcontents 
+\addtocontents{toc}{~\hfill\textbf{Page}\par}
+\thispagestyle{empty}
 \newpage
 
 \pagenumbering{arabic}
 
-\input{Introduction.tex}
-
+\input{Background.tex}
 \pagebreak
 
 \input{ProblemSpace.tex}
-
 \pagebreak
 
 \input{ExistingSolutions.tex}
-
 \pagebreak
 
 \input{HighLevelDesign.tex}
-
 \pagebreak
 
 \input{Implementation.tex}
-
 \pagebreak
 
 \input{Evaluation.tex}
+\pagebreak
 
+\input{FurtherWork.tex}
 \pagebreak
 
 \input{Conclusions.tex}
+\pagebreak
 
 \bibliography{bibliography}{}
 \bibliographystyle{plain}

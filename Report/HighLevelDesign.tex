@@ -54,16 +54,16 @@ our project requirements.
 \noindent We will start by examining the first requirement. We will need a
 language that is capable of conveying at the very least the generic basics 
 of a programming language, namely the notions of primitive value and function
-declarations and function applications. After this, our language will need
+declarations, and function applications. After this our language will need
 some means of flow control, namely conditionally executed statements and 
 loops. The last of these basic required features is some manner of stuctured
 data type, allowing for the creation of more complex types as composites of
 primitive types. 
 
-Our resultant compiled language will need to type-safe and support lazy
+Our resultant compiled language will need to be type-safe and support lazy
 evaluation. The former will require some variety of type-checking to be 
 performed on our input language at some stage during compilation, and any
-type errors found to be dealt with and report. The latter is more of a 
+type errors found to be dealt with and reported. The latter is more of a 
 compilation concern than one one of language choice, although a pure input
 language which we can guarantee side-effect free would be of great help.
 
@@ -122,19 +122,23 @@ on System F here LINKLINK
 
 The reason System F is so intereesting to us is its similarity to a number of functional
 language representations currently in use. Many high-level functional programming languages
-can be expressed in terms of System F while still preserving their full semantics. Of
+can be expressed in terms of System F or derivites of System F~\cite{SystemF} while still 
+preserving their full semantics. Of
 particular note however are the languages of Core and SAPL. These are intermediate languages
 used as minimal representations for Haskell and Clean respectively which can be emitted by
 specific compilers for each language midway through compilation. The term 'Core' is often
 used to refer to any such intermediate functional language based on typed lambda calculus,
 but from here on we shall refer to the GHC (Glasgow Haskell Compiler) specific intermediate
-language as Core or 'External Core' and similar languages as 'Core-like'. Core is a lambda
-calculus dialect (System F with added type coercions to be specific~\cite{SystemF}) which
-can be obtained from GHC with the compiler argument -fext-core. SAPL can be similarly 
-obtained from the Clean compiler. 
+language as Core or 'Core' and similar languages as 'Core-like'. We will use 'External 
+Core' to refer to the specific output of GHC when passed the -fext-core flag, as distinct
+frmo 'Core' in general which can refer to this output or the internal representation. 
+Core is a lambda calculus dialect (System F with added type coercions to be 
+specific~\cite{Ext-Core}) which can be obtained from GHC with the compiler argument 
+-fext-core. SAPL can be similarly obtained from the Clean compiler. 
 
 
-\noindent The semantics of Core look like this~\cite{Ext-Core}..
+\noindent The semantics of Core exprs look something like this
+~\cite{GHCCoreSyntax}~\cite[pp.9]{Inliner}..
 
 \begin{verbatim}
 type CoreExpr = Expr Var
@@ -152,15 +156,15 @@ data Expr b
 \end{verbatim}
 
 \noindent ...when expressed in terms of a Haskell algebraic data type (which 
-coincidentally is a nice way to express most things in life). Lam in this
+coincidentally is a nice way to express many things). Lam in this
 case stands for Lambda and the liberally added 'b's for the types of the binders
 in the expression, the rest is mostly self explanatory. Note that data constructors
 are not represented here although are included in the language seperate to the
 Core expr type, along with a \%data denotation.
 
 By the time a source program reaches the stage of GHC where it can be emitted
-as Core, it has already undergone type checking. It has also been substantially 
-minimized to the simplest representation
+as Core, it has already undergone type checking~\cite{Inliner}. It has also 
+been substantially minimized to the simplest representation
 possible still perserving all of the original program's semantics. This makes
 Core an excellent candidate as an input language, as its minimalism makes it
 easy to parse and allows us to make assumptions about its type safety.
@@ -239,7 +243,7 @@ structure, with our computations being represented in the form of \( \backslash
  to know that x + y can be represented as + @ x y, that is \emph{plus applied to
  x and y}.
  
-SAPL is similar to core, with a few differences. SAPL uses a \emph{select} 
+SAPL is similar to core~\cite[pp.5]{SAPL2JS} with a few differences. SAPL uses a \emph{select} 
 expression in place of Core's case expressions although this is a difference in name
 only, the semantics of both being equivalent. SAPL also has a built in \emph{if}
 expression which in Core would be expressed using case expressions instead. SAPL
@@ -314,7 +318,12 @@ The machine is built upon a state consisting of
 \noindent The stack is a stack of addresses which correspond
 to nodes in the heap. These nodes form the spine of the 
 expression being evaluated. The dump is used to record the
-state of the expression being evaluated. When we **EXPLAIN**.
+state of the expression being evaluated. When we come across
+an expression which we need to be in weak head normal form, 
+we save sufficient of the state of the machine to allow us to
+return to this point of execution. We then evaluate the expression
+in question in WHNF, leaving a pointer to it on top of the stack
+and return to the point of execution saved in the dump.
 The heap is a list of nodes and their associated heap addresses.
 The nodes contained in the heap correspond to the examples
 given in the overview in the background section.
@@ -372,7 +381,9 @@ this point, I was looking to move towards a different
 implementation which would better suit some of my 
 requirements. Those interested will find a more complete
 implementation of a template instantiation compiler 
-described in greather depth in **SJP BOOK AND TUTORIAL**.
+described in greather depth in "The Implementation of Functional 
+Programming Languages: A Tutorial", by Simon Peyton Jones
+and David Lester.
 
 The template instantiation machine suffers from one notable
 problem which made it particularly unsuitable for our
@@ -410,22 +421,25 @@ architectures and platforms. This makes it easier to write
 runtime evaluators for G-machine compiled programs, as the
 initial state can be expressed in an intermediate form 
 between that of a reducible graph state representation 
-and an easily executed program state. This fact will prove
-useful when it comes to writing the runtime to evaluate
-our compiled programs.
+and an easily executed program state~\cite[pp.294]{SPJ}. 
+This fact will prove useful when it comes to writing the
+runtime to evaluate our compiled programs.
 
 The general form of the G-machine is similar to that of
 the template instantiation machine. We take our input language
-and compile this into an initial state. This state is identical
+and compile this into an initial state. This state is similar
 to the one listed previously, with the addition of a sequence
-of instructions to be called in order to evaluate our state.
+of instructions describing the evaluation of the current expression.
 There still exists a heap and stack, the former still containing
-nodes of the same types as those previously encountered.
+nodes of the same types as those previously encountered, with
+the expection of our NGlobal nodes. These now contain the 
+instructions needed to instantiate a supercombinator definition
+rather than the body of the supercombinator itself.
 This state is passed to the runtime which will execute until
 we reach a final state where we have no further instructions
 to evaluate and a single pointer to a node in the heap on top
-of the stack. Our runtime must now possess the means to 
-interpret these instructions and execute them upon the current
+of the stack. Our runtime must possess the means to interpret 
+the provided instructions and execute them upon the current
 state, producing a new state. This is in contrast to the 
 evaluation stage of the template instantiation machine which
 had a list of state transition rules which would fire when
@@ -458,16 +472,16 @@ instructions can be found in later implementation chapters.
 
 The G-machine compiler consists of a number of schemes which
 determine what sequence of instructions to output when we
-encounter certain expressions in our input language. These
-together with an initial heap built from the supercombinators
-of our input program along with any prelude definitions are
-then passed to the runtime.
+encounter certain expressions in our input language. These,
+together with an initial heap built from the compiled 
+supercombinators of our input program along with any prelude 
+definitions and primitive operations, make up the initial
+state we pass to our runtime.
 
 The improved efficiency of the G-machine over the template
 instantion machine, along with the intended ease of writing
-an abstract machine to evaluate programs at runtime, makes
+an abstract machine to evaluate programs at runtime, make
 it the better choice of the two explored implementations.
-
 
 \subsection{Runtime}
 Now that we have decided on the G-machine as the general
@@ -494,9 +508,9 @@ In a sense, these are comparable to the thunks
 represented in Fay placed into the context of a graph
 reduction machine. Our primitive operation instructions
 will be implemented as operations on graph states
-returning new graph states, as opposed to thunks. We
-do not concern ourselves with forcing thunks, so to
-speak, but we will have to deal with evaluating 
+returning new graph states, as opposed to operations on 
+thunks. We do not concern ourselves with forcing thunks, 
+so to speak, but we will have to deal with evaluating 
 computations to weak head normal form, albeit in a 
 graph reduction context.
 
@@ -506,7 +520,7 @@ instruction sequence associated with this state. It will
 have to iterate through the instruction sequence, enacting
 the actions specified by the instructions upon our state.
 We can see that our runtime will need to understand how
-to interpret these instructions into concrete javascript
+to interpret these instructions into concrete JavaScript
 actions which we can then call from our browser. Our 
 runtime must also be capable of representing our compiled
 initial state and instructions in a javascript format 

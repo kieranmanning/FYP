@@ -1,0 +1,34 @@
+\usetikzlibrary{decorations.markings}
+\newcommand{\signedanddate} [3] []{
+   \begin{center}
+       \begin{tikzpicture}
+           \draw[#2-#3, thick, #1] (0,0) to (0.5\linewidth,0);
+           \node[align=left, below] at (1.75,0) {Kieran Manning};
+           \draw[#2-#3, thick, #1] (0.7\linewidth,0) to (\linewidth,0);
+           \node[align=left,below] at(0.729\linewidth,0) {Date};
+       \end{tikzpicture}
+   \end{center}
+}
+ 
+\newcommand \signed[1]{
+\signedanddate{}{}
+ 
+}
+
+\section*{Declaration}
+I hereby declare that this project is entirely my own work and that it has not
+been submitted as an exercise for a degree at this or any other university.
+$ $\\
+$ $\\
+
+\signed{Kieran Manning}
+
+\pagebreak
+
+\section*{Permission to lend}
+I agree that the Library and other agents of the College may lend or copy
+this report upon request.
+$ $\\
+$ $\\
+
+\signed{Kieran Manning}

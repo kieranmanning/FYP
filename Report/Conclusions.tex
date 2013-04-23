@@ -1,1 +1,42 @@
 \section{Conclusions}
+I am mostly satisfied with the outcome of this project. The
+set of features my compiler and runtime are capable of compiling
+and evaluating are sufficient to express most basic concepts
+one would expect in a functional language. With data constructors
+we are able to express lists and user-defined types. Our Case 
+statements and conditionals can be used to define more complex
+flow control such as loops. Characters and strings are currently
+absent but as discussed in the evaluation and further works sections
+their addition would be complicated. I'm somewhat disappointed at
+the lack of garbage collection as this was a feature I'd hoped to
+have a chance to experiment with. As mentioned, the lack of a core
+parser is unfortunate but does not detract from the more interesting
+aspects of the project. 
+
+When I started this project, I was somewhat proficient at Haskell
+but could have benefitted from more experience writing
+it. This project provided that experience and improved my
+confidence with the language. My JavaScript abilities have
+improved greatly as a result of this project, having been quite
+weak at the beginning. I originally had no experience with functional
+compilation and as a consequence of the research conducted through-out
+it is now a topic in which I am quite interested. I look forward
+to further reading on the subject and hope that I will get another
+chance to apply some of what I've learned about functional compilation
+and functional languages in general. 
+
+Were I to start this project again, I probably would have implemented
+a basic compiler as early as possible. I somewhat underestimated the
+scope of writing a compiler for even a minimal functional language
+and in the end this cost me. Writing the JavaScript runtime was 
+particularly arduous. Having to switch between writing JavaScript
+and Haskell really made obvious the benefits of writing in a 
+langauge with a strong type system. If I was to write the runtime
+again, I would probably investigate ways of modelling strong
+typing in JavaScript through its use of prototypes etc. I would
+also have made use of some kind of testing framework. In reality,
+this would probably have meant rolling my own as JavaScript testing
+frameworks have proven themselves unhelpful to me in the past. While
+this would be time consuming it would have reduced many of the
+headaches I experienced as a consequence of trying to track down
+JavaScript bugs. 

@@ -6,7 +6,11 @@ undecided. We'll now examine some of these details in more depth.
 The following section will explain the design choices made when
 implementing my project. It will also explain the implementation
 itself, providing select examples of the code used as well as the
-progress of a program as it passes through our compiler.
+progress of a program as it passes through our compiler. For brevity's
+sake I will be trying to avoid adding unnecessary code snippets
+throughout this chapter. The code referenced can be found in the
+code repo attached to this project. I will provide file names where
+necessary.
 
 \subsection{Core Language Representation}
 We'll start with a description of the Haskell representation for
@@ -101,7 +105,7 @@ Peyton Jones and David Lester. This will allow us to focus on
 the more interesting aspects of the project, most specifically
 the runtime. Those familiar with the implementation in the 
 above mentioned text can easily skip this subsection. If not, 
-I'd recommend reading the text over this as Jones and Lester 
+I'd recommend reading the text as Jones and Lester 
 describe it better than I could ever hope to.
 
 \subsubsection{Program State}
@@ -135,24 +139,6 @@ type Heap a = (Int, [Int], [(Int, a)])
 
 type GmGlobals = [(Name, Addr)]
 
-data Instruction 
-	= Slide Int 
-	| Unwind
-	| PushGlobal Name 
-	| PushInt Int 
-	| Push Int 
-	| Mkap
-	| Pop Int
-	| Alloc Int 
-	| Update Int
-	| Eval
-	| Add | Sub | Mul | Div | Neg
-	| Eq  | Neq | Lt  | Le | Gt | Ge
-	| Cond GmCode GmCode
-	| Pack Int Int
-	| Casejump [(Int, GmCode)]
-	| Split Int
-	deriving(Eq, Show)
 \end{verbatim}
 
 The state of our program at any point throughout its evaluation
@@ -184,23 +170,25 @@ data Node
 These correspond with the nodes described in the background section
 with a couple of additions. NInd nodes are indirection nodes 
 containing the address of another node in the stack. These are
-used to **EXPLAIN**. NConstr nodes are used to represent data
+used to implement the lazy updates discussed previously. When we
+evaluate an expression, we create an indirection node to its
+value and replace the address of this node with that of the root
+of the expression. NConstr nodes are used to represent data
 constructors. They consist of an Int representing the arity
 of the data constructor and a list of addresses corresponding to
 the locations in the heap of the elements of the data constructor.
 NNum, NAp and NGlobal nodes correspond to integer primitives, 
 applicators and function identifier nodes respectively. NGlobals
 consist of an Int representing the arity of the supercombinator
-they represent and a list of instructions describe the behaviour
-of the supercombinator.
+they represent and a list of instructions describing the 
+instantiation of the supercombinator.
 
 GmStack represents our stack. It consists of a list of addrs 
 which are user defined type synonyms for integers. These 
 correspond to locations in the heap. GmStack is used in the same
 manner as the stack described in the background section. When we
-compile our input program, the stack in the initial state will.
-contain a single address, that of the main supercombinator. This
-is why we need an entry point such as main. In general, addrs
+compile our input program, the stack in the initial state will
+be empty. In general, addrs
 of heap items needed in immediately pending expression evaluations
 are pushed to the stack and removed when no longer needed.
 
@@ -220,6 +208,31 @@ NGlobal node containg these instructions in our heap. When
 we wish to apply our supercombinator, we lookup its node by
 name firstly in GmGlobals, then by address in the heap. We
 then place its instructions into GmCode and execute them.
+Instructions are defined as follows, we'll provide an 
+explanation of their operations when discussing the implementation
+of the runtime:
+
+\begin{verbatim}
+data Instruction 
+	= Slide Int 
+	| Unwind
+	| PushGlobal Name 
+	| PushInt Int 
+	| Push Int 
+	| Mkap
+	| Pop Int
+	| Alloc Int 
+	| Update Int
+	| Eval
+	| Add | Sub | Mul | Div | Neg
+	| Eq  | Neq | Lt  | Le | Gt | Ge
+	| Cond GmCode GmCode
+	| Pack Int Int
+	| Casejump [(Int, GmCode)]
+	| Split Int
+	deriving(Eq, Show)
+\end{verbatim}
+
 
 GmDump represents the dump described in the background section.
 It consists of a list of GmDumpItems which contain a tuple of
@@ -387,7 +400,6 @@ representing the components of our state.
 		  JavaScript. 
 \end{enumerate}
 
-
 Our serialization code will take an initial state from our
 compiler and produce an equivelent representation in Javascript.
 This representation will consist of the components described
@@ -412,7 +424,6 @@ by JavaScript representing our compiled state. For our example
 'K' program, that output looks like this:
 
 \begin{verbatim}
-
 var GmOutput = [];
  
 var GmCode = [new PushGlobal("main"),new Eval()];
@@ -422,22 +433,20 @@ var GmStack = [];
 var GmDump = [];
  
 var GmHeap = {
-objCount:3,
-freeAddrs:[4,5,6,7,8,9,10],
+objCount:2,
+freeAddrs:[3,4,5,6,7,8,9,10],
 addrObjMap:{
-3:new NGlobal(1,[new Push(0),new Eval(),new Update(1),new Pop(1),new Unwind()]),
 2:new NGlobal(0,[new PushInt(2),new PushInt(1),new PushGlobal("K"),new Mkap(),new Mkap(),new Update(0),new Pop(0),new Unwind()]),
 1:new NGlobal(2,[new Push(0),new Eval(),new Update(2),new Pop(2),new Unwind()])}
 };
  
-var GmGlobals = {"K":1,"main":2,"Id":3};
+var GmGlobals = {"K":1,"main":2};
  
 var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
  
 function main(){
 	return evalProg(GmState);
 }
-
 \end{verbatim}
 
 \emph{
@@ -454,10 +463,334 @@ state. The next step is to evaluate this state to a final
 result. This will be accomplish in our runtime, which we will
 now describe.
 
-\section{Runtime}
+\subsection{Runtime}
 We will now examine the implementation of the runtime. As described
 in the design choices section, this will be a JavaScript
 representation of an abstract machine capable of evaluating 
-a Gmachine compiled state. 
+a Gmachine compiled state. We have already described the 
+components of this state and their abstract representations in
+JavaScript so this section will be concerned mostly with the
+methods of evaluation we employ when executing our state. The
+code related to this section can be found in runtime.js in the
+supplied repo. 
 
-\section{Others}
+Our runtime consists of a number of stateless functions and the 
+global definitions for our compiled state. Functions operating
+on our compiled state are generally of the following form:
+
+\begin{verbatim}
+function funcName(xState, otherParams){
+	var State = xState;
+	var component = getComponent(State);
+	alter_component(component);
+	var newState = putComponent(State);
+}
+\end{verbatim}
+
+\noindent We wish for our runtime operations to be somewhat
+pure out of concern for code cleanliness and sanity. However,
+JavaScript functions operate on a pass-by-reference basis. 
+For this reason, we declare a new variable represented a 
+copy of our state inside the scope of each such function.
+We apply our changes to scoped copy and return it, leaving
+the original copy passed to the function unchanged.
+
+In the serialized example of our "K" function above, you may
+have noticed the function main(){return evalProg(GmState)}. 
+This serves as our browser's entry point to the evaluation of
+our state. The call to evalProg() tells our runtime to evaluate
+the GmState definition provided. The function evalProg iterates
+through each state in the evaluation of our compiled program,
+evaluating each in turn until we reach a final state. This
+final state is determined by the function gmFinal(), which 
+checks if we have run out of instructions to execute in GmCode.
+This implies that there is no further evaluation to be performed
+on the current state and the node pointed to by the address on
+top of the stack should represent the final result of our 
+program. 
+
+On each iteration of evalProg()'s evaluation loop, we
+call the function step() on the then
+current state. Step acts as an instruction dispatch function.
+It will pop one instruction from the sequence
+in GmCode, check it's value and call the relevant function 
+representing its behaviour. The instanceof method in JavaScript
+is used to check if an instantiated function objects is an
+instance of a certain function. This is how we compare our
+node and instruction representations and perform pattern 
+matching on them. The parameters of each instruction are 
+passed as parameters to the functions representing their
+behaviour. 
+
+We will now examine some of the utility functions in our
+runtime. Between lines 66 and 91 of runtime.js, we have
+functions id(), head(), tail() and an array prototype
+method addition drop(). The first three functions work
+as expected. Functions head() and tail() are included to
+make reasoning on lists more intuitive. JavaScript has
+built in push and pop methods, however these operate in
+a destructive pass-by-reference sense which is unhelpful
+when trying to model execution avoiding the notion of
+global state. Drop() was included for similar reasons, 
+implementing similar functionality to Haskell's drop.
+
+hAlloc at line 233 is used to allocate a node on the
+heap. It takes the GmHeap from our state and a node
+and returns a new heap with the node at the last free
+address of the heap. The free addresses and object
+count of the returned heap reflect this change. 
+hLookup and aLookup immediately following are used 
+to lookup items in the heap and globals respectively. 
+Lines 255 to 320 contain a number of similar looking 
+functions. These are used to standardize access to 
+components of our heap, making it easier to access and
+update our state in a clean and organized fashion.
+
+\subsubsection{Runtime Instructions}
+The implementations of our Gmachine instructions start at
+line 327 in our runtime. In general, the functions representing
+the actions of instructions are named for their namesake. The
+all take as paramaters a program state and any parameters
+required by the instruction. They all return a program state.
+
+pushglobal() takes the name of a super combinator. It finds 
+the address of the super combinator by name in the globals 
+array of the state and pushes this onto the stack of the returned
+state.
+
+pushint() takes a literal integer and allocates an NNum node
+in the heap to represent it. The address of the new node is
+pushed onto the stack of the returned state.
+
+mkap() takes no additional parameters. It pops the top two 
+addresses from the stack of the state passed to it. A new
+NAp node is created with these two addresses as parameters
+and is inserted into the heap. The address of the new node
+is pushed to the stack and both it and the updated heap
+are returned in a new state. 
+
+push() takes an integer representing an index in the stack.
+The address located at this index is pushed to the top of
+a stack which is returned in a new state.
+
+pack() is used to create NConstr nodes, representing data
+constructors in our heap. The function takes two integer
+as additional paramaters, a tag and an arity respectively.
+We assume as many elements of the data constructor as 
+indicated by the arity parameter are addressed by the top
+items on the stack. We pop these from the stack and use
+them along with the tag to create an NConstr node, which 
+we insert into the heap. The new heap and stack are 
+returned in a new state.
+
+casejump() takes as an additional argument an associative
+array of integers and code sequences. The integers represent
+tags in data constructors. The code sequences contain the 
+sequences of instructions to undertake if the associated tag
+is encountered. The function expects to find a constructor
+tag address on top of the stack. The node pointed to by the
+top address is found in the heap and its tag extracted. The
+code sequence associated with that tag is located in the array
+and is added to the existing code sequence in the program
+state. This new code sequence is returned in a new state.
+
+split()  
+
+update() is used to overwrite the root of a reducible expression
+with its value after it is first evaluated. This corresponds
+with the typical update operation describe in the background
+section. The function takes an integer N as an additional
+paramater. It will 
+
+pop() takes an integer N and pops N items from the stack.
+The resultant stack is returned in a new state.
+
+evalInst() corresponds to the Eval function but is so named
+because of naming conflicts with JavaScript's built-in eval
+method and another similarly named function in our runtime.
+Eval is used to evaluate an expression to weak head normal
+form, at least in theory. In practice, it defers the current
+stack and code state to the dump and replaces them with a
+single pointer to the expression to be evaluated and a single
+Unwind instruction. These are returned in a new state.
+
+The next two functions handle boxing and unboxing of integers
+in NNum nodes. boxInteger() takes a value N and creates an
+NNum node representing this value. This is added to the heap
+and its address added to the front of the stack. unboxInteger()
+takes the address of an integer node, finds it in the stack
+and returns the integer value it contains. 
+
+boxBoolean() takes a boolean value and converts it to an
+integer representation. There is no boolean node representation
+in our compiler which is fine as one isn't needed. The function
+creates an NConster of tag 1 to represent true, 2 to represent 
+false and adds it to the heap. The address is pushed to the
+front of the stack and both are returned in a new state.
+
+Functions primitive1() and primitive2() are used to simplify
+arithmetic operations. They handle the application of monadic
+and dyadic operators respectively. Both accept as parameters:
+
+\begin{enumerate}
+	\item A boxing function, to place values in nodes and
+		  add them to the heap.
+	\item An unboxing function to extract values from nodes.
+	\item The operator in question to apply.
+	\item The current state
+\end{enumerate}
+
+\noindent using these functions greatly minimizes the code we
+need to write for the functions representing our arithmetic and
+equality checking instructions. A number of such primitives
+are implemented in the runtime, all with much the same format;
+functions that take a state, call the relevant arity primitive 
+handling function and pass to it a function representing the 
+JavaScript operator we wish to use. 
+
+A function cond() handles conditionals. This takes two instruction
+sequences as well as the usual state and expects to find the address
+of an NConstr node on top of the stack. This node is found in the
+heap and its tag checked. As with boxBoolean(), a tag of 1 represents
+true, 2 false. Based on the tag, the appropriate of the two instuction
+sequences passed as parameters if added to the current code sequence
+and returned in a new state.
+
+Lastly, the unwind() function is used to 
+
+\subsubsection{Example Evaluation}
+We will now provide an example of program evaluation in our runtime.
+As before, we will use our "K" program. For brevity's sake, we will
+describe the states we encounter informally or in Haskell as their
+JavaScript representations are less readable. When last we saw our
+program it consisted of an empty stack and dump, a heap and globals
+array containing 2 items each, and a code sequence of PushGlobal
+main, Eval. We start by calling the main function which in turn
+calls evalProg on our initial state. We then iterate through each
+state.
+
+\begin{itemize}
+	\item Iteration 1: PushGlobal instruction encountered, find
+		  address of "main" super combinator passed as argument
+		  and add to stack. 
+	\item Iteration 2: Eval function encountered. Defer state of
+		  stack and code sequence to dump. Code is empty and stack
+		  contains only the address of "main" so dump is updated
+		  to [([],[])]. Unwind instruction added to code sequence.
+	\item Iteration 3: Unwind finds pointer to WHNF super combinator
+		  "main" and places its code sequence in GmCode.
+	\item Iterations 4, 5: "K" is being called on integers 1 and 2.
+		  PushInt 1 and 2 add the appropriate nodes to the heap and
+		  their addresses to the top of the stack. Globals also
+		  updated.
+	\item Iterations 6 - 8: Address of super combinator "K" pushed
+		  to stack. Two subsequent Mkap instructions add two NAp
+		  nodes creating a graph of "K", 1 and 2. 
+	\item Iteration 9,10: Update 0 instruction creates NInd
+		  indirection node to heap node 6. Pop 0 pops no addresses
+		  from the stack. Both trivial operations in this particular
+		  example.
+	\item Iterations 10 - 13: Series of Unwind instructions. Firstly
+		  redirects trivial NInd node by replacing its address on the
+		  stack with that of its pointer (address 6). Places left
+		  arguments of both Mkap nodes on top of stack. When Unwind
+		  encounters pointer to "K" on stack, its code is added to
+		  the code sequence.
+	\item Iteration 14: Push 0 instruction at head of code sequence
+		  pushes pointer to first argument to "K" onto stack. This
+		  is the actual behaviour of "K".
+	\item Iterations 15 - 20: Eval instruction following "K" checks
+		  the return argument is in WHNF as before. Update 2 instruction
+		  overwrites the poitner to "K" with the value of its evaluation.
+		  Pop 2 instruction removes the argument pointers passed to
+		  "K" from the stack. Series of Unwind instructions follows,
+		  until we are left with a pointer to a single WHNF node on
+		  top of the stack.
+	\item Iteration 21: Pointer to NNum 1 on top of stack. No further
+		  code to evaluate. Final state.
+\end{itemize}
+
+At this point, the GmCode part of our starting GmState is empty.
+GmHeap will contain a number of additional nodes compared to its
+starting state as we added nodes representing the parameters passed
+to our K function, applicator nodes to form a reducible graph 
+expression and indirection nodes to aid in updating. GmStack will
+contain a single item pointing to the return value of evaluating
+our program, in this case an NNum node of value 1. This value will
+be extracted and returned by evalProg().
+
+\subsection{Specific Feature Implemenations}
+When we encounter a dyadic expression application in our input
+program, we check if the expression being applied is a built-in
+primitive defined in our compiler. If so, we know that we are
+compiling in a strict context. We compile the arguments to the
+operator in this same context and place the instruction 
+representing our primitive operation after the compiled arguments
+in the code sequence. If the application is not recognized, we
+assume it is a user (or possibly prelude) defined supercombinator
+and compile it in a lazy context. This will result in a code
+sequence containing a Mkap instruction to construction an application
+node in the graph the arguments to the application, compiled in the
+same context. With one exception there are no non-dyadic operations
+defined in our compiler, so non-dyadic expression applications
+will default to the lazy compilation scheme. The exception is
+the negate function, a unary primitive operation.
+
+Data constructors are represented using EConstr expressions in 
+the abstract data type of our input language. These are treated
+as applicable expressions in the compiler, not unlike super 
+combinators or primitive operations. When we encounter an 
+application, we first check if the expression we are applying
+is an EConstr. This is done by recursively checking its arguments
+for the presence of an EConstr. If so, we compile its arguments 
+and follow them in the emitted code sequence with a Pack t n 
+instructions, where t will be the tag of the constructor and n 
+its arity. It is presumed that the previous n items in the code 
+sequence will be its arguments. 
+
+Case expressions are represented in the input language as ECase
+expressions, which take an expression and a series of case 
+alternatives. The expression will evaluate to a data constructor
+whose tag will correspond to one of the case alternatives. The 
+expression will be compiled ahead of the alternatives and its
+evaluated result placed on the stack. When the casejump instruction 
+is encountered in the runtime, the data constructor will be 
+found in the heap and the code from the compiled case alternative
+corresponding to its tag placed in the code sequence.
+
+
+\subsection{Others}
+There are a few other aspects of the implementation that
+are probably worth mentioning. A prelude for the compiler exists
+in GPrelude.hs. This would normally contain a list of prelude
+definitions but for testing purposes it currently contains a 
+number of test program definitions. This would be useful for
+anyone looking to test the compiler.  An evaluator written in 
+Haskell exists in GEval.hs. This was written concurrently with 
+the runtime, as it helped greatly in diagnosing errors which 
+were somewhat vague in JavaScript. Lastly, in order to actually
+use the compiler, catalyst.hs provides a command line interface.
+It can be ran from the linux command line with the -h flag which
+will return some helpful information and further instructions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
