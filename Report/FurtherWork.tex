@@ -11,22 +11,22 @@ almost identical to the official definition GHC provide
 for their own algebraic data type representing Core. Examples of
 parsers written for previous versions of Core can be found in old
 versions of GHC. As Core and its tools have not been well maintained 
-in recent versions, these parsers do not quite fit the corre language
+in recent versions, these parsers do not quite fit the core language
 specification. However it should be entirely possible to adapt the 
 last such parser to accept current core and convert it to into our 
 algebraic data type representation. Even if this is not possible, Core
-is designed to be parseable and is built from a very small set of 
+is designed to be parse-able and is built from a very small set of 
 components. Writing a parser from scratch would be a little 
 time-consuming, but not especially difficult.
 
-\subsection{Characters, String}
+\subsection{Characters, Strings}
 Adding characters and strings would not be particularly difficult.
 We could add a node type to our Gmachine representing characters if
 we wished. Alternatively, we could represent characters as their
 ascii integer representations with the existing NNum node type. 
 Strings could be built in much the same way we currently handle
 lists; A string could be constructed as a list of character nodes
-(or NNum node character represenations) concatenated together. 
+(or NNum node character representations) concatenated together. 
 
 \subsection{Browser Interaction Methods}
 In order to allow for the writing of useful browser executed programs
@@ -58,12 +58,12 @@ as outlined in the design choices section. However, there exist other
 schemes which may suit the purposes of this project better. Of note is
 the Three Instruction Machine, a compilation scheme which uses only
 three instructions in its runtime and opts for a \emph{spineless} graph 
-representation in the heap. Such an implemenation would be of obvious
+representation in the heap. Such an implementation would be of obvious
 interest to us, as it would allow for a very minimal runtime. This would
 improve load times for pages using our compiled language as there would
 be less data to transmit when loading the runtime. However, this comes
-at a tradeoff. The initial state is more complicated and evaluation will
-require more steps than our Gmachine implemenation. Such considerations
+at a trade-off. The initial state is more complicated and evaluation will
+require more steps than our Gmachine implementation. Such considerations
 would ultimately decide the choice of best compilation scheme for our
 purposes. 
 
@@ -71,10 +71,18 @@ purposes.
 A significant issue in our implementation is the lack of a garbage collection
 system for our heap. This would prove to be quite problematic (even fatal)
 for any large program we wish to run. A lot of research has gone into
-functional language garbage collection and i would found it an intersting
+functional language garbage collection and i would found it an interesting
 feature to implement. Sadly there was not enough time and it was decided
 that a compiler without a garbage collector would be of more use than a 
 garbage collector without a compiler. A garbage collection implementation
-exists for our Gmachine implementation in the Jones and Lester implemenation
+exists for our Gmachine implementation in the Jones and Lester implementation
 tutorial. Further work related to garbage collection would probably start
-there, unless an alternative compilation scheme was used.
+there, unless an alternative compilation scheme was used. 
+
+It should also be possible to make use of JavaScript built-in garbage
+collection. Our runtime is built from objects like any other JavaScript
+program and it should be able to handle garbage collection of unneeded
+objects by itself. JavaScript's garbage collection is not a topic I'm 
+familiar with however so I'm unsure of the specific details and efficiency
+but it definitely worth be worth researching when implementing such a
+feature for our implementation.

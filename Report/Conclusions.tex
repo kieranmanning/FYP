@@ -13,6 +13,48 @@ have a chance to experiment with. As mentioned, the lack of a core
 parser is unfortunate but does not detract from the more interesting
 aspects of the project. 
 
+Our project differs from the existing solutions we examined earlier
+in a number of important ways. In contrast to Fay, we are capable
+of expressing the full semantics of Core programs in JavaScript. 
+Fay focused on compiling a domain specific langage written in Haskell
+to a JavaScript representation. The DSL provided the functionality
+could be consider the Fay language. As such, only functionality 
+existing in this DSL could be compiled. Our approach allows us to
+represent any semantics which can be expressed in Core. We
+can then proceed to add browser-specific functionality in our
+programs as we wish, provided any required primitive functions 
+exist in our compiler and runtime. 
+
+Our project shares a number of traits with the aspects of iTasks
+we examined. Both use a compiled version of a high-level language
+as input. Both are capable of expressing the full semantics of
+this input language in a form executable by a web browser. Our
+project obviously differs in that we chose Core over SAPL. We
+also opted to implement a Gmachine strategy with its runtime
+in JavaScript rather than translating our source programs into
+one-to-one translations in JavaScript. Our project was also
+aimed specifically at the task of bringing functional programming
+concepts to the browser programming domain whereas this functionality
+in iTasks was secondary to their main goal.
+
+Both our implementation and those of Fay and iTasks use a form
+of abstract machine written in JavaScript to evaluate a compiled
+form of the input language. 
+
+We have provided examples of compiling and executing some small
+programs throughout this report. If we wanted to use this project
+for large scale projects there would be a number of considerations.
+As mentioned in the further work section, there exists much work
+to be done in improving the efficiency of the runtime as well
+as providing some means of garbage collection. We would probably
+also want to add some primitive functions which are capable of
+interacting with the DOM etc. These would correspond to built-in
+types and functions when writing our source programs. However,
+the proof-of-concept behind this project is sound and aside from
+efficiency concerns and its narrow functionality set there is
+no reason to assume we couldn't use it to build arbitrarily large
+programs.
+
 When I started this project, I was somewhat proficient at Haskell
 but could have benefitted from more experience writing
 it. This project provided that experience and improved my

@@ -5,14 +5,22 @@ Eddy Burel and Jan~Martin Jansen.
 \newblock Implementing a non-strict purely functional language in javascript,
   2010.
 
+\bibitem{Clojure}
+ClojureScript.
+\newblock \url{https://github.com/clojure/clojurescript}.
+
 \bibitem{Coffee}
 CoffeeScript.
-\newblock Coffeescript.
-\newblock http://coffeescript.org/.
+\newblock \url{http://coffeescript.org/}.
 
 \bibitem{JSGoodParts}
 Doug Crockford.
 \newblock Javascript: The good parts.
+
+\bibitem{JEL}
+Laszlo Domoszlai, Eddy Bruel, and Jan~Martin Jansen.
+\newblock Implementing a non-strict purely functional language in javascript,
+  2011.
 
 \bibitem{Fay}
 Fay.
@@ -28,6 +36,11 @@ GHC.
 \bibitem{DSLs}
 Paul Hudak.
 \newblock Modular domain specific languages and tools.
+
+\bibitem{iTasks}
+Jan~Martin Jansen, Rinus Plasmeijer, Pieter Koopman, and Peter Achten.
+\newblock Embedding a web-based workflow management system in a functionl
+  language.
 
 \bibitem{SPJ}
 Simon~Peyton Jones.

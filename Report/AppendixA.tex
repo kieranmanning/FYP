@@ -1,0 +1,237 @@
+\appendix
+
+\section{Runtime Instruction Definitions}
+The code in this appendix accompanies section 6.4.1
+
+\begin{verbatim}
+function pushglobal(Name, xState){
+    //console.log("pushglobal called"); 
+    var State       = xState;   
+    var stack       = getStack(State);
+    var globals     = getGlobals(State);
+    var addr        = aLookup(globals, Name);
+    var newStack    = [addr].concat(stack);
+    return putStack(newStack, State);
+}  
+
+
+function pushint(Int, xState){
+    var State           = xState;
+    var heap            = getHeap(State);
+    var stack           = getStack(State);
+    var node            = new NNum(Int);
+    var newHeap;
+    var addr;
+    [newHeap, addr]     = hAlloc(heap, node);
+    var newStack        = [addr].concat(stack);
+    var newState        = putStack(newStack, State);
+    var newNewState     = putHeap(newHeap, newState);
+    return newNewState;
+}   
+
+
+function mkap(xState){
+    var oldState            = xState;
+    var stack               = getStack(oldState);
+    var heap                = getHeap(oldState);    
+    var a1                  = stack[0];
+    stack.splice(0,1);
+    var a2                  = stack[0];
+    stack.splice(0,1);
+    var stackRest           = stack;
+    var node                = new NAp(a1, a2);
+    [newHeap, nodeAddr]     = hAlloc(heap, node);
+    stack                   = [nodeAddr].concat(stack);
+    var newStack            = stack;
+    var newState            = putHeap(newHeap, oldState);
+    var newNewState         = putStack(newStack, newState);
+    return newNewState;
+} 
+
+function push(N, xState){
+    //console.log("push called");
+    var State       = xState;
+    var stack       = getStack(State);
+    var newStack    = [stack[N]].concat(stack);
+    var newState    = putStack(newStack, State);
+    return newState;
+}  
+
+
+function pack(t, n, xState){
+    var State = xState;
+    var stack = getStack(State);
+    var heap  = getHeap(State);
+    var addrs = [];
+    for(var x = 0; x < n; x++){
+        addrs[x] = stack[x];
+    }
+    var newHeap;
+    var addr;
+    [newHeap, addr] = hAlloc(heap, new NConstr(t, addrs));
+    stack.drop(n);
+    var newStack = [addr].concat(stack);
+    return putStack(newStack, (putHeap(newHeap, State)));
+}
+
+
+function casejump(tagbranches, xState){
+    var State = xState;
+    var stack = getStack(State);
+    var i = getCode(State);
+    var node = hLookup(getHeap(State), head(stack));
+    var tag = node.t;
+    for(var j=0;j<tagbranches.length;j++){
+        if(tagbranches[j][0] == tag){
+            var branchCode = tagbranches[j][1];
+            return putCode(branchCode.concat(i), State);
+        }
+    }
+    console.error("error in casejump");
+}
+
+function split(n, xState){
+    var State = xState;
+    var stack = getStack(State);
+    var node = hLookup(getHeap(State), head(stack));
+    var addrs = node.a;
+    var addrsUsed = [];
+    stack.drop(1);
+    for(var i=0;i<n;i++){
+        addrsUsed[i] = addrs[i];
+    }
+    var newStack = addrsUsed.concat(stack);
+    return putStack(newStack, State);
+}
+
+function update(N, xState){
+    //console.log("update called");
+    var State           = xState;
+    var stack           = getStack(State);
+    var oldAddr         = stack[N+1];
+    if(oldAddr == undefined){
+        console.log("accessing undefined stack space - line 376");
+    }
+    var newHeap;
+    var newAddr;
+    [newHeap, newAddr]  = hAlloc(getHeap(State), (new NInd(stack[0])));
+    var stack;
+    stack[N+1]          = newAddr;
+    stack.drop(1);
+    var newStack        = stack;
+    var newState        = putStack(newStack, State);
+    var newNewState     = putHeap(newHeap, newState);
+    return newNewState;
+}
+
+
+function pop(N, xState){
+    //console.log("pop called");
+    var State    = xState;
+    var stack    = getStack(State);
+    var newStack = stack.splice(N, stack.length);
+    return putStack(newStack, State);
+}  
+
+
+function evalInst(xState){
+    console.log("evalInst called");
+    var State = xState;
+    var Stack = getStack(State);
+    var i = getCode(State);
+    var a = head(Stack); 
+    var s = tail(Stack);
+    var newDump = [[i,s]].concat(getDump(State));
+    console.log("New dump: " + newDump);
+    var newState = putStack([a], State);
+    var newNewState = putCode([new Unwind], newState);
+    var finalState = putDump(newDump, newNewState);
+    return finalState;
+}
+
+function boxInteger(N, xState){
+    var State = xState;
+    var h;
+    var a;
+    [h,a] = hAlloc(getHeap(State), (new NNum(N)));
+    //console.log(a);
+    var newStack = [a].concat(getStack(State));
+    var newState = putStack(newStack, (putHeap(h, State)));
+    return newState;
+}
+
+function unboxInteger(A, xState){
+    var State = xState;
+    var node = hLookup(getHeap(State), A);
+    if(node instanceof NNum){
+        return node.n;
+    } else {
+        console.log("error unboxing non-int");
+    }
+}
+
+function boxBoolean(b, xState){
+    var State = xState;
+    if(b == true){
+        var newB = 1;
+    } else {
+        if(b == false){
+            var newB = 2;
+        } else {
+            console.error("unexpected boolean representation");
+        }
+    }
+    var newHeap;
+    var a;
+    [newHeap, a] = hAlloc(getHeap(State), (new NConstr(newB, [])))
+    var newStack = [a].concat(getStack(State));
+    return putStack(newStack, 
+           putHeap(newHeap, State));
+}
+
+function primitive1(box, unbox, op, xState){
+    var State = xState;
+    var Stack = getStack(State);
+    var a = head(Stack);
+    var as = tail(Stack);
+    console.log(as);
+    var val = unbox(a, State);
+    var result = op(val);
+    var newState = putStack(as, State);
+    var newNewState = box(result, newState);
+    return newNewState;
+}
+
+function primitive2(box, unbox, op, xState){
+    var State = xState;
+    var Stack = getStack(State);
+    var a0 = head(Stack);
+    var a1 = head(tail(Stack));
+    var as = tail(tail(Stack));
+    var val0 = unbox(a0, State);
+    var val1 = unbox(a1, State);
+    var result = op(val0, val1);
+    var newState = putStack(as, State);
+    return box(result, newState);
+}
+
+function cond(i1, i2, xState){
+    var State = xState;
+    var i = getCode(State);
+    var stack = getStack(State);
+    var a = head(stack);
+    var as = tail(stack);
+    var node = hLookup(getHeap(State), a);
+    console.log("node.t: " + node.t);
+    if(!(node instanceof NConstr)){
+        console.error("cond called on non-bool");
+    }
+    if(node.t == 2){
+        return putCode(i2.concat(i), putStack(as, State));
+    }
+    if(node.t == 1){
+        return putCode(i1.concat(i), putStack(as, State));
+    }
+    console.error("unsuccesful cond");
+}
+\end{verbatim}

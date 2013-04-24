@@ -1,6 +1,20 @@
 
 \section{A High Level Design}
 \subsection{Overview}
+Having looked at the problems we wish to solve and some existing solutions, we
+now turn our attention to the design of our own solution. It was decided
+that we would separate our implementation into a compiler and runtime evaluator. The
+compiler would take as input GHC's external Core and compile this into some
+intermediate representation which could be evaluated by our runtime. Our
+runtime will be written in JavaScript, allowing its methods to be executed in
+all common web browsers. Two different compilation schemes will be investigated
+in this section. We will also take inspiration from the runtime implementations
+used in Fay and iTasks when designing our own implementation. Our runtime will
+consist of an abstract machine capable of evaluating the low-level representation
+of our input language produced by out compiler. We will now examine the rationale
+behind the choices and investigate the more specific details of their implementation.
+
+\begin{comment}
 Having looked at the problems we wish to solve and some existing solutions, we 
 now turn our attention to the implementation of our own solution. First,
 we form an image of the overall architecture of our solution. At a
@@ -27,7 +41,7 @@ web browser. With this in mind, we can say that it is the job of our compiler to
 take our input language and transform it into a representation which our runtime can
 then execute when called from a browser. 
 
-Seperating our compiler and runtime poses a small problem. We now have two disparate
+Separating our compiler and runtime poses a small problem. We now have two disparate
 stages which will need to communicate in some sense. We could write both our compiler
 and runtime in a language which can be executed by a browser, but this would be 
 unnecessary and an inefficient use of any such language. Instead, we should write our
@@ -44,19 +58,14 @@ our project requirements.
 		  which can be executed by our runtime.
 	\item A runtime to execute our program in a browser. 
 \end{enumerate}
+\end{comment}
 
 \subsection{Input Language}
-
-**Note we haven't commented on the format of core programs beyond **\\
-**recognizing them at a glance. Need to go into detail on [ScDefn]**\\
-**and others, although we could probably leave that until impl	  **\\
-
-\noindent We will start by examining the first requirement. We will need a
-language that is capable of conveying at the very least the generic basics 
+We need a language that is capable of conveying at the very least the generic basics 
 of a programming language, namely the notions of primitive value and function
 declarations, and function applications. After this our language will need
 some means of flow control, namely conditionally executed statements and 
-loops. The last of these basic required features is some manner of stuctured
+loops. The last of these basic required features is some manner of structured
 data type, allowing for the creation of more complex types as composites of
 primitive types. 
 
@@ -74,7 +83,7 @@ or Haskell, with a very simple feature set. It could also be compared to
 classic LISP with the addition of structured data types. 
 
 On a more interesting note is the similarity of our required language to
-certain subsets of Lambda Calculus. Before examing these subsets, we'll
+certain subsets of Lambda Calculus. Before examining these subsets, we'll
 take a quick look at some simpler dialects. The basic
 features of simple untyped lambda calculus are lambda terms, denoting well 
 formed expressions in the lambda calculus which can consist of:
@@ -86,7 +95,7 @@ formed expressions in the lambda calculus which can consist of:
 \end{itemize}
 
 \noindent where the latter two correspond with function abstractions (or
-definitions) and applications in more familar terminology. The lambda term
+definitions) and applications in more familiar terminology. The lambda term
 representing a function that takes two parameters and returns their sum 
 would be 
 
@@ -114,15 +123,14 @@ quantified types. As an example, we can express the identity function as
 
 \noindent which we read as \emph{the type level function which takes 
 the type \(\alpha\) and returns the id function \( \lambda x^\alpha . x \)
-(which is of type \emph{ function that takes a paramater of type \( \alpha \) 
+(which is of type \emph{ function that takes a parameter of type \( \alpha \) 
 and forall type \(\alpha\) returns a value of type \( \alpha \)})}, where 
 the id function can be read as \emph{the function that takes an x of 
-type \( \alpha \) and returns same}. Those interested will find further information
-on System F here LINKLINK
+type \( \alpha \) and returns same}. 
 
-The reason System F is so intereesting to us is its similarity to a number of functional
+The reason System F is so interesting to us is its similarity to a number of functional
 language representations currently in use. Many high-level functional programming languages
-can be expressed in terms of System F or derivites of System F~\cite{SystemF} while still 
+can be expressed in terms of System F or derivatives of System F~\cite{SystemF} while still 
 preserving their full semantics. Of
 particular note however are the languages of Core and SAPL. These are intermediate languages
 used as minimal representations for Haskell and Clean respectively which can be emitted by
@@ -131,43 +139,55 @@ used to refer to any such intermediate functional language based on typed lambda
 but from here on we shall refer to the GHC (Glasgow Haskell Compiler) specific intermediate
 language as Core or 'Core' and similar languages as 'Core-like'. We will use 'External 
 Core' to refer to the specific output of GHC when passed the -fext-core flag, as distinct
-frmo 'Core' in general which can refer to this output or the internal representation. 
+from 'Core' in general which can refer to this output or the internal representation. 
 Core is a lambda calculus dialect (System F with added type coercions to be 
 specific~\cite{Ext-Core}) which can be obtained from GHC with the compiler argument 
--fext-core. SAPL can be similarly obtained from the Clean compiler. 
-
-
-\noindent The semantics of Core exprs look something like this
+-fext-core. SAPL can be similarly obtained from the Clean compiler.  The semantics of 
+Core exprs look something like this
 ~\cite{GHCCoreSyntax}~\cite[pp.9]{Inliner}..
 
 \begin{verbatim}
-type CoreExpr = Expr Var
+CoreExpr ::= Expr Var
 
-data Expr b 
-  = Var	  Id
-  | Lit   Literal
-  | App   (Expr b) (Arg b)
-  | Lam   b (Expr b)
-  | Let   (Bind b) (Expr b)
-  | Case  (Expr b) b Type [Alt b]
-  | Cast  (Expr b) Coercion
-  | Note  Note (Expr b)
-  | Type  Type
+Expr b ::= Var	  Id
+        | Lit   Literal
+        | App   (Expr b) (Arg b)
+        | Lam   b (Expr b)
+        | Let   (Bind b) (Expr b)
+        | Case  (Expr b) b Type [Alt b]
+        | Cast  (Expr b) Coercion
+        | Note  Note (Expr b)
+        | Type  Type
 \end{verbatim}
 
-\noindent ...when expressed in terms of a Haskell algebraic data type (which 
-coincidentally is a nice way to express many things). Lam in this
+\noindent Lam in this
 case stands for Lambda and the liberally added 'b's for the types of the binders
 in the expression, the rest is mostly self explanatory. Note that data constructors
-are not represented here although are included in the language seperate to the
+are not represented here although are included in the language separate to the
 Core expr type, along with a \%data denotation.
 
 By the time a source program reaches the stage of GHC where it can be emitted
 as Core, it has already undergone type checking~\cite{Inliner}. It has also 
 been substantially minimized to the simplest representation
-possible still perserving all of the original program's semantics. This makes
+possible still preserving all of the original program's semantics. This makes
 Core an excellent candidate as an input language, as its minimalism makes it
 easy to parse and allows us to make assumptions about its type safety.
+
+By the time a source program reaches the stage of GHC where it can be emitted
+as Core, it has already undergone a number of transformations~\cite[pp.5]{Inliner}
+~\cite{Ext-Core}. 
+
+\begin{itemize}
+  \item Inlining: replacing the bound variable right hand side of a let expression
+        with its binding value.
+  \item Dead code elimination: minimization by removing unnecessary code.
+  \item Beta reduction: Rewriting lambda applications to let expressions.
+  \item Type-checking
+  \item Compilation of sugarred expressions such as guards, pattern matches
+        into representations consisting of only of Core components.
+  \item Alpha substitution: to ensure uniqueness of variable names, in particular
+        when scoping is removed within functions.
+\end{itemize}
 
 To give an idea of what a Core program looks like, we'll examine a small 
 example. A factorial program is the canonical functional Hello World and will
@@ -210,8 +230,8 @@ main = fac 4
     (ghczmprim:GHCziTypes.Izh (4::ghczmprim:GHCziPrim.Intzh));
 \end{verbatim}
 
-\noindent Which is intended to be partially human readable, but mostly
-just parseable. Lets tidy this up a bit...
+\noindent For clarity, we present the same Core program with more readable
+type names:
 
 \begin{verbatim}
 %module main:MIdent
@@ -230,25 +250,23 @@ just parseable. Lets tidy this up a bit...
 main :: Types.Int = fac (Types.Izh (4::Int));
 \end{verbatim}
 
-\noindent That looks nicer. Here, I have shortened the type names in the
+\noindent Here, I have shortened the type names in the
 primitive value type notations, removed the function return type notations
-and replaced the longwinded arithmetic operator names with their traditional
+and replaced the long-winded arithmetic operator names with their traditional
 symbols. We can see that the guards (Haskell pattern matching syntax, denoted
 with '\textbar' symbols) have been removed and replaced with a case statement, in
-keeping with Core's minimal mindset. We can also see a lambda calculus esque
+keeping with Core's minimal mindset. We can also see a lambda calculus-esque
 structure, with our computations being represented in the form of \( \backslash
- [params] \rightarrow function body\). The influence System F can be seen in
- the type signatures prefixing the fac function. Of note also is the '@' symbol, used
- to denote function application. More on this later, for the moment it's enough
- to know that x + y can be represented as + @ x y, that is \emph{plus applied to
- x and y}.
- 
-SAPL is similar to core~\cite[pp.5]{SAPL2JS} with a few differences. SAPL uses a \emph{select} 
-expression in place of Core's case expressions although this is a difference in name
-only, the semantics of both being equivalent. SAPL also has a built in \emph{if}
-expression which in Core would be expressed using case expressions instead. SAPL
-contains no type annotations, all such information having been removed after the
-Clean compilation type-checking stage.
+[params] \rightarrow function body\). The influence of System F can be seen in
+the type signatures prefixing the fac function. Of note also is the '@' symbol, used
+to denote function application. More on this later, for the moment it's enough
+to know that x + y can be represented as + @ x y, that is \emph{plus applied to
+x and y}. 
+
+SAPL is similar to core~\cite[pp.5]{SAPL2JS} with a few differences. 
+The semantics of SAPL were explored earlier in this paper when discussing the 
+iTasks system. It is worth noting also that SAPL lacks Core's liberally added
+type annotations.
 
 Choosing a language such as Core or SAPL as our input language would provide
 a number of benefits for this project. Firstly, it would allow us to write
@@ -278,36 +296,29 @@ input language.
 Now that we have decided on our input language, we need to plan our compilation
 strategy. Thankfully for us, there is a wealth of literature and previous work
 on writing a compiler for System F resemblant languages and a number of approaches
-already exist from which we can take inspiration. An overview of general 
+already exist from which we can take inspiration~\cite{Tutorial}. An overview of general 
 functional language compilation is provided in the background chapter of this
 report so that this section and following sections discussing compilation can 
 focus on the aspects of immediate interest to us.
 
-*ADD GRAPH REDUCTION TO BACKGROUND*
-
 First, we need some way to compile programs written in our input language into
 some form from which we can derive an initial state. The traditional way to
-do this is to view our program as a graph as described above and convert this
+do this is to view our program as a graph~\cite[pp.185]{SPJ} as described above and convert this
 graph into a programmatic representation. There are many existing functional
 compilation language strategies which achieve this, so it was decided to 
 examine those before deciding on an implementation. In particular, there were
 two strategies which I investigated in-depth
 
 \begin{enumerate}
-	\item The template instantation machine
+	\item The template instantiation machine
 	\item The G-Machine
 \end{enumerate}
 
 \subsubsection{The template instantiation machine} 
 The template instantiation machine is a simplistic approach to
-functional graph reduction and compilation but conveys many of 
-the ideas used in more complicated approaches. When the project
-started moving towards implemenation of a solution, this is the
-approach I started with. It proved very useful in understanding
-some of the key ideas in writing a functional compiler and gave
-me an idea of the scope of such an implementation. 
-
-The machine is built upon a state consisting of
+functional graph reduction and compilation~\cite[pp.42]{Tutorial} but conveys many of 
+the ideas used in more complicated approaches.. The machine is built 
+upon a state consisting of
 \begin{itemize}
 	\item A stack
 	\item A dump
@@ -331,7 +342,7 @@ The globals array associates the names of our declared
 supercombinators with their addresses in the heap, allowing
 supercombinators to be looked up by name. 
 
-The operation of the template instiation machine is described
+The operation of the template instantiation machine is described
 by a number of state transitions which are called if the state
 of the machine represents that of the transition. When no
 transition rule matches, we assume execution to be complete. 
@@ -353,7 +364,7 @@ to the stack or overwrite the root of the redex with the
 result, depending on whether the implementation in question
 is performing lazy updates. 
 
-The implemenation of the template instantiation machine is
+The implementation of the template instantiation machine is
 split into compilation and evaluation stages. The compiler
 in the first stage takes our input program, along with
 any built-in prelude definitions, and builds an initial
@@ -367,49 +378,33 @@ the stack consists of a single pointer to an item which
 can be evaluated no further, for example and integer or
 a fully saturated data constructor. 
 
-**PROVIDE EXAMPLE COMPILATION**
-
-This is about the extent to which I implemented my initial
-template instantiation machine. There were further 
-improvements which could be made, such as adding primitive
-operations, let expressions etc. etc. My implementation was
-capable of taking a program representing an identity 
-function, compiling it and evaluating it. This was 
-sufficient for my purposes of understanding some of the
-basic concepts of functional compiler implementation. At
-this point, I was looking to move towards a different
-implementation which would better suit some of my 
-requirements. Those interested will find a more complete
-implementation of a template instantiation compiler 
-described in greather depth in "The Implementation of Functional 
-Programming Languages: A Tutorial", by Simon Peyton Jones
-and David Lester.
 
 The template instantiation machine suffers from one notable
 problem which made it particularly unsuitable for our
 purposes. The general operation of the template instantiation
 machine constructs an instance of a supercombinator body.
 Each time we attempt to instantiate a supercombinator we
-recurseivly traverse the template. This action is executed
+recursively traverse the template. This action is executed
 in the evaluation stage. We know that our end goal is the
 ability to execute programs in a browser and as such it would
 be of great benefit to us if we could minimize the amount of
-work needed at run time. Thankfully for us, there exist
-implemenations which are capable of doing this!
+work needed at run time. As such, the efficiency 
+lost in such an implementation is not ideal. We will now
+investigate a more efficient compilation scheme.
 
 \subsubsection{The G-machine}
 The G-machine differs from the template instantiation machine
 in a few ways but there is one significant difference in 
 their principles of operation. The G-machine translates each
 supercombinator body to a sequence of instructions which will
-construct an instance of the supercombinator body when run.
+construct an instance of the supercombinator body when run~\cite[pp.86]{Tutorial}.
 In comparison to the template instantiation machine, this
 allows us to execute the actions of a supercombinator without
 the need to instantiate it at run time, this having been
 achieved in advance at compile time. 
 
 The G-machine decouples the compiler from evaluator to a
-greater extent than the template instantion machine. The
+greater extent than the template instantiation machine. The
 G-machine's compiler not only produces an initial state from
 our input program but also a list of instructions which when
 combined with the initial state can be evaluated to a final
@@ -432,7 +427,7 @@ to the one listed previously, with the addition of a sequence
 of instructions describing the evaluation of the current expression.
 There still exists a heap and stack, the former still containing
 nodes of the same types as those previously encountered, with
-the expection of our NGlobal nodes. These now contain the 
+the exception of our NGlobal nodes. These now contain the 
 instructions needed to instantiate a supercombinator definition
 rather than the body of the supercombinator itself.
 This state is passed to the runtime which will execute until
@@ -479,7 +474,7 @@ definitions and primitive operations, make up the initial
 state we pass to our runtime.
 
 The improved efficiency of the G-machine over the template
-instantion machine, along with the intended ease of writing
+instantiation machine, along with the intended ease of writing
 an abstract machine to evaluate programs at runtime, make
 it the better choice of the two explored implementations.
 
@@ -494,10 +489,10 @@ commonly used browser-side programming language. If we
 want the results of this project to be usable in any
 general sense, JavaScript is the only sensible option.
 
-It is worth re-examining Fay at this point. We are
+It is worth re-examining Fay and iTasks at this point. We are
 taking some inspiration from its implementation in
-that we are using a runtime written in javascript to 
-evaluator a low level representation of our compiled
+that we are using a runtime written in JavaScript to 
+evaluate a low level representation of our compiled
 program. However, it's worth noting the differences.
 As we have decided to use the G-machine as our overall
 compilation strategy, we 
@@ -512,7 +507,7 @@ returning new graph states, as opposed to operations on
 thunks. We do not concern ourselves with forcing thunks, 
 so to speak, but we will have to deal with evaluating 
 computations to weak head normal form, albeit in a 
-graph reduction context.
+graph reduction context. 
 
 Our runtime will receive the graph state representation
 of our input program after compilation, along with the
@@ -523,23 +518,23 @@ We can see that our runtime will need to understand how
 to interpret these instructions into concrete JavaScript
 actions which we can then call from our browser. Our 
 runtime must also be capable of representing our compiled
-initial state and instructions in a javascript format 
+initial state and instructions in a JavaScript format 
 for our actions to be enacted upon. We will 
 need some abstract representations of the components of
 our state, our instructions and their attributes. The
 compiled state will need to be serialized from the 
 language which we use to represent our program through
 the compilation stage (which as it turns out will be
-Haskell) into Javascript. This will be achieved by
-instantiating our abstract state javascript
+Haskell) into JavaScript. This will be achieved by
+instantiating our abstract state JavaScript
 representations to represent the concrete components of
 our state and instructions.
 
 At this point, we will have a compiled G-machine state 
-in Javascript form and the means to evaluate it into
+in JavaScript form and the means to evaluate it into
 subsequent states. 
-A javascript function will iterate through our states
-appling the changes necessary. On each iteration, this
+A JavaScript function will iterate through our states
+applying the changes necessary. On each iteration, this
 will check the state of the stack and
 the instruction at the front of the instruction list,
 apply the evaluation actions required by the instruction
@@ -551,15 +546,5 @@ function will be included in our serialized compiled
 state which we can call to initiate execution.
 When we have finished executing, we will then need
 to extract the result of our evaluated program from
-our state and return it in a javascript format for 
-use in our browser, other javascript functions etc.
-
-\subsection{Summary}
-We have decided that our project will consist of a Gmachine
-based compiler that accepts GHC's external Core. This 
-will be compiled into a graph based representation of the
-initial state of our program. This initial state will be
-serialized to a JavaScript representation thereof. A 
-Gmachine graph evaluator implemented in JavaScript will
-then evaluate this initial state to a final state and
-resultant value
+our state and return it in a JavaScript format for 
+use in our browser, other JavaScript functions etc.

@@ -1,39 +1,5 @@
 
 \section{Background}
-It would help to explain some of the concepts to which I will be referring 
-throughout this report. Not everyone will be familiar with some of the 
-functional programmming, and more specificially Haskell, ideas being discussed.
-While many programmers will have an idea of the workings of JavaScript, at
-least in so far as it is an imperative language, some of the concepts which 
-we will be examining might go beyond the scope of casual javascript programming.
-For brevity's sake I will explain some of the more specific concepts to which 
-I will be commonly referring to throughout this report.
-
-\begin{comment}
-\subsection{Types in Javascript}
-**Is this really needed?**
-\\
-There are seven data types in javascript, five of which concern us for the purposes
-of this project; three primary data types which are Number, String and Boolean, 
-and two 'composite' data types, Objects and Arrays. When writing in straight
-forward javascript, types are more or less invisible to the programmer. To declare
-a variable, of any type, the usual format is...
-\begin{verbatim}
-var varname = value;
-\end{verbatim}
-The type of varname is inferred from the type of the value. The types of javascipt
-objects are inferred from their attributes and methods. Types can be mixed
-in operators and functions with some type coercion, which can be dangerous
-if used incorrectly. The composite Object type will be most interest to us later,
-when dealing with the javascript 'runtime' used both in our own implementation
-and in that of the Fay language, which we will be looking at.
-
-An important point to remember is that we can represent primitive objects as
-composite objects, albeit it with a performance penalty. This idea will prove
-significant later when dealing with lazy evaluation, where simple primitive
-types will be insufficient to represent lazy evaluation.
-\end{comment}
-
 \subsection{Functional Programming}
 Functional programming is a programming paradigm distinct from imperative
 programming. It aims to view programs more as mathematical functions or series
@@ -54,13 +20,13 @@ transparity to practice by rewriting expressions with their evaluated results af
 their first evaluation. Many functional langauges can be seen as abstractions built
 on top of (polymorphically typed) lambda calculus~\cite[pp.37]{SPJ}, examples including 
 Haskell, Miranda, ML and Lisp. This is particularly noticeable in Lisp where the 
-influence of lambda calculus is still visible in its syntax. This is an extremely high-level
-overview of functional programm. I will attempt to explain any of the above mentioned
-concepts which appear frequently throughout this report. 
+influence of lambda calculus is still visible in its syntax. This is of course 
+an extremely high-level overview of functional programming. Where possible I will attempt to explain 
+any of the above mentioned concepts which appear frequently throughout this report. 
 
 \subsection{Functional Compilation}
 I will be referring frequently to some of the more common ideas and practices
-invovled in compiling a functional language thoughout this report. Unsurprisingly
+involved in compiling a functional language thoughout this report. Unsurprisingly
 the field of functional compiler design is not easily summarized in a paragraph,
 let alone a paper; the implementation explained here only scratches the surface.
 However it will be easier to understand some of the points I make if we start
@@ -68,23 +34,40 @@ with a quick overview.
 
 Most compiler implementations for simple functional languages start with an 
 input language which consists of a list of function definitions and some entry
-or "main" function, which serves as the entry point for the runtime or evaluator.
-We wish to avoid writing programs with side effects and as such the syntax of
-our input program will reflect that. There is no concept of global state nor
-stateful computations and when we need to represent some concept of changing
-state we do so by passing state as paramaters between functions. 
+or \emph{main} function, which serves as the entry point for the runtime or evaluator.
+Some of the common components we would expect to see in such a language are:
 
-The input language is parsed into a simplified expression-based representation.
-One such representation, the one used later in this report, is defined as:
+\begin{enumerate}
+	\item Variable names corresponding to a defined value.
+	\item Primitive integers.
+	\item Data constructors, consisting of a number of elements and a 
+		  tag to uniquely identify a constructor in its own context.
+	\item Binary function applicatiors which we use to apply expressions in order
+		  to construct larger expressions.
+	\item Let expressions, allowing us to define a list of arguments local
+		  to a specific expression.
+	\item Case expressions, containing first a condition expression which
+		  will evaluate to a tag identifying a data constructor in the context
+		  of the case expression, and secondly, a list of constructor tags and 
+		  the code to be executed when a particular tag is found.
+	\item Lambda abstractions, or anonymous expressions. 
+\end{enumerate}
+
+\noindent We can combine the above components to form expressions in our language. The
+term \emph{supercombinator} is used to refer to a named expression with a 
+list of \emph{binders} or arguments~\cite[pp.12]{Tutorial}. We could compare these to function 
+definitions in more conventional terminology. With these supercombinator
+defintions we are capable of building programs. A programmatic representation
+of such a language would look like this:
 
 \begin{verbatim}
-Program ::= [EVar, [a], Expr a]
+Program ::= [Var, [a], Expr a] 	-- Program ::= [Supercombinator]
 
 Expr a
   ::= EVar Name
     | ENum Int
-    | EConstr Int Int
-    | EAp (Expr a) (Expr a)
+    | EConstr Int Int 			-- data constructors
+    | EAp (Expr a) (Expr a) 	-- expression applicators
     | ELet 
         IsRec
         [(a, Expr a)]
@@ -92,31 +75,8 @@ Expr a
     | ECase
         (Expr a)
         [Alter a]
-    | ELam [a] (Expr a)
+    | ELam [a] (Expr a) 		-- lambda abstractions
 \end{verbatim}
-
-\noindent We say that a program in this representation consists of a list of
-super combinator definitions. A super combinator, for our purposes, is an 
-expression body along with an identifying variable name and a list of arguments
-to the expressions~\cite[pp.12]{Tutorial}. Expressions can consist of
-
-\begin{enumerate}
-	\item EVars. Variable names corresponding to a defined value.
-	\item ENums. Primitive integers
-	\item EConstrs. Data constructors, along with the number of elements in the
-		  fully saturated constructor as well as the constructors tag, used to
-		  differentiate constructors in a given context.
-	\item EAp. Binary function applications which we use to apply exprs in order
-		  to construct larger exprs.
-	\item ELet. Let expressions, allowins us to define a list of arguments local
-		  to a specific expression.
-	\item ECase. Case expressions, containing first a condition expression which
-		  will evaluate to a tag identifying a data constructor in the context
-		  of the case expressions and secondly, a list of constructor tags and 
-		  the code to be executed when a particular tag is found.
-	\item ELam. Lambdas, or anonymous expressions. Note the similarity to a 
-		  super combinator, without the identifying variable name.
-\end{enumerate}
 
 \noindent By way of example, a sample program taking two paramaeters and returning
 their sum, written in such a language, would resemble
@@ -125,10 +85,9 @@ their sum, written in such a language, would resemble
  ["sum"], ["x", "y"], EAp (EAp (EVar "+") (EVar "x")) (EVar "y")
 \end{verbatim}
 
-
-\noindent Note in particular that we address a supercombinator named "+" 
+\noindent Note in particular that we address a supercombinator named \verb!"+"!
 representing our integer addition primitive and that we use two EAp 
-binary expression applications in order to call it on two parameters x and y.
+binary expression applications in order to apply it to two parameters x and y.
 
 Our compiler will take a program in such a simplified representation
 and convert it into an initial state representing our input program and the
@@ -155,22 +114,24 @@ from a small set of nodes~\cite[pp.185]{SPJ}, namely
 We say that our program can be represented by a graph of reducible expressions
 or \emph{redexes} built from the above nodes. 
 Our program state will consist of a heap containing the nodes which form
-or graph addressable by their address in the heap. We will
+our graph addressable by their address in the heap. We will
 also have a stack used to contain a working set of heap addresses which 
 will be required in the evaluation of immediately pending expressions. A 
-'globals' dictionary will associate global function identifiers with the
-addresses of their function nodes in the heap. \\
+\emph{globals} dictionary will associate global supercombinator identifiers with the
+addresses of their representative nodes in the heap. \\
 
 **GIVE EXAMPLE OF GRAPH**
 
 **EXAMPLE OF REDEX REDUCTION** \\
 
 An evaulator or runtime evaluates our compiled program by iterating through
-states from the initial state to the final. On each iterartion, the state
+states from the initial state to the final. On each iteration, the state
 (and instruction sequence if present) are examined to determine the actions
 to execute in order to reach the next state. The appropriate actions are
 executed, producing a next state which we will then evaluate in the same
-manner. 
+manner. Expressions are instaniated as redexes in our heap which we reduce
+to find their resultant values. We evaluate the program as a whole in this
+fashion to a final result.
 
 \subsection{Lazy Evaluation}
 Lazy evaluation, also known as call-by-need evaluation, is an evaluation method
@@ -191,7 +152,7 @@ programming. Let's take two examples:
 ending with 'e'. The function \verb!take! evaluates and returns the number of
 elements of the second parameter specified by the first parameter, starting at the
 head of the list. In this example we're \emph{taking} one element from "abcde" which
-of gives us the character 'a'. 
+gives us the character 'a'. 
 
 \begin{center}
 	\verb!take 1 [1..]!
@@ -243,7 +204,7 @@ beyond the scope of this project and implementation.
 in this context to denote the level of possible evaluation in an expression.
 We say an expression is in head normal form when it has been fully evaluated
 or reduced, and can neither be further evaluated nor contains any sub
-expressions which can be further evaluated. For example...
+expressions which can be further evaluated. We'll examine the following examples.
 
 \begin{itemize}
  \item 1
@@ -251,18 +212,18 @@ expressions which can be further evaluated. For example...
  \item \verb!(1, 2)!
 \end{itemize}
 
-are an integer, lambda expression and tuple respectively in normal form. "1 + 1"
+These are an integer, lambda expression and tuple respectively in normal form. \verb!1 + 1!
 by comparison would not be in normal form as there is an addition operation to
 be performed.
 
 Expressions in weak head normal form are expressions that have been evaluated
 to the outermost data constructor~\cite[pp.198]{SPJ}. These can be data constructors, undersaturated
 primitive operations or lambda abstractions. For example...
-\begin{verbatim}
-Just (1 + 1)
-\x -> 2 + 2
-'h' : ("e" ++ "ello")
-\end{verbatim}
+\begin{itemize}
+	\item \verb!Just (1 + 1)!
+	\item \verb!\x -> 2 + 2!
+	\item \verb!'h' : ("e" ++ "ello")!
+\end{itemize}
 The first example contains two sub expressions which could be further evaluated,
 but as the outermost component (the Just data constructor) has been evaluated 
 fully, it is still in WHNF. The same is true of the 3rd example, where the "++"

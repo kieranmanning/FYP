@@ -1,63 +1,64 @@
 \section{Implentation}
-Now that we have a plan for the design of our project, it is time
-to begin implementing it. There are still many considerations to
-be made. Our strategy still leaves many of the finer details 
-undecided. We'll now examine some of these details in more depth.
-The following section will explain the design choices made when
-implementing my project. It will also explain the implementation
-itself, providing select examples of the code used as well as the
-progress of a program as it passes through our compiler. For brevity's
-sake I will be trying to avoid adding unnecessary code snippets
-throughout this chapter. The code referenced can be found in the
-code repo attached to this project. I will provide file names where
-necessary.
+Now that we have seen the high-level design of our project we will
+examine its implementation. As stated, this will consist of
+
+\begin{itemize}
+    \item A programmatic representation of our input language
+    \item A compiler which will transform the above representation
+          into an initial program state and series of instructions.
+    \item A means of serializing this initial state into a form our
+          runtime can evaluate.
+    \item A runtime capable of evaluating this initial state in a
+          web browser.
+\end{itemize}
+
+The compiler and language representation will be implemented in
+Haskell. This is firstly because we know of existing implementations
+for such a compiler written in Haskell and secondly personal 
+preference. The serializer, also written in Haskell, will translate
+this state into a JavaScript representation thereof. Our runtime
+which will be implemented in JavaScript for reasons already explored
+will provide the means to evaluate this state. 
 
 \subsection{Core Language Representation}
 We'll start with a description of the Haskell representation for
 our input language, GHC's external Core. This is implemented in
-haskell using algebraic data types (or ADTs) and our own defined
-types.
+Haskell using algebraic data types (or ADTs) and our own defined
+types. The following the is ADT used:
 
 \begin{verbatim}
 data Expr a 
-	= EVar Name
-	| ENum Int
-	| EConstr Int Int
-	| EAp (Expr a) (Expr a)
-	| ELet 
-		IsRec
-		[(a, Expr a)]
-		(Expr a)
-	| ECase
-		(Expr a)
-		[Alter a]
-	| ELam [a] (Expr a)
-	deriving(Show, Read)
+    = EVar Name
+    | ENum Int
+    | EConstr Int Int
+    | EAp (Expr a) (Expr a)
+    | ELet 
+        IsRec
+        [(a, Expr a)]
+        (Expr a)
+    | ECase
+        (Expr a)
+        [Alter a]
+    | ELam [a] (Expr a)
+    deriving(Show, Read)
 
-type ScDefn a = (Name, [a], Expr a)
-type CoreScDefn = ScDefn Name
+    type ScDefn a = (Name, [a], Expr a)
+    type CoreScDefn = ScDefn Name
 
-type Program a = [ScDefn a]
+    type Program a = [ScDefn a]
 \end{verbatim}
 
-\noindent This is the ADT representing a Core expression. We can
+\noindent We can
 see many of the ideas we discussed earlier when discussing Core
 and its components. The 'a's represent the type of the expression.
 'Names' are just renamed strings. The EAp expression is the Core
 equivalent of the function applicators we already discussed. ECase
-exprs are case statements. ELam and ELet are lambda abstractions
-and let expressions respectively, although in practice neither 
-were implemented in our compiler. These were not deemed critical
-to the evaluation of our language as their behaviour can be 
-expressed in terms of other expressions. The "deriving(Show, Read)"
-at the bottom of our data type definition will crop up frequently.
-This tells Haskell to automatically derive instances of Show and
-Read for our data type, allowing it to represented as and
-interpreted from String types respectively. Supercombinators
+exprs are case statements. ELet and ELam are lambda abstractions
+and let expressions respectively. Supercombinators
 are defined as tuples of their identifier,
 the expression forming the body of the supercombinator and the 
 list of parameters to pass to the expression. A program is
-built from a series of these super combinator defintions,
+built from a series of these supercombinator definitions,
 named ScDefn in the code. 
 
 We will provide an example of a simple program written in this
@@ -71,57 +72,70 @@ integers. When written in terms of our ADT, this would look
 like:
 
 \begin{verbatim}
-[
-	("K", ["x", "y"], EVar "x"), 
- 	("main", [], EAp (EAp (EVar "K")(ENum 1))(Enum 2)))
-]
-
-K x y  = x
-main = K 1 2
+    [
+    ("K", ["x", "y"], EVar "x"), 
+    ("main", [], EAp (EAp (EVar "K")(ENum 1))(Enum 2)))
+    ]
 \end{verbatim}
 
-A more readable version is also provided above. Note that our
+\noindent A comparable function written in a language such
+as Haskell or Miranda would look like:
+
+\begin{verbatim}
+    K x y  = x
+    main = K 1 2
+\end{verbatim}
+
+\noindent Note that our
 program consists of two supercombinator definitions. The first
 of these is our K function. The second is a function called
 "main" which applies our function K to integers 1 and 2. Our
 language requires an entry point for our runtime to begin
-evaluation from. In our implemention, as in many, the standard
+evaluation from. In our implementation, as in many, the standard
 will be to name that entry point main. It is otherwise a 
-regular supercombinator defintion. This project is capable of
-taking more complicated programs however these quickly become
-unwieldy to discuss. Those interested will find some subjectively
-cooler examples in GPrelude.hs in the supplied code repository.
+regular supercombinator definition. 
 
 \subsection{Compiler}
-Our compiler will accept such representions of the core language
-as input and compile them to an initial state. We have
-decided to use the Gmachine as the template for our compiler
-implementation. This will make the problem of writing the compiler
-substantially easier as implemenations of the Gmachine already
+Our compiler will accept an ADT representation of the core language
+as input and compile this into an initial state as described below.
+This state will consist of a Haskell representation of a reducible
+expression graph and set of Gmachine instructions.
+It is our intention that such a state can be executed from a browser
+once passed to the JavaScript runtime discussed. 
+
+We had originally intended to take the syntax of external Core itself
+as the input to our compiler however 
+this proved to be problematic. Tools for parsing Core exist in
+previous versions of GHC but maintenance of these seems to have
+stopped sometime around version 6. As the semantics of Core has
+been updated since then, these tools have stagnated. It would not
+be particularly difficult to write a parser for Core however the time
+was not available and doing so was deemed uninteresting in the
+scope of this project.
+
+The decision to use the Gmachine as the template for our compiler
+implementation will make the problem of writing the compiler
+substantially easier as implementations of the Gmachine already
 exist. Rather than re-implement the wheel we will re-use an 
 existing implementation, specifically the one described in 
 \emph{Implementing Functional Languages: A Tutorial} by Simon
 Peyton Jones and David Lester. This will allow us to focus on
 the more interesting aspects of the project, most specifically
-the runtime. Those familiar with the implementation in the 
-above mentioned text can easily skip this subsection. If not, 
-I'd recommend reading the text as Jones and Lester 
-describe it better than I could ever hope to.
+the runtime. 
 
 \subsubsection{Program State}
-We have mentioned our \emph{initial state} countless times
-so far in this report. Lets see what that state looks like
-when represented in Haskell.
+The following is the Haskell representation we use for our
+compiled state.
 
 \begin{verbatim}
 type GmState 
-	= (	GmOutput,
-		GmCode,
-		GmStack,
-		GmDump,
-		GmHeap,
-		GmGlobals,
-		GmStats)
+= ( GmOutput,
+    GmCode,
+    GmStack,
+    GmDump,
+    GmHeap,
+    GmGlobals,
+    GmStats)
 
 type GmCode = [Instruction]
 
@@ -129,7 +143,7 @@ type GmOutput = [Char]
 
 type GmDump = [GmDumpItem]
 
-type GmDumpItem = (GmCode, GmStack)		
+type GmDumpItem = (GmCode, GmStack)     
 
 type GmStack = [Addr]
 
@@ -142,9 +156,10 @@ type GmGlobals = [(Name, Addr)]
 \end{verbatim}
 
 The state of our program at any point throughout its evaluation
-is reprseneted by GmState. The definition of GmState and its
-constituent components is described above. We can ignore GmOutput
-and GmStats, they're not of particular interest to us. 
+is represented by GmState. The definition of GmState and its
+constituent components is described above. GmOutput and GmStats
+were used for testing and debugging purposes and are not of great 
+interest.
 
 GmHeap is defined as Heap Node, where Heap is a parameterized type
 definition and Node is the type of items contained in the heap in 
@@ -159,12 +174,12 @@ section. Nodes are defined as follows:
 
 \begin{verbatim}
 data Node 
-	= NNum Int 
-	| NAp Addr Addr  		
-	| NGlobal Int GmCode 	-- NGlobal Arity Code
-	| NInd Addr 			-- Indirection
-	| NConstr Int [Addr]
-	deriving(Eq, Show)
+    = NNum Int 
+    | NAp Addr Addr         
+    | NGlobal Int GmCode    -- NGlobal Arity Code
+    | NInd Addr             -- Indirection
+    | NConstr Int [Addr]
+    deriving(Eq, Show)
 \end{verbatim}
 
 These correspond with the nodes described in the background section
@@ -203,8 +218,8 @@ GmCode represents the list of instructions immediately pending
 execution. An instruction describes the actions to be next
 executed upon the program state. When we encounter a super-
 combinator in our input language, we compile it into a list
-of instructions representing its behaviour. We then place an
-NGlobal node containg these instructions in our heap. When
+of instructions representing its behavior. We then place an
+NGlobal node containing these instructions in our heap. When
 we wish to apply our supercombinator, we lookup its node by
 name firstly in GmGlobals, then by address in the heap. We
 then place its instructions into GmCode and execute them.
@@ -214,23 +229,23 @@ of the runtime:
 
 \begin{verbatim}
 data Instruction 
-	= Slide Int 
-	| Unwind
-	| PushGlobal Name 
-	| PushInt Int 
-	| Push Int 
-	| Mkap
-	| Pop Int
-	| Alloc Int 
-	| Update Int
-	| Eval
-	| Add | Sub | Mul | Div | Neg
-	| Eq  | Neq | Lt  | Le | Gt | Ge
-	| Cond GmCode GmCode
-	| Pack Int Int
-	| Casejump [(Int, GmCode)]
-	| Split Int
-	deriving(Eq, Show)
+    = Slide Int 
+    | Unwind
+    | PushGlobal Name 
+    | PushInt Int 
+    | Push Int 
+    | Mkap
+    | Pop Int
+    | Alloc Int 
+    | Update Int
+    | Eval
+    | Add | Sub | Mul | Div | Neg
+    | Eq  | Neq | Lt  | Le | Gt | Ge
+    | Cond GmCode GmCode
+    | Pack Int Int
+    | Casejump [(Int, GmCode)]
+    | Split Int
+    deriving(Eq, Show)
 \end{verbatim}
 
 
@@ -248,7 +263,7 @@ calling a subroutine in assembly languages.
 \subsubsection{Compilation Procedure}
 Compilation is started with the \emph{compile} function in 
 GCompiler.hs. This function takes a Core program and 
-returns an intial GmState. The initial values for GmStack..
+returns an initial GmState. The initial values for GmStack..
 and GmDump are empty lists. The initial value for GmCode
 is [PushGlobal "main", Eval], which will tell the runtime
 to start by executing the main supercombinator. We construct 
@@ -289,12 +304,12 @@ Let's look at our 'K' program after compilation.
 GmCode: [PushGlobal "main", Eval]
 GmStack: []
 GmDump: []
-GmHeap:	(2, 
-		[3..],  
-		[	(2,NGlobal 0 [PushInt 2,PushInt 1,PushGlobal "K",
-			 Mkap,Mkap,Update 0,Pop 0,Unwind]),
-			(1,NGlobal 2 [Push 0,Eval,Update 2,Pop 2,Unwind])
-		])
+GmHeap: (2, 
+        [3..],  
+        [   (2,NGlobal 0 [PushInt 2,PushInt 1,PushGlobal "K",
+             Mkap,Mkap,Update 0,Pop 0,Unwind]),
+            (1,NGlobal 2 [Push 0,Eval,Update 2,Pop 2,Unwind])
+        ])
 GmGlobals: [("K",1),("main",2))]
 
 \end{verbatim}
@@ -303,7 +318,7 @@ GmGlobals: [("K",1),("main",2))]
 runtime will be 
 \verb!PushGlobal! \verb!"main"!, \verb!Eval!. 
 This will tell our runtime
-to instaniate the main supercombinator and provides the entry
+to instantiate the main supercombinator and provides the entry
 point previously mentioned. The stack is empty as expected,
 as is the dump. GmHeap contains firstly an integer 2. This 
 is the number of objects in the heap; Secondly, a list of
@@ -311,7 +326,7 @@ empty addresses (slightly edited for our purposes, the heap
 is represented by an infinite lazy list in Haskell which we
 cannot show in its original form for obvious reasons). Lastly,
 we have the representation of our compiled graph containing two
-NGlobal nodes representing the supercombinators 'K' and 'main'.
+NGlobal nodes representing the supercombinators "K" and "main".
 The compilation environment has been greatly simplified for
 ease of demonstration. Normally all primitive operations 
 defined in the compiler as well as any prelude functions would
@@ -320,88 +335,83 @@ two supercombinators above. Lastly, GmGlobals contains the
 names and heap addresses of our two supercombinators.
 
 Our initial state is now ready to be evaluated. However, as
-it is currently represented in haskell, we need a way to make
+it is currently represented in Haskell, we need a way to make
 it compatible with JavaScript. 
 
 \subsection{Serialization To JavaScript}
-Our serialization code lives in Haskell2JS.hs. It isn't 
-particularly exciting but is pretty crucial to the operation
-of our compiler. It consists of a number of functions which
+Our serialization code lives in Haskell2JS.hs. It consists of
+a number of functions which
 translate the components of our state into an equivalent
 JavaScript representation. Before showing the operation
-of this code, we'll look at the JavaScript implemenation
+of this code, we'll look at the JavaScript implementations
 representing the components of our state.
 
 \begin{enumerate}
-	\item Lists\\
-		  We use lists in Haskell to represent globals, the
-		  heap etc. Haskell equivalent lists do not exist
-		  in JavaScript, but there is an array type. When 
-		  we wish to represent a list such as GmGlobals, we
-		  create a JavaScript array object. GmStack becomes
-		  \verb!var GmStack = [];!
-		  GmDump is represented as a list of two-item lists 
-		  of GmCode and GmStack.
-	\item Associative Lists\\
-		  These are used to represent GmHeap and GmGlobals.
-		  They consist of a list of tuples. In the case of
-		  GmHeap for example, we have a list of tuples of
-		  supercombinator names and heap addresses ([Name,
-		  Addr]). Primitive JavaScript arrays wont help
-		  us here, so we use JavaScript objects. The 
-		  GmGlobals from our compiled state now becomes 
+    \item Lists\\
+          We use lists in Haskell to represent globals, the
+          heap etc. Haskell equivalent lists do not exist
+          in JavaScript, but there is an array type. When 
+          we wish to represent a list such as GmGlobals, we
+          create a JavaScript array object. GmStack becomes
+          \verb!var GmStack = [];!
+          GmDump is represented as a list of two-item lists 
+          of GmCode and GmStack.
+    \item Associative Lists\\
+          These are used to represent GmHeap and GmGlobals.
+          They consist of a list of tuples. In the case of
+          GmHeap for example, we have a list of tuples of
+          supercombinator names and heap addresses ([Name,
+          Addr]). Primitive JavaScript arrays wont help
+          us here, so we use JavaScript objects. The 
+          GmGlobals from our compiled state now becomes 
 
-		  \begin{verbatim}
-		  	var GmGlobals = {
-		  		"K" : 1,
-		  		"main" : 2
-		  	}
-		  \end{verbatim}
+          \begin{verbatim}
+            var GmGlobals = {
+                "K" : 1,
+                "main" : 2
+            }
+          \end{verbatim}
 
-	\item Data Types \\
-		  We use Data Types to represent many aspects of 
-		  our state in Haskell, such as nodes, instructions
-		  etc. As there is no such concept in JavaScript, 
-		  we again need to find a new way to represent these
-		  values. In JavaScript, it is possible to instantiate
-		  functions as function objects. Function objects are
-		  similar to regular objects in a number of ways. They
-		  can be defined in the abstract and instantiated. They
-		  can take parameters and maintain values as attributes.
-		  For example, if we wanted to express an NNum node as
-		  one of these function objects, we could do so like
-		  this:
+    \item Data Types \\
+          We use Data Types to represent many aspects of 
+          our state in Haskell, such as nodes, instructions
+          etc. As there is no such concept in JavaScript, 
+          we again need to find a new way to represent these
+          values. In JavaScript, it is possible to instantiate
+          functions as function objects. Function objects are
+          similar to regular objects in a number of ways. They
+          can be defined in the abstract and instantiated. They
+          can take parameters and maintain values as attributes.
+          For example, if we wanted to express an NNum node as
+          one of these function objects, we could do so like
+          this:
 
-		  \begin{verbatim}
-		  	function NNum(n){
-		  		this.n = n;
-		  	}
-		  \end{verbatim}
+          \begin{verbatim}
+            function NNum(n){
+                this.n = n;
+            }
+          \end{verbatim}
 
-		  We could instantiate this as:
+          We could instantiate this as:
 
-		  \begin{verbatim}
-		  	var node = new NNum(n);
-		  \end{verbatim}
+          \begin{verbatim}
+            var node = new NNum(n);
+          \end{verbatim}
 
-		  where n is the value we wish our node to contain, 
-		  must like the Int parameter passed to the NNum data
-		  constructor in our Haskell equivalent. 
+          where n is the value we wish our node to contain, 
+          must like the Int parameter passed to the NNum data
+          constructor in our Haskell equivalent. 
 
-		  We will use this concept of instantiated function
-		  objects to represent nodes and instructions. In the
-		  case of data constructors of arity 0, our function
-		  will take no arguments and appear empty. They are
-		  still sufficient in this state to represent the
-		  equivalent data constructors.
-
-	\item Functions \\ 
-		  Functions in Haskell will be represented as same in
-		  JavaScript. 
+          We will use this concept of instantiated function
+          objects to represent nodes and instructions. In the
+          case of data constructors of arity 0, our function
+          will take no arguments and appear empty. They are
+          still sufficient in this state to represent the
+          equivalent data constructors.
 \end{enumerate}
 
 Our serialization code will take an initial state from our
-compiler and produce an equivelent representation in Javascript.
+compiler and produce an equivalent representation in JavaScript.
 This representation will consist of the components described
 above. The function GmState2JS in Haskell2JS.hs takes our 
 state and calls the relevant functions on its constituent 
@@ -419,44 +429,38 @@ we then include as parameters to the NGlobal node. GmCode
 is serialized in a similar manner although in practice that's
 trivial as we always know what its contents will be.
 
-The output of this serialization step is a string parseable
+The output of this serialization step is a string parse-able
 by JavaScript representing our compiled state. For our example
 'K' program, that output looks like this:
 
 \begin{verbatim}
-var GmOutput = [];
+    var GmOutput = [];
+     
+    var GmCode = [new PushGlobal("main"),new Eval()];
+     
+    var GmStack = [];
+     
+    var GmDump = [];
+     
+    var GmHeap = {
+        objCount:2,
+        freeAddrs:[3,4,5,6,7,8,9,10],
+        addrObjMap:{
+            2:new NGlobal(0,[new PushInt(2),new PushInt(1),
+              new PushGlobal("K"),new Mkap(),new Mkap(),
+              new Update(0),new Pop(0),new Unwind()]),
+            1:new NGlobal(2,[new Push(0),new Eval(),
+              new Update(2),new Pop(2),new Unwind()])}
+    };
  
-var GmCode = [new PushGlobal("main"),new Eval()];
- 
-var GmStack = [];
- 
-var GmDump = [];
- 
-var GmHeap = {
-objCount:2,
-freeAddrs:[3,4,5,6,7,8,9,10],
-addrObjMap:{
-2:new NGlobal(0,[new PushInt(2),new PushInt(1),new PushGlobal("K"),new Mkap(),new Mkap(),new Update(0),new Pop(0),new Unwind()]),
-1:new NGlobal(2,[new Push(0),new Eval(),new Update(2),new Pop(2),new Unwind()])}
-};
- 
-var GmGlobals = {"K":1,"main":2};
- 
-var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
- 
-function main(){
-	return evalProg(GmState);
-}
+    var GmGlobals = {"K":1,"main":2};
+     
+    var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
+     
+    function main(){
+        return evalProg(GmState);
+    }
 \end{verbatim}
-
-\emph{
-I'll mention at this point that the free addresses in GmHeap
-are represented rather naively as a finite list of integers.
-This decision was originally intended to be temporary. I'll
-provide a solution outline in conclusions. It is relatively
-trivial to write correctly. For now it is sufficient to
-know that this method is far from ideal but works.
-}
 
 We now have a JavaScript representation of our compiled program
 state. The next step is to evaluate this state to a final 
@@ -470,21 +474,19 @@ representation of an abstract machine capable of evaluating
 a Gmachine compiled state. We have already described the 
 components of this state and their abstract representations in
 JavaScript so this section will be concerned mostly with the
-methods of evaluation we employ when executing our state. The
-code related to this section can be found in runtime.js in the
-supplied repo. 
+methods of evaluation we employ when executing our state. 
 
 Our runtime consists of a number of stateless functions and the 
 global definitions for our compiled state. Functions operating
 on our compiled state are generally of the following form:
 
 \begin{verbatim}
-function funcName(xState, otherParams){
-	var State = xState;
-	var component = getComponent(State);
-	alter_component(component);
-	var newState = putComponent(State);
-}
+    function funcName(xState, otherParams){
+        var State = xState;
+        var component = getComponent(State);
+        alter_component(component);
+        var newState = putComponent(State);
+    }
 \end{verbatim}
 
 \noindent We wish for our runtime operations to be somewhat
@@ -496,9 +498,15 @@ We apply our changes to scoped copy and return it, leaving
 the original copy passed to the function unchanged.
 
 In the serialized example of our "K" function above, you may
-have noticed the function main(){return evalProg(GmState)}. 
+have noticed the following function:
+
+\begin{center}
+ \verb!main(){return evalProg(GmState)}!
+\end{center}
+
 This serves as our browser's entry point to the evaluation of
-our state. The call to evalProg() tells our runtime to evaluate
+our state and the JavaScript representation of our Gmachine
+evaluator entry point. The call to evalProg() tells our runtime to evaluate
 the GmState definition provided. The function evalProg iterates
 through each state in the evaluation of our compiled program,
 evaluating each in turn until we reach a final state. This
@@ -514,27 +522,34 @@ call the function step() on the then
 current state. Step acts as an instruction dispatch function.
 It will pop one instruction from the sequence
 in GmCode, check it's value and call the relevant function 
-representing its behaviour. The instanceof method in JavaScript
+representing its behavior. The instanceof method in JavaScript
 is used to check if an instantiated function objects is an
 instance of a certain function. This is how we compare our
 node and instruction representations and perform pattern 
 matching on them. The parameters of each instruction are 
 passed as parameters to the functions representing their
-behaviour. 
+behavior. 
 
 We will now examine some of the utility functions in our
 runtime. Between lines 66 and 91 of runtime.js, we have
-functions id(), head(), tail() and an array prototype
-method addition drop(). The first three functions work
-as expected. Functions head() and tail() are included to
+functions \verb!id()!, \verb!head()!, \verb!tail()! and an array prototype
+method addition \verb!drop()!. The first three functions work
+as expected. Functions \verb!head()! and \verb!tail()! are included to
 make reasoning on lists more intuitive. JavaScript has
 built in push and pop methods, however these operate in
 a destructive pass-by-reference sense which is unhelpful
 when trying to model execution avoiding the notion of
-global state. Drop() was included for similar reasons, 
+global state. \verb!drop()! was included for similar reasons, 
 implementing similar functionality to Haskell's drop.
+In a sense, we could say that the implementation of the
+runtime is somewhat functionally inspired. We have avoided
+using globally stateful computations and implemented
+common functional methods such as \verb!head()! and 
+\verb!tail! to allow for easy reasoning on lists. There is
+no particular significance in this beyond making our
+runtime easier to implement and reason about.
 
-hAlloc at line 233 is used to allocate a node on the
+\verb!hAlloc! at line 233 is used to allocate a node on the
 heap. It takes the GmHeap from our state and a node
 and returns a new heap with the node at the last free
 address of the heap. The free addresses and object
@@ -547,11 +562,13 @@ components of our heap, making it easier to access and
 update our state in a clean and organized fashion.
 
 \subsubsection{Runtime Instructions}
-The implementations of our Gmachine instructions start at
-line 327 in our runtime. In general, the functions representing
-the actions of instructions are named for their namesake. The
-all take as paramaters a program state and any parameters
+The following provides a description of the implementation
+of our instructions and the the functions which execute their
+behavior in our runtime. In general, the functions representing
+the actions of instructions are named for their namesake. They
+all take as parameters a program state and any parameters
 required by the instruction. They all return a program state.
+The code related to this section is included in appendix A.
 
 pushglobal() takes the name of a super combinator. It finds 
 the address of the super combinator by name in the globals 
@@ -575,7 +592,7 @@ a stack which is returned in a new state.
 
 pack() is used to create NConstr nodes, representing data
 constructors in our heap. The function takes two integer
-as additional paramaters, a tag and an arity respectively.
+as additional parameters, a tag and an arity respectively.
 We assume as many elements of the data constructor as 
 indicated by the arity parameter are addressed by the top
 items on the stack. We pop these from the stack and use
@@ -594,18 +611,26 @@ code sequence associated with that tag is located in the array
 and is added to the existing code sequence in the program
 state. This new code sequence is returned in a new state.
 
-split()  
+split() takes as an additional argument an integer N. Split
+instructions are encountered at the start of each case 
+alternative in a case statement. The function itself finds
+the NConstr node pointed to by the address on top of the
+stack and replace this address with the addresses of each
+of the elements in of the data constructor. We can then
+access the tags of these elements in a casejump. A Slide
+instruction following the case alternative will then remove
+these addresses from the stack. 
 
 update() is used to overwrite the root of a reducible expression
 with its value after it is first evaluated. This corresponds
 with the typical update operation describe in the background
 section. The function takes an integer N as an additional
-paramater. It will 
+parameter. It will 
 
 pop() takes an integer N and pops N items from the stack.
 The resultant stack is returned in a new state.
 
-evalInst() corresponds to the Eval function but is so named
+evalInst() corresponds to the Eval instruction but is so named
 because of naming conflicts with JavaScript's built-in eval
 method and another similarly named function in our runtime.
 Eval is used to evaluate an expression to weak head normal
@@ -633,11 +658,11 @@ arithmetic operations. They handle the application of monadic
 and dyadic operators respectively. Both accept as parameters:
 
 \begin{enumerate}
-	\item A boxing function, to place values in nodes and
-		  add them to the heap.
-	\item An unboxing function to extract values from nodes.
-	\item The operator in question to apply.
-	\item The current state
+    \item A boxing function, to place values in nodes and
+          add them to the heap.
+    \item An unboxing function to extract values from nodes.
+    \item The operator in question to apply.
+    \item The current state
 \end{enumerate}
 
 \noindent using these functions greatly minimizes the code we
@@ -652,11 +677,45 @@ A function cond() handles conditionals. This takes two instruction
 sequences as well as the usual state and expects to find the address
 of an NConstr node on top of the stack. This node is found in the
 heap and its tag checked. As with boxBoolean(), a tag of 1 represents
-true, 2 false. Based on the tag, the appropriate of the two instuction
+true, 2 false. Based on the tag, the appropriate of the two instruction
 sequences passed as parameters if added to the current code sequence
 and returned in a new state.
 
-Lastly, the unwind() function is used to 
+Lastly, the unwind() function is used to unwind the spine of the
+expression currently being evaluated. The unwind() function checks
+the type of the node on top of the stack using a series of if
+statements. Again, instanceof is used to determine the function
+from which the node was instantiated. The exact actions of unwind()
+will vary depending on the type of the node found but the general
+aim is to leave a pointer to a normalized expression on top of
+the stack. 
+
+\begin{itemize}
+
+\item If an indirection is encountered it is replaced with the
+expression pointer it contains and another Unwind is added to the
+instruction sequence. 
+
+\item If an application is found, both of its
+arguments are added to the stack and another Unwind is added. 
+
+\item If
+an NNum node pointer is found, and there is no state currently
+stored in the dump, we return the current state as there is nothing
+to change. If the dump is not empty we pop the top code/stack pair
+from the dump, replace the current code sequence with the restored
+code sequence and append the restored stack to the current stack. 
+This signifies that we just finished evaluating an expression to
+WHNF and are now ready to return to regular evaluation.
+
+\item If the top stack item points to an NConster we do the same
+as in the case of NNum nodes for the same reasons.
+
+\item If the top stack item is a pointer to an NGlobal node 
+then we add its code the code sequence so that it can be evaluated.
+We can see this as being the implementation of a function call.
+
+\end{itemize}
 
 \subsubsection{Example Evaluation}
 We will now provide an example of program evaluation in our runtime.
@@ -670,44 +729,44 @@ calls evalProg on our initial state. We then iterate through each
 state.
 
 \begin{itemize}
-	\item Iteration 1: PushGlobal instruction encountered, find
-		  address of "main" super combinator passed as argument
-		  and add to stack. 
-	\item Iteration 2: Eval function encountered. Defer state of
-		  stack and code sequence to dump. Code is empty and stack
-		  contains only the address of "main" so dump is updated
-		  to [([],[])]. Unwind instruction added to code sequence.
-	\item Iteration 3: Unwind finds pointer to WHNF super combinator
-		  "main" and places its code sequence in GmCode.
-	\item Iterations 4, 5: "K" is being called on integers 1 and 2.
-		  PushInt 1 and 2 add the appropriate nodes to the heap and
-		  their addresses to the top of the stack. Globals also
-		  updated.
-	\item Iterations 6 - 8: Address of super combinator "K" pushed
-		  to stack. Two subsequent Mkap instructions add two NAp
-		  nodes creating a graph of "K", 1 and 2. 
-	\item Iteration 9,10: Update 0 instruction creates NInd
-		  indirection node to heap node 6. Pop 0 pops no addresses
-		  from the stack. Both trivial operations in this particular
-		  example.
-	\item Iterations 10 - 13: Series of Unwind instructions. Firstly
-		  redirects trivial NInd node by replacing its address on the
-		  stack with that of its pointer (address 6). Places left
-		  arguments of both Mkap nodes on top of stack. When Unwind
-		  encounters pointer to "K" on stack, its code is added to
-		  the code sequence.
-	\item Iteration 14: Push 0 instruction at head of code sequence
-		  pushes pointer to first argument to "K" onto stack. This
-		  is the actual behaviour of "K".
-	\item Iterations 15 - 20: Eval instruction following "K" checks
-		  the return argument is in WHNF as before. Update 2 instruction
-		  overwrites the poitner to "K" with the value of its evaluation.
-		  Pop 2 instruction removes the argument pointers passed to
-		  "K" from the stack. Series of Unwind instructions follows,
-		  until we are left with a pointer to a single WHNF node on
-		  top of the stack.
-	\item Iteration 21: Pointer to NNum 1 on top of stack. No further
-		  code to evaluate. Final state.
+    \item Iteration 1: PushGlobal instruction encountered, find
+          address of "main" super combinator passed as argument
+          and add to stack. 
+    \item Iteration 2: Eval function encountered. Defer state of
+          stack and code sequence to dump. Code is empty and stack
+          contains only the address of "main" so dump is updated
+          to [([],[])]. Unwind instruction added to code sequence.
+    \item Iteration 3: Unwind finds pointer to WHNF super combinator
+          "main" and places its code sequence in GmCode.
+    \item Iterations 4, 5: "K" is being called on integers 1 and 2.
+          PushInt 1 and 2 add the appropriate nodes to the heap and
+          their addresses to the top of the stack. Globals also
+          updated.
+    \item Iterations 6 - 8: Address of super combinator "K" pushed
+          to stack. Two subsequent Mkap instructions add two NAp
+          nodes creating a graph of "K", 1 and 2. 
+    \item Iteration 9,10: Update 0 instruction creates NInd
+          indirection node to heap node 6. Pop 0 pops no addresses
+          from the stack. Both trivial operations in this particular
+          example.
+    \item Iterations 10 - 13: Series of Unwind instructions. Firstly
+          redirects trivial NInd node by replacing its address on the
+          stack with that of its pointer (address 6). Places left
+          arguments of both Mkap nodes on top of stack. When Unwind
+          encounters pointer to "K" on stack, its code is added to
+          the code sequence.
+    \item Iteration 14: Push 0 instruction at head of code sequence
+          pushes pointer to first argument to "K" onto stack. This
+          is the actual behaviour of "K".
+    \item Iterations 15 - 20: Eval instruction following "K" checks
+          the return argument is in WHNF as before. Update 2 instruction
+          overwrites the poitner to "K" with the value of its evaluation.
+          Pop 2 instruction removes the argument pointers passed to
+          "K" from the stack. Series of Unwind instructions follows,
+          until we are left with a pointer to a single WHNF node on
+          top of the stack.
+    \item Iteration 21: Pointer to NNum 1 on top of stack. No further
+          code to evaluate. Final state.
 \end{itemize}
 
 At this point, the GmCode part of our starting GmState is empty.
@@ -719,7 +778,7 @@ contain a single item pointing to the return value of evaluating
 our program, in this case an NNum node of value 1. This value will
 be extracted and returned by evalProg().
 
-\subsection{Specific Feature Implemenations}
+\subsection{Specific Feature Implementations}
 When we encounter a dyadic expression application in our input
 program, we check if the expression being applied is a built-in
 primitive defined in our compiler. If so, we know that we are
@@ -770,7 +829,7 @@ Haskell exists in GEval.hs. This was written concurrently with
 the runtime, as it helped greatly in diagnosing errors which 
 were somewhat vague in JavaScript. Lastly, in order to actually
 use the compiler, catalyst.hs provides a command line interface.
-It can be ran from the linux command line with the -h flag which
+It can be ran from the Linux command line with the -h flag which
 will return some helpful information and further instructions.
 
 

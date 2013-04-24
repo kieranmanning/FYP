@@ -9,9 +9,7 @@ we wished to implement.
 \subsection{Completeness}
 Firstly, we were capable of taking a representation of a functional
 language derived from Haskell and compiling it into an initial state.
-\emph{ Note that I say "representation" as the compiler is not 
-currently able to take Core in its unparsed form. This point will be
-further explored below.} This representation is capable of expressing
+This representation is capable of expressing
 a number of features, of which we support the following:
 
 \begin{itemize}
@@ -42,7 +40,7 @@ the Gmachine compilation scheme. This gives us a heap representing
 our program from which our evaluator can build a reducible expression
 graph. It also provides a stack and state dump which will be 
 required by the runtime evaluator. Our compiler can then serialize
-this state into an equivalent JavaScript represention which we can
+this state into an equivalent JavaScript representation which we can
 evaluate in a browser, given the right set of abstract definitions
 and methods.
 
@@ -57,7 +55,7 @@ and serialization, be executed in a browser.
 
 In order for our project to be a viable option when writing 
 real-world programs, we would need to add a number of basic browser
-interation components. We can currently evaluate expressions but
+interaction components. We can currently evaluate expressions but
 not effect the state of the browser. Possible solutions to this
 will be outlined in the further work section.
 
@@ -67,11 +65,11 @@ external core into the representation provided in GADT.hs.As
 deadlines approached, features yet to be implemented had to be
 prioritized. Writing a parser for Core was deemed to be of less
 importance and interest than other features. Core is designed to
-be easily parsed. Its specification has changed subtley but frequently
+be easily parsed. Its specification has changed subtly but frequently
 over the last decade through various updates to GHC. Completed
 parsers exist for previous versions of Core however sometime between
 version 5 and the current version of GHC, maintenance of the core
-language becamse less of a priority for the development team. As
+language became less of a priority for the development team. As
 a result, tools such as the parser stagnated. Writing a core parser
 would not be a difficult task and will be explored in the further
 work section below. However, it was a task deemed uninteresting 
@@ -83,7 +81,7 @@ more directly related to the goal of this project.
 Efficiency was not the main aim of this project. As such, there
 exists a lot of scope for optimization and improvement. The simple
 examples provided will execute in acceptable time in a browser. 
-However, the execution time of more complex programs will certainbly 
+However, the execution time of more complex programs will certainly 
 become noticeably and problematically slower than programs with 
 equivalent semantics written in optimized JavaScript. It would 
 not be possible to achieve what we wanted and compete directly with
@@ -96,6 +94,140 @@ which are more efficient. The JavaScript code used in the runtime
 could also stand to be more efficient. When implementing the 
 runtime i was most concerned with producing a clean, understandable
 proof-of-concept. There is currently no garbage collection in my
-implemenation. Possible solutions to these will be examined in
+implementation. Possible solutions to these will be examined in
 the further work section.
 
+\subsection{Some Examples}
+We will now provide some examples of some slightly more complicated
+programs than the "K" program we used earlier. Firstly, a
+factorial function, as is traditional in functional programming. The
+following is a factorial function in Haskell:
+
+\begin{verbatim}
+    module MIdent where
+
+    fac 0 = 1
+    fac n = n * fac (n - 1)
+
+    main = fac 3
+\end{verbatim}
+
+This compiles into the following unedited GHC external Core:
+
+\begin{verbatim}
+%module main:MIdent
+  %rec
+  {main:MIdent.fac :: ghczmprim:GHCziTypes.Int ->
+                      ghczmprim:GHCziTypes.Int =
+     \ (dsdl0::ghczmprim:GHCziTypes.Int) ->
+         %case ghczmprim:GHCziTypes.Int dsdl0
+         %of (wildX4::ghczmprim:GHCziTypes.Int)
+           {ghczmprim:GHCziTypes.Izh (ds1dl1::ghczmprim:GHCziPrim.Intzh) ->
+              %case ghczmprim:GHCziTypes.Int ds1dl1
+              %of (ds2Xl6::ghczmprim:GHCziPrim.Intzh)
+                {%_ ->
+                   base:GHCziNum.zt @ ghczmprim:GHCziTypes.Int 
+                   base:GHCziNum.zdfNumInt
+                   wildX4
+                   (base:GHCziNum.zm @ ghczmprim:GHCziTypes.Int
+                    base:GHCziNum.zdfNumInt (main:MIdent.fac wildX4)
+                    (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh)));
+                 (0::ghczmprim:GHCziPrim.Intzh) ->
+                   ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh)}}};
+  main:MIdent.main :: ghczmprim:GHCziTypes.Int =
+    main:MIdent.fac
+    (ghczmprim:GHCziTypes.Izh (4::ghczmprim:GHCziPrim.Intzh));
+\end{verbatim}
+
+\noindent When we shorten the type annotations of the above for clarity,
+this looks like:
+
+\begin{verbatim}
+%module main:MIdent
+  %rec
+  {fac :: Int -> Int =
+     \ (d0::Int) -> %case Int d0 %of (wildX4::Int)
+
+           {Types.Izh (d1::Int) -> %case Types.Int d1 %of (d6::Int)
+
+                 {%_ ->
+                    * @ Int NumInt wildX4 (- @ Types.Int Int (fac wildX4) 
+                        (Types.Izh (1::Int));
+                 
+                 (0::Int) ->
+                    Types.Izh (1::Int)}}};
+
+main :: Types.Int =
+    fac
+    (Types.Izh (4::Int));
+\end{verbatim}
+
+\noindent When we pass the Haskell ADT representation of this function
+through our compilation and serialization phases, we get the following 
+JavaScript representation of our compiled initial state:
+
+\begin{verbatim}
+
+var start = new Date().getTime();
+
+var GmOutput = [];
+
+var GmCode = [new PushGlobal("main"),new Eval()];
+
+var GmStack = [];
+
+var GmDump = [];
+
+var GmHeap = {
+objCount:12,
+freeAddrs:[13..],
+addrObjMap:{
+12:new NGlobal(3,[new Push(0),new Eval(),
+			      new Cond([new Push(1)],
+			     [new Push(2)]),new Update(3),
+			      new Pop(3),new Unwind()]),
+11:new NGlobal(2,[new Push(1),new Eval(),new Push(1),
+				  new Eval(),new Neq(),new Update(2),
+				  new Pop(2),new Unwind()]),
+10:new NGlobal(2,[new Push(1),new Eval(),new Push(1),
+				  new Eval(),new Eq(),new Update(2),
+				  new Pop(2),new Unwind()]),
+9:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Update(1),
+				 new Pop(1),new Unwind()]),
+8:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),
+	  			 new Div(),new Update(2),new Pop(2),new Unwind()]),
+7:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),
+				 new Mul(),new Update(2),new Pop(2),new Unwind()]),
+6:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),
+				 new Sub(),new Update(2),new Pop(2),new Unwind()]),
+5:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new Eval(),
+			     new Add(),new Update(2),new Pop(2),new Unwind()]),
+4:new NGlobal(1,[new Push(0),new Eval(),new Update(1),new Pop(1),new Unwind()]),
+3:new NGlobal(0,[new PushInt(3),new PushGlobal("fac"),new Mkap(),
+				 new Eval(),new Update(0),new Pop(0),new Unwind()]),
+2:new NGlobal(1,[new Push(0),new PushGlobal("xeq0"),new Mkap(),new Eval(),
+				 new Cond([new PushInt(1)],[new PushInt(1),new Push(1),
+				 new PushGlobal("-"),new Mkap(),new Mkap(),new PushGlobal("fac"),
+				 new Mkap(),new Eval(),new Push(1),new Eval(),new Mul()]),
+				 new Update(1),new Pop(1),new Unwind()]),
+1:new NGlobal(1,[new Push(0),new Eval(),new PushInt(0),new Eq(),new Update(1),
+				 new Pop(1),new Unwind()])}
+};
+
+var GmGlobals = {"xeq0":1,"fac":2,"main":3,"Id":4,"+":5,
+				 "-":6,"*":7,"/":8,"neg":9,"==":10,"!=":11,
+				 "if":12};
+
+var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 	
+
+
+function main(){
+return evalProg(GmState);
+}
+
+\end{verbatim}
+
+\noindent This can be executed in a browser with a call to \verb!main()!, assuming
+the runtime is included. Finally, this will evaluate to a final state in which
+the only value left on the stack is a pointer to an NNum 6 node. \verb!main()! will
+return the value 6 as removed from that node.

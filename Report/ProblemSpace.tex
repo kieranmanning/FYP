@@ -17,7 +17,7 @@ var x = 2;
 it to be of type int based on the value assigned to it and assign it the
 value 2. Objects and functions are declared in a similar fashion, with their
 attributes and behaviour used to determine their types. This runtime inference
-exemplifies the dynamic nature of javascript typing. It also means that
+exemplifies the dynamic nature of JavaScript typing. It also means that
 type errors can only be diagnosed at runtime, generally with unhelpful 
 error messages. A strongly typed language would be capable of finding such
 errors at compile time. This is a somewhat imperfect argument as JavaScript
@@ -65,14 +65,14 @@ resulting in a NaN return. Another more worrying example is the Infinity
 numeric value, which occurs when a value goes outside the bounds of
 a floating point number. Much like our NaN example, the program will
 continue to run until it chokes on this Infinity value. This permissive
-behaviour along with javascript's weak typing and implicit (often unintuitive)
+behaviour along with JavaScript's weak typing and implicit (often unintuitive)
 casting makes it unfortunately easy to write programs which exhibit
 unintended behaviour with non-existant or silent errors.
  
 
 
 \subsection{Syntax}
-When javascript was created, its syntax was intended to resemble that 
+When JavaScript was created, its syntax was intended to resemble that 
 of C and Java. At the time, these were two predominant languages and
 reusing ideas from their syntax design was intended to lessen the 
 learning curve for programmers coming from C and Java backgrounds.
@@ -82,7 +82,7 @@ recent languages.
 JavaScript's syntax is awkward and verbose in places. Nested 
 anonymous functions for example can quickly become ugly, requiring
 careful curly brace placement and indentation to remain vaguely
-readable. The use of curly braces, parenthesis and semicolons to
+readable. The use of curly braces, parentheses and semicolons to
 seperate and sequence statements allows for horribly ugly, executable
 code. Languages such as Python and Haskell have found ways
 to overcome these problems through the use of whitespace and significant
@@ -98,7 +98,7 @@ though overloading operators as common as \verb!+! by default is probably
 not the wisest or most intuitive choice. 
 
 \subsection{Lazy Evaluation}
-Javascript is a strictly evaluated language. This isn't a problem per
+JavaScript is a strictly evaluated language. This isn't a problem per
 se and and there is no "better" choice between lazy or strict evaluation.
 However, the option of lazy evaluation in browser side programming would
 be nice. 

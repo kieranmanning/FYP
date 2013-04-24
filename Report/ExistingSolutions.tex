@@ -15,7 +15,7 @@ another language which has attempted to solve some of the problems we
 are interested in. It provides a Haskell DSL with primitives corresponding
 to those of JavaScript as well as various built-in methods to aid in browser
 side programming. Programs are written in this DSL then compiled using the
-Fay compiler into a javascript representation thereof. The choice of Haskell
+Fay compiler into a JavaScript representation thereof. The choice of Haskell
 as the platform language gives Fay a number of useful properties. Programs 
 compiled with Fay are:
 
@@ -32,7 +32,7 @@ are needed. These are provided in a seperate runtime written in JavaScript.
 
 \subsubsection{A Haskell DSL}
 Fay source programs are written in Haskell, making use of a number of
-primitives defined in a haskell embedded domain specific language.
+primitives defined in a Haskell embedded domain specific language.
 In general, there are a number of advantages to using domain specific languages
 to accomplish tasks. Such languages can take advantage of the tools and 
 features of their platform language. This reduces the time taken to
@@ -60,7 +60,7 @@ alert = ffi "window.alert(%1)"
 The type signature of the function \emph{alert} shows this in action.
 We say that the alert function takes a String and returns a Fay () action.
 In this case, the Fay action is a foreign function interface call to
-JavaScripts window.alert() method.  Fay also contains a list of type 
+JavaScripts \verb!window.alert()! method.  Fay also contains a list of type 
 definitions corresponding to the JavaScript types into which our Haskell
 and Fay types will be compiled. In this way, primitive Haskell types and 
 Fay types can be mixed in Fay source programs. 
@@ -68,17 +68,18 @@ Fay types can be mixed in Fay source programs.
 This approach allows the programmer to take advantage of many of Haskell's
 existing features when writing Fay programs. The syntax remains the same,
 with the addition of a few keywords and constructs added by Fay. Someone
-coming from a Haskell background with seperate web developmente experience
+coming from a Haskell background with seperate web development experience
 would have little difficult getting up to speed with Fay, once they figure
 out the Fay specific additions in the DSL. As Fay is embedded within Haskell,
 it is able to take full advantage of its type system. This means that Fay
-programs are type-safe. It also means that error messages and warnings from 
+programs are statically, strongly typed. It also means that error messages and warnings from 
 Haskell compilers can be used when debugging Fay programs. This is a significant
 improvement over writing JavaScript where debugging errors in such a weakly
 typed language tend to be tedious and vague. 
 
 \subsubsection{Runtime}
-Fay programs are compiled into a low level JavaScript representation. The
+Fay programs are compiled into a low level JavaScript representation.~\cite{Fay}
+ The
 compiled program is built from primitive thunk objects and operations
 which process these thunks. The abstract representation for these thunks 
 exists in a seperate runtime written in JavaScript. This runtime also contains
@@ -190,16 +191,29 @@ browser. This is an idea which will be important when it comes time to write
 our own implementation. Its use of a Haskell embedded domain specific 
 language, and the benefits this brings, is also interesting to us.
 
+Fay's approach differs from the direction we want our implemenation to take.
+We wish to take a more general approach to bridging the gap between Haskell
+and JavaScript. Fay allows for the compilation of a subset of the language
+however that subset must be defined specifically in terms of Fay. We would
+rather provide the means to compile any concept present in Haskell. This
+would provide us with added flexibility as we would be able to represent
+actions we wish to execute in a browser as native Haskell concepts, rather
+than having to rely solely on the features Fay provides in its domain 
+specific language.
+
 \subsection{iTasks}
 iTasks is a project built with the Clean programming language. Its aim
 is different from ours but its implementation manages to achieve some of
 our goals. iTasks is a workflow management system specification language,
-embedded in Clean, which generates workflow applications. As it is written
-as a DSL inside a functional language, much like Fay, it benefits from a
+embedded in Clean, which generates workflow applications~\cite{iTasks}. Workflow management
+is a term used to describe programs which co-ordinate and manage tasks
+performed by human workers (or computers, albeit in the abstract sense).
+As iTasks is written as a DSL inside a functional language, much like Fay, 
+it benefits from a
 number of the advantages of the host language. In particular, iTasks inherits
-Clean's concepts of generic programming and its type system.
+Clean's concepts of generic programming and its type system~\cite[pp.9]{iTasks}. 
 
-\subsubsection{Implementation}
+\subsection{Overview}
 The domain specific language of iTasks makes available to the programmer a
 number of constructs and functions needed to express a series of workflow
 tasks when specifying a workflow system. Tasks are represented by a 
@@ -220,19 +234,84 @@ enterPerson :: Task Person
 enterPerson = enterInformation "Enter Information"
 \end{verbatim}
 
-From this, iTasks will produce a standard form with fields for firstName, 
-surName, dateOfBirth and gender. There are a number of interesting points
-in this example. Clean's concept of records is used to define a "Person",
+From this, iTasks will produce a standard form with fields for \verb!firstName!, 
+\verb!surName!, \verb!dateOfBirth! and \verb!gender!. There are a number of interesting points
+in this example. Clean's concept of records is used to define a \verb!Person!,
 consisting of a number of fields of types String, HtmlDate and Gender. 
-Gender is also a user defined type. The function enterPerson takes no
+Gender is also a user defined type. The function \verb!enterPerson! takes no
 parameters and returns a value of type Task Person, which is a Task
 carrying data of type Person. This is making use of Clean's concept 
 of parameterized data types to carry aditional information about the 
 task in particular. As well as iTasks specific functions, the programmer
 can write general Clean code to assist in their work with iTasks.
+The above code is used to create server-side applications.
 
-\subsection{Core/SAPL paper}
+\subsection{SAPL Interpreter}
+iTasks provides a SAPL interpreter written in JavaScript. The iTasks
+team considered the use of a browser applet written in Java or a
+dedicated plug-in for interfacing with their applications on the 
+client-side. Much like us, they came to the conclusion that a better
+method would be the use of JavaScript and the native cross-browser 
+compatibility that would provide~\cite[pp.77]{JEL}.  
 
+SAPL is an intermediate language used to represent partially compiled
+Clean programs. It consists of a very minimal set of components~\cite[pp.79]{JEL}, 
+similar to the minimal input language described in our background
+section. Specifically, SAPL supports:
+
+\begin{itemize}
+  \item let expressions
+  \item select expressions
+  \item if expressions
+  \item lambda abstractions
+  \item expression aplications
+  \item primitive values
+  \item Expressions built from the above
+\end{itemize}
+
+\noindent A SAPL program consists of a list of named functions consisting
+of an expression body and list of binders, much like supercombinators as
+described in the background section.
+
+SAPL programs are compiled into JavaScript using JavaScript representations
+for SAPL components.~\cite[pp.79]{JEL}. As JavaScript does not have the
+means to represent natively lazy computations, the notion of \emph{thunks} is
+used to represent SAPL's expression applications. Unevaluated expressions
+are represented as arrays of thunks. An \verb!feval! function defined in the runtime is 
+used to evaluate such expression representations to weak head normal form
+when their values are required in a strict context~\cite[pp.84]{JEL}. Primitive operations in SAPL 
+must also be given representations in the runtime; SAPL's operations are
+designed to operate in a non-strict context on SAPL expressions. These
+can not be represented directly in JavaScript and so it is necessary
+to define new representations. Addition for example looks like this~\cite[pp.83]{JEL}:
+
+\begin{center}
+  \verb!function add(x,y){return Sapl.feval(x) + Sapl.feval(y);}!
+\end{center}
+
+\subsection{Analysis}
+The aim of iTasks is not to introduce functional programming concepts
+to JavaScript. It is a stand-alone application which faced some of the
+problems we are looking to solve. Its solutions to these problems are
+of interest to us however. Similar to Fay, we can see the benefits of using a
+DSL embedded in a high level functional language. Clean programs can
+be compiled to SAPL by the Clean compiler and interpreted using the
+SAPL-to-JavaScript interpreter, allowing for the semantics of the
+original program to be preserved in a means that can be executed in
+a browser. iTasks also uses the idea of a runtime evaluator written
+in JavaScript to evaluate compiled programs in a browser when required.
+iTasks differs from Fay however, in that it concerns itself with a 
+minimal input language. Fay handles a small subset of a large, high-level
+langauge (Haskell) and produces an equivalent representation in JavaScript.
+iTasks can compile the full (albeit minimal) syntax of SAPL into such
+a representation. As such, any program which can be written in SAPL can
+be represented in JavaScript. 
+
+This last point is of interest to us. If we aim to handle the full
+semantics of a language such as SAPL it would provide us with a
+lot of flexibility. We would be capable using this as a platform
+upon which we could later add the browser-specific elements found
+in Fay's domain specific language. 
 
 \subsection{Others}
 We have discussed some existing projects which provide solutions to 
@@ -245,7 +324,7 @@ approaches to the ones discussed above; using JavaScript as a target
 language, adding to its semantics and/or avoiding certain unwanted 
 aspects.
 
-Coffeescript is an example of such a project which has gained a lot
+CoffeeScript~\cite{Coffee} is an example of such a project which has gained a lot
 of interest in the last few years. First released in late 2009, 
 CoffeeScript provides a sort of wrapper language which compiles into
 equivalent JavaScript. The underlying semantics of JavaScript are
@@ -278,7 +357,7 @@ effect on the underlying semantics of JavaScript much less bringing
 functional concepts to the language.
 
 Another language worth mentioning is ClojureScript. It provides a compiler
-which compiles Clojure into JavaScript. This allows the use of Clojure concepts
+which compiles Clojure into JavaScript~\cite{Clojure}. This allows the use of Clojure concepts
 such as hashmaps, let bindings etc. in browser executed programs by 
 representing them in compiled JavaScript. Clojure's syntax is also preserved,
 still showing the nested parenthesized expression syntax inherited from and

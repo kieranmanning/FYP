@@ -1,6 +1,6 @@
 \section{Introduction}
 An important aspect of web development is the ability to write dynamic
-websites which will adapt to users requirements, input etc. This can be
+websites which will adapt to users' requirements, input etc. This can be
 achieved by writing adaptive client-side or server-side web programs
 which serve dynamic content. Client-side browser executed programming 
 has become  increasingly important as it is more scalable and allows 
@@ -24,7 +24,7 @@ Some features have been added to JavaScript over the years but in
 general the language has not greatly changed since its inception. This
 is understandably problematic. As of the moment of this writing the
 language is 18 years old. 
-As web development and websites have become increasingly more complex
+As web development and websites have become increasingly more complex,
 problems inherent in JavaScript have started to become more obvious.
 JavaScript's syntax is unappealing and verbose. Its type system is 
 weak in more than name alone, leading to frequent problems with ill-
@@ -41,7 +41,7 @@ programs on which they rely have grown larger, unimaginably so since
 Many people have attempted to
 write alternative languages which could replace JavaScript but 
 introducing new standards in the hopes of replacing old standards
-usually ends as predicted. As JavaScript began as the \emph{the
+usually ends as predicted. As JavaScript began as \emph{the
 standard}, so it seems it shall continue. There is some light to the
 situation, however. Much time and effort has been put into making 
 JavaScript run fast and it is capable of great efficiency. While 
@@ -52,5 +52,13 @@ to improve JavaScript by augmenting its feature set through the use
 of user created libraries. One notable example is JQuery, a JavaScript
 library which adds new features and alternative syntax to the language.
 These are still only addons though, relying on the underlying semantics
-and executing of the original language. 
+and execution of the original language. 
 
+This project aims to produce a means of executing a minimal functional language in a
+web browser. This language will be sufficient to provide a base upon which more 
+complicated concepts can be built. Our implemenation will consist of a compiler to 
+compile this functional language into an executable state and a runtime capable of 
+evaluating this state to a result. The runtime will executable from within a browser.
+Programs written in this language will be type-safe and our runtime will be capable
+of evaluating them lazily. Our runtime will be written in JavaScript so as to be 
+compatible with all major browsers.
