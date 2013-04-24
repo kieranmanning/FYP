@@ -1,0 +1,37 @@
+NAME
+       Catalyst - A Haskell core representation to Javascript compiler
+
+SYNOPSIS
+       catalyst [-c] [-r] [-o outfile] -i infile
+                [-h | -v]
+
+DESCRIPTION
+                        
+
+OPTIONS
+        -c, --compile-only
+                Output the compiled initial state only, ommitting
+                the default serialization process used to create
+                a javascript executable represenation of the initial 
+                state.
+
+        -v, --version
+                version info
+
+        -r, --runtime=FILE
+                Append result of compilation to provided runtime, 
+                producing a large runable javascript file. By default
+                catalyst will only return the compiled state itself.
+
+        -i, --input=FILE
+                Name of file to be compiled
+
+        -o, --output=FILE
+                Name of file into which resultant compilation will be
+                saved. Defaults to a.out.js
+
+AUTHOR
+        Written by Kieran Manning. 
+
+REPORTING BUGS
+        How did this get here I am not good with computer.
