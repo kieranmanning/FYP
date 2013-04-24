@@ -1,0 +1,12 @@
+digraph G{
+    node[width=0.05,height=0.05];
+    nodesep = .5;
+    node [shape=plaintext];    
+	nap0[label="@"];
+	nap1[label="@"];
+	plus[label="+"];
+	nap0 -> nap1;
+	nap0 -> y;
+	nap1 -> plus;
+	nap1 -> x;
+}

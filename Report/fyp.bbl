@@ -53,7 +53,7 @@ Simon~Peyton Jones and David Lester.
 
 \bibitem{Inliner}
 Simon~Peyton Jones and Simon Marlow.
-\newblock Secrets of the glashow haskell compiler inliner, 1999.
+\newblock Secrets of the glasgow haskell compiler inliner, 1999.
 
 \bibitem{SystemF}
 Martin Sulzmann, Manual M.~T. Chakravarty, Simon~Peyton Jones, and Kevin

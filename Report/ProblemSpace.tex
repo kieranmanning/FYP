@@ -9,14 +9,14 @@ duck typing} and similar is used in other languages such as Python. The
 consequences of this typing lead to some of JavaScripts notable characteristics.
 Firstly, programmers do not need to concern themselves with annotating the
 types of their objects, functions etc. when declaring them and the syntax
-relfects this. The statement...
+reflects this. The statement...
 \begin{center}
 var x = 2;		
 \end{center}
 \noindent ...will, when evaluated at runtime, create a variable named x, infer
 it to be of type int based on the value assigned to it and assign it the
 value 2. Objects and functions are declared in a similar fashion, with their
-attributes and behaviour used to determine their types. This runtime inference
+attributes and behavior used to determine their types. This runtime inference
 exemplifies the dynamic nature of JavaScript typing. It also means that
 type errors can only be diagnosed at runtime, generally with unhelpful 
 error messages. A strongly typed language would be capable of finding such
@@ -65,9 +65,9 @@ resulting in a NaN return. Another more worrying example is the Infinity
 numeric value, which occurs when a value goes outside the bounds of
 a floating point number. Much like our NaN example, the program will
 continue to run until it chokes on this Infinity value. This permissive
-behaviour along with JavaScript's weak typing and implicit (often unintuitive)
+behavior along with JavaScript's weak typing and implicit (often unintuitive)
 casting makes it unfortunately easy to write programs which exhibit
-unintended behaviour with non-existant or silent errors.
+unintended behavior with non-existent or silent errors.
  
 
 
@@ -83,7 +83,7 @@ JavaScript's syntax is awkward and verbose in places. Nested
 anonymous functions for example can quickly become ugly, requiring
 careful curly brace placement and indentation to remain vaguely
 readable. The use of curly braces, parentheses and semicolons to
-seperate and sequence statements allows for horribly ugly, executable
+separate and sequence statements allows for horribly ugly, executable
 code. Languages such as Python and Haskell have found ways
 to overcome these problems through the use of whitespace and significant
 statement placement. Their forced coding styles produce cleaner, more

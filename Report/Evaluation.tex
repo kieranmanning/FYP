@@ -230,4 +230,65 @@ return evalProg(GmState);
 \noindent This can be executed in a browser with a call to \verb!main()!, assuming
 the runtime is included. Finally, this will evaluate to a final state in which
 the only value left on the stack is a pointer to an NNum 6 node. \verb!main()! will
-return the value 6 as removed from that node.
+return the value 6 as removed from that node. Note that this example includes a
+number of compiler primitives not needed by our factorial program.
+
+Next, we will look at an example of a program using data constructors. There is
+currently no concept of lists in our compiler however we can use the built-int
+data constructors to create them with ease. The program
+
+\begin{verbatim}
+    data List = Nil | Cons Int List
+
+    main = Cons 1 Nil
+\end{verbatim}
+
+\noindent would look like this in our core ADT representation:
+
+\begin{verbatim}
+   [("nil", [], EConstr 1 0),
+    ("cons", ["x", "y"], EAp(EAp(EConstr 2 2)(EVar "x"))(EVar "y")),
+    ("main", [], (EAp(EAp(EVar "cons")(ENum 1))(EVar "nil")))]
+\end{verbatim}
+
+\noindent Which when compiled and serialized looks like this:
+
+\begin{verbatim}
+    var GmOutput = [];
+ 
+    var GmCode = [new PushGlobal("main"),new Eval()];
+ 
+    var GmStack = [];
+ 
+    var GmDump = [];
+ 
+    var GmHeap = {
+    objCount:3,
+    freeAddrs:[4,5,6,7,8,9,10],
+    addrObjMap:{
+    3:new NGlobal(0,[new PushGlobal("nil"),new PushInt(1),
+                     new PushGlobal("cons"),new     Mkap(),
+                     new Mkap(),new Update(0),new Pop(0),
+                     new Unwind()]),
+    2:new NGlobal(2,[new Push(1),new Push(1),new Pack(2,2),
+                     new Eval(),new Update(2),new     Pop(2),
+                     new Unwind()]),
+    1:new NGlobal(0,[new Pack(1,0),new Update(0),new Pop(0),
+                     new Unwind()])}
+    };
+     
+    var GmGlobals = {"nil":1,"cons":2,"main":3};
+     
+    var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap, GmGlobals]; 
+     
+    function main(){
+      return evalProg(GmState);
+    }
+
+\end{verbatim}
+
+\noindent When we call \verb!main()! from a browser, we will be left in
+a final state where the stack contains a single pointer to an NConstr
+node representing our list constructed from a Cons and Nil constructor
+and an integer. The example given is for lists but data constructor can
+be created in the same manner.

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.1415926-2.4-0.9998 (TeX Live 2012/Arch Linux) (format=xelatex 2013.4.14)  24 APR 2013 01:21
+This is XeTeX, Version 3.1415926-2.4-0.9998 (TeX Live 2012/Arch Linux) (format=xelatex 2013.4.14)  24 APR 2013 11:07
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -440,32 +440,23 @@ Underfull \hbox (badness 10000) in paragraph at lines 114--122
 
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 125--126
-
- []
-
 [5]
-Overfull \hbox (4.81796pt too wide) in paragraph at lines 137--142
+Overfull \hbox (4.81796pt too wide) in paragraph at lines 133--138
 \OT1/cmr/m/n/10.95 method that de-lays eval-u-a-tions un-til such time as their
  val-ues are re-quired [10,
  []
 
 [6]
-Underfull \hbox (badness 10000) in paragraph at lines 175--176
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 202.
 
- []
-
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 210.
-
-(/usr/share/texmf-dist/tex/latex/base/omscmr.fd
+ (/usr/share/texmf-dist/tex/latex/base/omscmr.fd
 File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10.95> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 210.
- [7]) [8] (./ProblemSpace.tex
-[9] [10]) [11] (./ExistingSolutions.tex [12] [13] [14] [15] [16] [17] [18]
-[19]) [20] (./HighLevelDesign.tex [21] [22] [23]
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 202.
+ [7]) [8]
+(./ProblemSpace.tex [9] [10]) [11] (./ExistingSolutions.tex [12] [13] [14]
+[15] [16] [17] [18] [19]) [20] (./HighLevelDesign.tex [21] [22] [23]
 Overfull \hbox (53.90552pt too wide) in paragraph at lines 217--217
 []        \OT1/cmtt/m/n/10.95 {ghczmprim:GHCziTypes.Izh (ds1dl1::ghczmprim:GHCz
 iPrim.Intzh) ->[] 
@@ -519,116 +510,128 @@ Overfull \hbox (4.31612pt too wide) in paragraph at lines 732--735
  ad-dress of "main"
  []
 
-[46] [47]) [48] [49] (./Evaluation.tex [50] [51]
-Overfull \hbox (71.15158pt too wide) in paragraph at lines 127--127
+[46] [47] [48]) [49] (./Evaluation.tex [50] [51]
+Overfull \hbox (71.15158pt too wide) in paragraph at lines 125--125
 []           \OT1/cmtt/m/n/10.95 {ghczmprim:GHCziTypes.Izh (ds1dl1::ghczmprim:G
 HCziPrim.Intzh) ->[] 
  []
 
 
-Overfull \hbox (2.16733pt too wide) in paragraph at lines 134--134
+Overfull \hbox (2.16733pt too wide) in paragraph at lines 132--132
 []                   \OT1/cmtt/m/n/10.95 (base:GHCziNum.zm @ ghczmprim:GHCziTyp
 es.Int[] 
  []
 
-[52]
-Overfull \hbox (30.91077pt too wide) in paragraph at lines 135--135
+
+Overfull \hbox (30.91077pt too wide) in paragraph at lines 133--133
 []                    \OT1/cmtt/m/n/10.95 base:GHCziNum.zdfNumInt (main:MIdent.
 fac wildX4)[] 
  []
 
 
-Overfull \hbox (94.14633pt too wide) in paragraph at lines 136--136
+Overfull \hbox (94.14633pt too wide) in paragraph at lines 134--134
 []                    \OT1/cmtt/m/n/10.95 (ghczmprim:GHCziTypes.Izh (1::ghczmpr
 im:GHCziPrim.Intzh)));[] 
  []
 
-
-Overfull \hbox (88.39764pt too wide) in paragraph at lines 138--138
+[52]
+Overfull \hbox (88.39764pt too wide) in paragraph at lines 136--136
 []                   \OT1/cmtt/m/n/10.95 ghczmprim:GHCziTypes.Izh (1::ghczmprim
 :GHCziPrim.Intzh)}}};[] 
  []
 
 
-Overfull \hbox (25.16208pt too wide) in paragraph at lines 153--153
+Overfull \hbox (25.16208pt too wide) in paragraph at lines 151--151
 []           \OT1/cmtt/m/n/10.95 {Types.Izh (d1::Int) -> %case Types.Int d1 %of
  (d6::Int)[] 
  []
 
 
-Overfull \hbox (59.6542pt too wide) in paragraph at lines 156--156
+Overfull \hbox (59.6542pt too wide) in paragraph at lines 154--154
 []                    \OT1/cmtt/m/n/10.95 * @ Int NumInt wildX4 (- @ Types.Int 
 Int (fac wildX4)[] 
  []
 
 [53]
-Overfull \hbox (7.91602pt too wide) in paragraph at lines 197--197
+Overfull \hbox (7.91602pt too wide) in paragraph at lines 195--195
 []\OT1/cmtt/m/n/10.95 9:new NGlobal(1,[new Push(0),new Eval(),new Neg(),new Upd
 ate(1),[] 
  []
 
 
-Overfull \hbox (2.16733pt too wide) in paragraph at lines 199--199
+Overfull \hbox (2.16733pt too wide) in paragraph at lines 197--197
 []\OT1/cmtt/m/n/10.95 8:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new E
 val(),[] 
  []
 
 
-Overfull \hbox (2.16733pt too wide) in paragraph at lines 201--201
+Overfull \hbox (2.16733pt too wide) in paragraph at lines 199--199
 []\OT1/cmtt/m/n/10.95 7:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new E
 val(),[] 
  []
 
 
-Overfull \hbox (2.16733pt too wide) in paragraph at lines 203--203
+Overfull \hbox (2.16733pt too wide) in paragraph at lines 201--201
 []\OT1/cmtt/m/n/10.95 6:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new E
 val(),[] 
  []
 
 
-Overfull \hbox (2.16733pt too wide) in paragraph at lines 205--205
+Overfull \hbox (2.16733pt too wide) in paragraph at lines 203--203
 []\OT1/cmtt/m/n/10.95 5:new NGlobal(2,[new Push(1),new Eval(),new Push(1),new E
 val(),[] 
  []
 
 
-Overfull \hbox (99.89502pt too wide) in paragraph at lines 207--207
+Overfull \hbox (99.89502pt too wide) in paragraph at lines 205--205
 []\OT1/cmtt/m/n/10.95 4:new NGlobal(1,[new Push(0),new Eval(),new Update(1),new
  Pop(1),new Unwind()]),[] 
  []
 
 
-Overfull \hbox (13.6647pt too wide) in paragraph at lines 208--208
+Overfull \hbox (13.6647pt too wide) in paragraph at lines 206--206
 []\OT1/cmtt/m/n/10.95 3:new NGlobal(0,[new PushInt(3),new PushGlobal("fac"),new
  Mkap(),[] 
  []
 
 
-Overfull \hbox (65.4029pt too wide) in paragraph at lines 210--210
+Overfull \hbox (65.4029pt too wide) in paragraph at lines 208--208
 []\OT1/cmtt/m/n/10.95 2:new NGlobal(1,[new Push(0),new PushGlobal("xeq0"),new M
 kap(),new Eval(),[] 
  []
 
 
-Overfull \hbox (13.6647pt too wide) in paragraph at lines 212--212
+Overfull \hbox (13.6647pt too wide) in paragraph at lines 210--210
 [] \OT1/cmtt/m/n/10.95 new PushGlobal("-"),new Mkap(),new Mkap(),new PushGlobal
 ("fac"),[] 
  []
 
 
-Overfull \hbox (88.39764pt too wide) in paragraph at lines 215--215
+Overfull \hbox (88.39764pt too wide) in paragraph at lines 213--213
 []\OT1/cmtt/m/n/10.95 1:new NGlobal(1,[new Push(0),new Eval(),new PushInt(0),ne
 w Eq(),new Update(1),[] 
  []
 
 [54]
-Overfull \hbox (36.65945pt too wide) in paragraph at lines 223--223
+Overfull \hbox (36.65945pt too wide) in paragraph at lines 221--221
 []\OT1/cmtt/m/n/10.95 var GmState = [GmOutput, GmCode, GmStack, GmDump, GmHeap,
  GmGlobals];[] 
  []
 
-) [55] (./FurtherWork.tex [56]) [57] [58] (./Conclusions.tex [59]) [60]
-(./AppendixA.tex [61] [62]
+
+Overfull \hbox (30.91077pt too wide) in paragraph at lines 250--250
+[]    \OT1/cmtt/m/n/10.95 ("cons", ["x", "y"], EAp(EAp(EConstr 2 2)(EVar "x"))(
+EVar "y")),[] 
+ []
+
+[55]
+Overfull \hbox (59.6542pt too wide) in paragraph at lines 282--282
+[]    \OT1/cmtt/m/n/10.95 var GmState = [GmOutput, GmCode, GmStack, GmDump, GmH
+eap, GmGlobals];[] 
+ []
+
+) [56] (./FurtherWork.tex [57]) [58] [59] (./Conclusions.tex [60]) [61]
+(./AppendixA.tex [62] [63]
 Overfull \hbox (19.41339pt too wide) in paragraph at lines 113--113
 []        \OT1/cmtt/m/n/10.95 console.log("accessing undefined stack space - li
 ne 376");[] 
@@ -640,7 +643,7 @@ Overfull \hbox (48.15683pt too wide) in paragraph at lines 117--117
 d(stack[0])));[] 
  []
 
-[63] [64]
+[64] [65]
 Overfull \hbox (2.16733pt too wide) in paragraph at lines 181--181
 []            \OT1/cmtt/m/n/10.95 console.error("unexpected boolean representat
 ion");[] 
@@ -652,7 +655,7 @@ Overfull \hbox (19.41339pt too wide) in paragraph at lines 186--186
 wB, [])))[] 
  []
 
-[65]) [66] (./fyp.bbl) [67] (./fyp.aux)
+[66]) [67] (./fyp.bbl) [68] (./fyp.aux)
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
@@ -660,10 +663,10 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 Here is how much of TeX's memory you used:
  9682 strings out of 494004
  190338 string characters out of 3155736
- 211835 words of memory out of 3000000
+ 212836 words of memory out of 3000000
  12718 multiletter control sequences out of 15000+200000
  9916 words of font info for 35 fonts, out of 3000000 for 9000
  1144 hyphenation exceptions out of 8191
  56i,6n,57p,720b,506s stack positions out of 5000i,500n,10000p,200000b,50000s
 
-Output written on fyp.pdf (76 pages).
+Output written on fyp.pdf (77 pages).

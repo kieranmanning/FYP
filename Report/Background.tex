@@ -17,7 +17,7 @@ strict evaluation, Lazy evaluation operates on a \emph{call-by-need} basis, only
 evaluating aspects of an expression as they are required. A secondary characteristic
 in lazy evaluation is that of \emph{updating}. Updating puts referential
 transparity to practice by rewriting expressions with their evaluated results after
-their first evaluation. Many functional langauges can be seen as abstractions built
+their first evaluation. Many functional languages can be seen as abstractions built
 on top of (polymorphically typed) lambda calculus~\cite[pp.37]{SPJ}, examples including 
 Haskell, Miranda, ML and Lisp. This is particularly noticeable in Lisp where the 
 influence of lambda calculus is still visible in its syntax. This is of course 
@@ -26,7 +26,7 @@ any of the above mentioned concepts which appear frequently throughout this repo
 
 \subsection{Functional Compilation}
 I will be referring frequently to some of the more common ideas and practices
-involved in compiling a functional language thoughout this report. Unsurprisingly
+involved in compiling a functional language throughout this report. Unsurprisingly
 the field of functional compiler design is not easily summarized in a paragraph,
 let alone a paper; the implementation explained here only scratches the surface.
 However it will be easier to understand some of the points I make if we start
@@ -42,7 +42,7 @@ Some of the common components we would expect to see in such a language are:
 	\item Primitive integers.
 	\item Data constructors, consisting of a number of elements and a 
 		  tag to uniquely identify a constructor in its own context.
-	\item Binary function applicatiors which we use to apply expressions in order
+	\item Binary function applicators which we use to apply expressions in order
 		  to construct larger expressions.
 	\item Let expressions, allowing us to define a list of arguments local
 		  to a specific expression.
@@ -78,7 +78,7 @@ Expr a
     | ELam [a] (Expr a) 		-- lambda abstractions
 \end{verbatim}
 
-\noindent By way of example, a sample program taking two paramaeters and returning
+\noindent By way of example, a sample program taking two parameters and returning
 their sum, written in such a language, would resemble
 
 \begin{verbatim}
@@ -120,16 +120,12 @@ will be required in the evaluation of immediately pending expressions. A
 \emph{globals} dictionary will associate global supercombinator identifiers with the
 addresses of their representative nodes in the heap. \\
 
-**GIVE EXAMPLE OF GRAPH**
-
-**EXAMPLE OF REDEX REDUCTION** \\
-
-An evaulator or runtime evaluates our compiled program by iterating through
+An evaluator or runtime evaluates our compiled program by iterating through
 states from the initial state to the final. On each iteration, the state
 (and instruction sequence if present) are examined to determine the actions
 to execute in order to reach the next state. The appropriate actions are
 executed, producing a next state which we will then evaluate in the same
-manner. Expressions are instaniated as redexes in our heap which we reduce
+manner. Expressions are instantiated as redexes in our heap which we reduce
 to find their resultant values. We evaluate the program as a whole in this
 fashion to a final result.
 
@@ -171,10 +167,6 @@ necessary to produce the number of elements required. In this manner, we do not
 need to know what items lay beyond the first element in the list when applying the
 \verb!take 1! function as we do not attempt to evaluate them.
 
-
-**EXPLAIN IMPLEMENTATION RE: OUR GRAPH REDUCTION**  \\
-
-
 A second characteristic often associated with lazy evaluation is that of 
 updating. When an expression is evaluated in a lazy context, and we know
 that the contents of the expression will not change, we can overwrite the
@@ -185,13 +177,13 @@ evaluating the expression. From then on, if our program attempts to
 access the expression, it will be redirected to a value in the heap 
 representing the evaluated expression. This means we need only evaluate
 the expression once. This is only possible in cases where
-we can say that the expression in question is \emph{referential transparency}. 
+we can say that the expression in question is \emph{referentially transparency}. 
 Referential transparency is the name
 given to a property of certain expressions which states that the expression
 can be replaced with its value without altering the semantics of the overall
 program. This property exists in programs which are \emph{pure}, that is to
 say programs consisting of expressions or functions whose evaluation is 
-dependant only on the body of the expression and it's parameters, and which
+dependent only on the body of the expression and it's parameters, and which
 cause no side effects which may effect other expressions upon execution. 
 We cannot update an expression with its value if there is a danger that
 some aspect of the expression may change during the course of program 
@@ -217,7 +209,7 @@ by comparison would not be in normal form as there is an addition operation to
 be performed.
 
 Expressions in weak head normal form are expressions that have been evaluated
-to the outermost data constructor~\cite[pp.198]{SPJ}. These can be data constructors, undersaturated
+to the outermost data constructor~\cite[pp.198]{SPJ}. These can be data constructors, under-saturated
 primitive operations or lambda abstractions. For example...
 \begin{itemize}
 	\item \verb!Just (1 + 1)!
@@ -230,7 +222,4 @@ fully, it is still in WHNF. The same is true of the 3rd example, where the "++"
 sub expression could be further evaluated, however the outermost element
 ':' is a data constructor, specifically the list cons constructor. The second
 example is in WHNF by virtue of being a lambda abstraction.
-
-
-**REDEX EXAMPLE**
 

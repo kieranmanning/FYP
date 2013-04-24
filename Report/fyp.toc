@@ -26,7 +26,7 @@
 \contentsline {subsubsection}{\numberline {5.3.1}The template instantiation machine}{27}
 \contentsline {subsubsection}{\numberline {5.3.2}The G-machine}{28}
 \contentsline {subsection}{\numberline {5.4}Runtime}{30}
-\contentsline {section}{\numberline {6}Implentation}{32}
+\contentsline {section}{\numberline {6}Implementation}{32}
 \contentsline {subsection}{\numberline {6.1}Core Language Representation}{32}
 \contentsline {subsection}{\numberline {6.2}Compiler}{34}
 \contentsline {subsubsection}{\numberline {6.2.1}Program State}{34}
@@ -35,18 +35,18 @@
 \contentsline {subsection}{\numberline {6.4}Runtime}{41}
 \contentsline {subsubsection}{\numberline {6.4.1}Runtime Instructions}{43}
 \contentsline {subsubsection}{\numberline {6.4.2}Example Evaluation}{46}
-\contentsline {subsection}{\numberline {6.5}Specific Feature Implemenations}{47}
-\contentsline {subsection}{\numberline {6.6}Others}{48}
+\contentsline {subsection}{\numberline {6.5}Specific Feature Implementations}{47}
+\contentsline {subsection}{\numberline {6.6}Others}{49}
 \contentsline {section}{\numberline {7}Evaluation}{50}
 \contentsline {subsection}{\numberline {7.1}Completeness}{50}
 \contentsline {subsection}{\numberline {7.2}A Core Parser}{51}
 \contentsline {subsection}{\numberline {7.3}Efficiency}{51}
 \contentsline {subsection}{\numberline {7.4}Some Examples}{52}
-\contentsline {section}{\numberline {8}Further Work}{56}
-\contentsline {subsection}{\numberline {8.1}External Core Parser}{56}
-\contentsline {subsection}{\numberline {8.2}Characters, Strings}{56}
-\contentsline {subsection}{\numberline {8.3}Browser Interaction Methods}{56}
-\contentsline {subsection}{\numberline {8.4}Better Compilation Scheme}{57}
-\contentsline {subsection}{\numberline {8.5}Garbage Collection}{57}
-\contentsline {section}{\numberline {9}Conclusions}{59}
-\contentsline {section}{\numberline {A}Runtime Instruction Definitions}{61}
+\contentsline {section}{\numberline {8}Further Work}{57}
+\contentsline {subsection}{\numberline {8.1}External Core Parser}{57}
+\contentsline {subsection}{\numberline {8.2}Characters, Strings}{57}
+\contentsline {subsection}{\numberline {8.3}Browser Interaction Methods}{57}
+\contentsline {subsection}{\numberline {8.4}Better Compilation Scheme}{58}
+\contentsline {subsection}{\numberline {8.5}Garbage Collection}{58}
+\contentsline {section}{\numberline {9}Conclusions}{60}
+\contentsline {section}{\numberline {A}Runtime Instruction Definitions}{62}
