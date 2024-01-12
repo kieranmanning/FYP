@@ -8,7 +8,7 @@ on:
 
 jobs:
   tests:
-    runs-on: [ ubuntu-22.04 ]
+    runs-on: ubuntu-latest
     steps: 
     - name: find AWS cli
       run: which aws
