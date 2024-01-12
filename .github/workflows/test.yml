@@ -1,0 +1,14 @@
+name: Runner test
+
+on:
+  push:
+    branches: 
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: [ ubuntu-22.04 ]
+    steps: 
+    - name: find AWS cli
+      run: which aws
